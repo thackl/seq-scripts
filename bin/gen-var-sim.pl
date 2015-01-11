@@ -158,7 +158,7 @@ my $var_max = sprintf("%.2f", $ref_len/$var_tot);
 $L->info("Maximum possible variant rate: 1/". $var_max
          ."\n Please keep in mind that the effecitve rate of introduced SNPs\n"
          ." will be lower if annotations allow identical substitutions\n"
-         ." e.g. A->A or A->R (iupac AG)");
+         ." e.g. A->A or A->R (iupac AG) or ar applied to identical positions");
 my $var_sample;
 
 if($var){
@@ -210,6 +210,7 @@ my $var_10 = int($var_sample * $var_tot / 10);
 my $var_p = 0;
 
 $L->info("Mutating");
+$|++;
 printf ("%-s%% ", 0) if $L->level <= $INFO;
 
 
@@ -284,14 +285,13 @@ while (my $var = <SDI>) {
 
     if($L->level <= $INFO){
         unless($c++%$var_10){
-            $|++;
             $var_p+=10;
             printf ("%-s%% ", $var_p);
-            $|--;
         }
     }
 }
 print "\n" if $L->level <= $INFO;
+$|--;
 
 close SDI;
 
