@@ -30,7 +30,7 @@ GetOptions(                     # use %opt (Cfg) as defaults
                         win_shift|win-shift=i
                         gc_min|gc-min=f
                         gc_max|gc-max=f
-                        min_report_length|min-report-length
+                        min_report_length|min-report-length=i
                         version|V!
                         debug|D!
                         help|h!
