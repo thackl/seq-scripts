@@ -89,6 +89,7 @@ while(my $fa = $fp->next_seq){
     foreach (@rwin) {
         # get win gc
         my $wl = $_->[1]-$_->[0];
+        next if $wl < $opt{min_report_length};
         my $s = substr($fa->seq, $_->[0], $wl);
         my $gc = $s =~ tr/GCgc//;
         print $fa->id,"\t", $_->[0],"\t", $_->[1], "\t", $gc/$wl,"\n";
