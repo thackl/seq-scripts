@@ -19,7 +19,8 @@ check_bin bedtools;
 FA=$1;
 #WIDTH=${2:-1000};
 #SHIFT=${3:-200};
-PRE=${FA%.*};
+PRE=`basename $FA`
+PRE=${PRE%.*};
 
 
 ## main
