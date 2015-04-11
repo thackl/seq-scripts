@@ -1,0 +1,34 @@
+#!/bin/bash
+
+## subs
+usage(){
+    echo -e "Usage:\n  seq-gc FASTA";
+    exit 0;
+}
+
+check_bin(){
+    hash $1 || { echo "$1 required in PATH" >&2; exit 1;}
+}
+
+## prep
+[[ $# -eq 0 ]] && usage;
+
+check_bin samtools;
+check_bin bedtools;
+
+FA=$1;
+#WIDTH=${2:-1000};
+#SHIFT=${3:-200};
+PRE=${FA%.*};
+
+
+## main
+samtools faidx $FA;
+cut -f 1,2 $FA.fai | sed 's/\t/\t0\t/' > $PRE.bed
+
+bedtools nuc \
+	-fi $FA \
+	-bed $PRE.bed  \
+	> $PRE.nuc
+
+cut -f1,5 $PRE.nuc | tail -n +2 > $PRE.gc
