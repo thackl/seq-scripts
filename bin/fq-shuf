@@ -2,10 +2,16 @@
 
 ## subs
 usage(){
-    echo -e "Usage:\n  cat A.fq [B.fq ..] | fq-shuf > AB-shuf.fq";
-    echo -e "  # paired-end\n  interleave A_[12].fq .. | fq-shuf -pe | interleaved-split 1> A-shuf_1.fq 2> A-shuf_2.fq";
-
-    exit 0;
+cat <<EOF
+Usage
+  # FASTA
+  cat A.fa [B.fa ..] | fq-shuf > AB-shuf.fa
+  # FASTQ
+  cat A.fq [B.fq ..] | fq-shuf > AB-shuf.fq
+  # FASTQ paired end
+  interleave A_[12].fq .. | fq-shuf -pe | interleaved-split 1> A-shuf_1.fq 2> A-shuf_2.fq
+EOF
+exit 0;
 }
 
 check_bin(){
@@ -18,9 +24,17 @@ check_bin(){
 check_bin sort;
 check_bin sed;
 
-BUF="N;N;N;"; # 4 lines from fq
-[[ $1 =~ ^-p ]]  && BUF="N;N;N;N;N;N;N;" # 8 lines from fq
+C=`head -c 1`; # read first char for format guessing
 
-sed "$BUF"'s/\n/\x0/g;' | sort -R | tr '\0' '\n'
+# FASTQ
+if [[ $C == "@" ]]; then
+    REC="1~4"; # 4 lines from fq
+    [[ $1 =~ ^-p ]] && REC="1~8" # 8 lines from fq
+    (echo -n $C; cat <&0) | sed "$REC{s/^/\x0/}" | sort -zR | tr -d '\0';
+fi;
 
+# FASTA
+if [[ $C == ">" ]]; then
+    (echo -n $C; cat <&0) | sed "s/^>/\x0>/" | sort -zR | tr -d '\0';
+fi;
 
