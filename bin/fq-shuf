@@ -1,0 +1,26 @@
+#!/bin/bash
+
+## subs
+usage(){
+    echo -e "Usage:\n  cat A.fq [B.fq ..] | fq-shuf > AB-shuf.fq";
+    echo -e "  # paired-end\n  interleave A_[12].fq .. | fq-shuf -pe | interleaved-split 1> A-shuf_1.fq 2> A-shuf_2.fq";
+
+    exit 0;
+}
+
+check_bin(){
+    hash $1 || { echo "$1 required in PATH" >&2; exit 1;}
+}
+
+## prep
+[[ $1 =~ ^-h ]] && usage;
+
+check_bin sort;
+check_bin sed;
+
+BUF="N;N;N;"; # 4 lines from fq
+[[ $1 =~ ^-p ]]  && BUF="N;N;N;N;N;N;N;" # 8 lines from fq
+
+sed "$BUF"'s/\n/\x0/g;' | sort -R | tr '\0' '\n'
+
+
