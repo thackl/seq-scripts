@@ -5,11 +5,11 @@ usage(){
 cat <<EOF
 Usage
   # FASTA
-  cat A.fa [B.fa ..] | fq-shuf > AB-shuf.fa
+  cat A.fa [B.fa ..] | seq-shuf > AB-shuf.fa
   # FASTQ
-  cat A.fq [B.fq ..] | fq-shuf > AB-shuf.fq
+  cat A.fq [B.fq ..] | seq-shuf > AB-shuf.fq
   # FASTQ paired end
-  interleave A_[12].fq .. | fq-shuf -pe | interleaved-split 1> A-shuf_1.fq 2> A-shuf_2.fq
+  interleave A_[12].fq .. | seq-shuf -pe | interleaved-split 1> A-shuf_1.fq 2> A-shuf_2.fq
 EOF
 exit 0;
 }
