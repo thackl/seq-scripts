@@ -73,7 +73,7 @@ my %def = (
            length => undef,
            insert_size => 180,
            coverage => undef,
-           region_length => 900_000,
+           region_length => 200_000,
            prefix => "r",
        );
 
