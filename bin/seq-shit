@@ -1,0 +1,89 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+use Getopt::Long;
+use Pod::Usage;
+
+
+=head1 SYNOPSIS
+
+  seq-shit [options] [-l] <LENGTH>
+
+=head1 OPTIONS
+
+=over
+
+=item -l/--length 
+
+Length of random sequence to generate.
+
+=item [--gc] [50]
+
+Percentage GC.
+
+=item [--line-width] [80]
+
+FASTA line width.
+
+=back
+
+=cut
+
+my $VERSION = 0.1.0;
+
+my %def = (
+           gc => 50,
+           line_width => 80,
+           length => undef
+          );
+
+my %opt = ();
+GetOptions(                     # use %opt (Cfg) as defaults
+           \%opt, qw(
+                        line_width|line-width=i
+                        gc=i
+                        l|length=i
+                        version|V!
+                        debug|D!
+                        help|h!
+                   )
+          ) or die 'Failed to "GetOptions"';
+
+# help
+$opt{help} && pod2usage(1);
+
+# primary options length
+if(@ARGV && !($ARGV[0] =~ /^-/)){
+        $opt{length} = $ARGV[0];
+}
+
+# version
+if ($opt{version}) {
+    print "$VERSION\n"; 
+    exit 0;
+}
+
+$opt{length} || pod2usage("required: --length");
+
+%opt = (%def, %opt);
+
+my @nucs = (
+    ("A")x(100-$opt{gc}), 
+    ("T")x(100-$opt{gc}),
+    ("G")x($opt{gc}),
+    ("C")x($opt{gc})
+);
+
+my $seq = ">seq-shit\n";
+
+for (my $i=1; $i<=$opt{length}; $i++){
+    $seq .= (@nucs)[int(rand(200))];
+    $i% $opt{line_width} || ($seq.="\n");
+    if (! $i%100 ){ # empty mem from time to time
+        print $seq;
+        $seq="";
+    }
+}
+chomp($seq);
+print $seq,"\n";
