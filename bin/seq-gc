@@ -2,8 +2,16 @@
 
 ## subs
 usage(){
-    echo -e "Usage:\n  seq-gc FASTA";
-    exit 0;
+cat <<EOF
+Usage:
+  seq-gc FASTA > FASTA.gc.tsv
+
+Calculate per sequence / window GC content.
+  -w  Window size. Unless set, GC is calculated per sequence.
+  -s  Shift between window starts. Default -w.
+  -m  Calculate median of windows. Default -w=1000.
+EOF
+exit 0;
 }
 
 check_bin(){
@@ -13,23 +21,100 @@ check_bin(){
 ## prep
 [[ $# -eq 0 ]] && usage;
 
+# Execute getopt
+ARGS=`getopt --name "seq-gc" \
+    --options "w:s:mhV" \
+    -- "$@"`
+
+#Bad arguments
+[ $? -ne 0 ] && exit 1;
+
+# A little magic
+eval set -- "$ARGS"
+
+# Now go through all the options
+while true; do
+    case "$1" in
+        -w)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            WIN=$2;
+            shift 2;;
+        -s)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            SHIFT=$2;
+            shift 2;;
+        -m)
+            MEDIAN=1;
+            shift;;
+	-h)
+	    usage && exit 0;;
+
+        -V)
+            grep -m1 'Version' "$0" | sed 's/.*Version\s*//';
+            exit 0;;
+        --)
+            shift
+            break;;
+        *)
+            echo "$1: Unknown option" 1>&2 && exit 1;;
+    esac
+done
+
+
+## prep
+[[ $# -eq 0 ]] && usage;
+
 check_bin samtools;
 check_bin bedtools;
 
 FA=$1;
-#WIDTH=${2:-1000};
-#SHIFT=${3:-200};
 PRE=`basename $FA`
 PRE=${PRE%.*};
-
+[[ -n $MEDIAN ]] && [[ -z $WIN ]] && WIN=1000;
+[[ -z $SHIFT ]] && SHIFT=$WIN
 
 ## main
 samtools faidx $FA;
-cut -f 1,2 $FA.fai | sed 's/\t/\t0\t/' > $PRE.bed
 
-bedtools nuc \
-	-fi $FA \
-	-bed $PRE.bed  \
-	> $PRE.nuc
+if [[ -z $WIN ]]; then
+    cut -f 1,2 $FA.fai | sed 's/\t/\t0\t/' > $PRE.bed
+else
+    cut -f 1,2 $FA.fai > $PRE.len
+    bedtools makewindows \
+        -g $PRE.len \
+        -w $WIN \
+        -s $SHIFT \
+        > $PRE.bed
+fi;
 
-cut -f1,5 $PRE.nuc | tail -n +2 > $PRE.gc
+if [[ -z $MEDIAN ]]; then
+    bedtools nuc \
+        -fi $FA \
+        -bed $PRE.bed |
+    cut -f1,5 |
+    tail -n +2
+else
+    bedtools nuc \
+        -fi $FA \
+        -bed $PRE.bed |
+    cut -f1,5 |
+    tail -n +2 |
+    perl -ane '
+      if($F[0] eq $id){
+          push @w, $F[1]
+      }else{
+          if(@w){
+              @w=sort{$a<=>$b}@w;
+              print $id,"\t",$w[@w/2],"\n"
+          }
+          $id=$F[0];
+          @w=($F[1]);
+      };
+      END{
+          if(@w){
+              @w=sort{$a<=>$b}@w;
+              print $id,"\t",$w[@w/2],"\n"
+          }
+      }'
+fi;
+    
