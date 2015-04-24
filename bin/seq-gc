@@ -10,6 +10,7 @@ Calculate per sequence / window GC content.
   -w  Window size. Unless set, GC is calculated per sequence.
   -s  Shift between window starts. Default -w.
   -m  Calculate median of windows. Default -w=1000.
+  -b  Output bed instead of tsv format for -w mode.
 EOF
 exit 0;
 }
@@ -23,7 +24,7 @@ check_bin(){
 
 # Execute getopt
 ARGS=`getopt --name "seq-gc" \
-    --options "w:s:mhV" \
+    --options "w:s:bmhV" \
     -- "$@"`
 
 #Bad arguments
@@ -46,7 +47,10 @@ while true; do
         -m)
             MEDIAN=1;
             shift;;
-	-h)
+        -b)
+            BED=1;
+            shift;;
+        -h)
 	    usage && exit 0;;
 
         -V)
@@ -88,11 +92,21 @@ else
 fi;
 
 if [[ -z $MEDIAN ]]; then
-    bedtools nuc \
-        -fi $FA \
-        -bed $PRE.bed |
-    cut -f1,5 |
-    tail -n +2
+    if [[ -z $BED ]]; then
+        bedtools nuc \
+            -fi $FA \
+            -bed $PRE.bed |
+        cut -f1,5 |
+        tail -n +2
+    else
+        bedtools nuc \
+            -fi $FA \
+            -bed $PRE.bed |
+        gawk -v w=${WIN} 'BEGIN{FS="\t"; OFS="\t"}
+{
+if (FNR>1) {print $1,$2,$3,"GC.w"w,$5}
+}'
+    fi;
 else
     bedtools nuc \
         -fi $FA \
@@ -117,4 +131,3 @@ else
           }
       }'
 fi;
-    
