@@ -52,13 +52,15 @@ GetOptions(
            'version=i'=>\$version,
            'type=s'=>\$type ,
            'source=s'=>\$source,
-           'aa=s'=>\$aa,
+           'aa!'=>\$aa,
            'help|?'=>\$help ,
            'man'=>\$man
           ) or pod2usage(2);
 
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+@ARGV && !$gff && ($gff=shift @ARGV);
 
 # required
 $gff || pod2usage("required: --gff");
