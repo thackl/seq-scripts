@@ -19,6 +19,8 @@ use Cwd;
 
   cap3-wrap fragments.fa --out contigs.fa
   cat fragments.fa | cap3-wrap > contigs.fa
+  # min overlap of 500 bp with 97% idy and max unaligned overhang of 100
+  cat fragments.fa | cap3-wrap -o 500 -p 97 -h 100 > contigs.fa
 
 =head1 OPTIONS
 
@@ -28,11 +30,53 @@ use Cwd;
 
 Write contigs to --out FILE. Default is to print contigs to STDOUT
 
-=item [--full-out] 
+=item [--full-out]
 
 Requires --out. Produce all CAP3 output files with --out basename.
 
+=item [-Q|--quiet/-D|--debug]
+
+Decrease/increase log verbosity.
+
+=item [-V|--version]
+
+Print script version string.
+
+=item [-?|--help]
+
+Show this help screen.
+
 =back
+
+=head2 CAP3
+
+  -a  N  specify band expansion size N > 10 (20)
+  -b  N  specify base quality cutoff for differences N > 15 (20)
+  -c  N  specify base quality cutoff for clipping N > 5 (12)
+  -d  N  specify max qscore sum at differences N > 20 (200)
+  -e  N  specify clearance between no. of diff N > 10 (30)
+  -f  N  specify max gap length in any overlap N > 1 (20)
+  -g  N  specify gap penalty factor N > 0 (6)
+  -h  N  specify max overhang percent length N > 2 (20)
+  -i  N  specify segment pair score cutoff N > 20 (40)
+  -j  N  specify chain score cutoff N > 30 (80)
+  -k  N  specify end clipping flag N >= 0 (1)
+  -m  N  specify match score factor N > 0 (2)
+  -n  N  specify mismatch score factor N < 0 (-5)
+  -o  N  specify overlap length cutoff > 15 (40)
+  -p  N  specify overlap percent identity cutoff N > 65 (90)
+  -r  N  specify reverse orientation value N >= 0 (1)
+  -s  N  specify overlap similarity score cutoff N > 250 (900)
+  -t  N  specify max number of word matches N > 30 (300)
+  -u  N  specify min number of constraints for correction N > 0 (3)
+  -v  N  specify min number of constraints for linking N > 0 (2)
+  -w  N  specify file name for clipping information (none)
+  -y  N  specify clipping range N > 5 (100)
+  -z  N  specify min no. of good reads at clip pos N > 0 (3)
+
+  IGNORED:
+  -x  N  specify prefix string for output file names (cap)
+         use --out for output file names control instead
 
 =head1 AUTHOR
 
@@ -69,6 +113,9 @@ my %opt = (
     tmp => (-d '/dev/shm' ? '/dev/shm' : '/tmp'),
 );
 
+# ignore x: file prefix option
+my @cap3_opt = qw(a b c d e f g h i j k m n o p r s t u v w y z);
+
 GetOptions(                     # use %opt (Cfg) as defaults
     \%opt, qw(
                  frg=s
@@ -77,9 +124,10 @@ GetOptions(                     # use %opt (Cfg) as defaults
                  full_out!
                  keep|keep-temporary-files!
                  version|V!
-                 help|h!
-                 quiet!
+                 help|?!
+                 quiet|Q!
                  debug|D!
+                 a=i b=i c=i d=i e=i f=i g=i h=i i=i j=i k=i m=i n=i o=i p=i r=i s=i t=i u=i v=i w=s x=s y=i z=i
          )
 ) or $L->logcroak('Failed to "GetOptions"');
 
@@ -145,25 +193,30 @@ if($opt{frg} eq ''){
     qx(ln -s $opt{frg} $frg);
 }
 
-$L->logdie("Failed to read fragments $opt{tmp}/$frg") unless -e $frg; 
+$L->logdie("Failed to read fragments $opt{tmp}/$frg") unless -e $frg;
 
 $L->info("Running assembly");
 my $cap3 = bin('cap3');
-qx($cap3 $frg &>$cap_log);
+my $i=0;
+my @cap3_opt_use = map{++$i%2 ? "-".$_ : $_}(%opt{grep{defined $opt{$_}}@cap3_opt});
+
+my $cap3_cmd = "$cap3 $frg @cap3_opt_use &>$cap_log";
+
+$L->info("$cap3_cmd");
+qx($cap3_cmd);
 $? && $L->logdie("ERROR running CAP3");
 
-
 if ($opt{out}) {
-    system("mv $cap_ctg $udir/$opt{out}");        
+    system("mv $cap_ctg $udir/$opt{out}");
     if ($opt{full_out}) {
         my $pre = basename($opt{out}, qw(.fa .fna .fasta .FA .FASTA));
-        system("mv $cap_sgl $udir/$pre.singlets.fa");        
-        system("mv $cap_ace $udir/$pre.ace");        
-        system("mv $cap_inf $udir/$pre.info");        
-        system("mv $cap_log $udir/$pre.log");        
+        system("mv $cap_sgl $udir/$pre.singlets.fa");
+        system("mv $cap_ace $udir/$pre.ace");
+        system("mv $cap_inf $udir/$pre.info");
+        system("mv $cap_log $udir/$pre.log");
     }
 }else {
-    system("cat $cap_ctg");    
+    system("cat $cap_ctg");
 }
 $L->info("Done");
 
