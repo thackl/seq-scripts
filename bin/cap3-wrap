@@ -127,7 +127,7 @@ GetOptions(                     # use %opt (Cfg) as defaults
                  help|?!
                  quiet|Q!
                  debug|D!
-                 a=i b=i c=i d=i e=i f=i g=i h=i i=i j=i k=i m=i n=i o=i p=i r=i s=i t=i u=i v=i w=s x=s y=i z=i
+                 a=i b=i c=i d=i e=i f=i g=i h=i i=i j=i k=i m=i n=i o=i p=s r=i s=i t=i u=i v=i w=s x=s y=i z=i
          )
 ) or $L->logcroak('Failed to "GetOptions"');
 
