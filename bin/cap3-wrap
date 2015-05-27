@@ -1,0 +1,268 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+use Carp;
+use Getopt::Long qw(:config no_ignore_case);
+use Pod::Usage;
+use Log::Log4perl qw(:no_extra_logdie_message);
+use Log::Log4perl::Level;
+
+use File::Temp 'tempdir';
+use File::Basename;
+use File::Which;
+use FindBin qw($RealBin $RealScript);
+use Cwd;
+
+
+=head1 SYNOPSIS
+
+  cap3-wrap fragments.fa --out contigs.fa
+  cat fragments.fa | cap3-wrap > contigs.fa
+  # min overlap of 500 bp with 97% idy and max unaligned overhang of 100
+  cat fragments.fa | cap3-wrap -o 500 -p 97 -h 100 > contigs.fa
+
+=head1 OPTIONS
+
+=over
+
+=item [--out=FILE] []
+
+Write contigs to --out FILE. Default is to print contigs to STDOUT
+
+=item [--full-out]
+
+Requires --out. Produce all CAP3 output files with --out basename.
+
+=item [-Q|--quiet/-D|--debug]
+
+Decrease/increase log verbosity.
+
+=item [-V|--version]
+
+Print script version string.
+
+=item [-?|--help]
+
+Show this help screen.
+
+=back
+
+=head2 CAP3
+
+  -a  N  specify band expansion size N > 10 (20)
+  -b  N  specify base quality cutoff for differences N > 15 (20)
+  -c  N  specify base quality cutoff for clipping N > 5 (12)
+  -d  N  specify max qscore sum at differences N > 20 (200)
+  -e  N  specify clearance between no. of diff N > 10 (30)
+  -f  N  specify max gap length in any overlap N > 1 (20)
+  -g  N  specify gap penalty factor N > 0 (6)
+  -h  N  specify max overhang percent length N > 2 (20)
+  -i  N  specify segment pair score cutoff N > 20 (40)
+  -j  N  specify chain score cutoff N > 30 (80)
+  -k  N  specify end clipping flag N >= 0 (1)
+  -m  N  specify match score factor N > 0 (2)
+  -n  N  specify mismatch score factor N < 0 (-5)
+  -o  N  specify overlap length cutoff > 15 (40)
+  -p  N  specify overlap percent identity cutoff N > 65 (90)
+  -r  N  specify reverse orientation value N >= 0 (1)
+  -s  N  specify overlap similarity score cutoff N > 250 (900)
+  -t  N  specify max number of word matches N > 30 (300)
+  -u  N  specify min number of constraints for correction N > 0 (3)
+  -v  N  specify min number of constraints for linking N > 0 (2)
+  -w  N  specify file name for clipping information (none)
+  -y  N  specify clipping range N > 5 (100)
+  -z  N  specify min no. of good reads at clip pos N > 0 (3)
+
+  IGNORED:
+  -x  N  specify prefix string for output file names (cap)
+         use --out for output file names control instead
+
+=head1 AUTHOR
+
+Thomas Hackl S<thackl@lim4.de> L<https://github.com/thackl>
+
+=cut
+
+
+##---------------------------------------------------------------------------##
+# Globals
+
+our $VERSION = "1.0.0";
+
+our $ID = basename($RealScript);
+
+# get a logger
+my $L = Log::Log4perl::get_logger();
+
+Log::Log4perl->init( \(q(
+	log4perl.rootLogger                     = INFO, Screen
+	log4perl.appender.Screen                = Log::Log4perl::Appender::Screen
+	log4perl.appender.Screen.stderr         = 1
+	log4perl.appender.Screen.layout         = PatternLayout
+	log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$ID.q(] %m%n
+)));
+
+
+##----------------------------------------------------------------------------##
+# Options
+
+my %opt = (
+    cap3_path => '',
+    out => '',
+    tmp => (-d '/dev/shm' ? '/dev/shm' : '/tmp'),
+);
+
+# ignore x: file prefix option
+my @cap3_opt = qw(a b c d e f g h i j k m n o p r s t u v w y z);
+
+GetOptions(                     # use %opt (Cfg) as defaults
+    \%opt, qw(
+                 frg=s
+                 tmp=s
+                 out=s
+                 full_out!
+                 keep|keep-temporary-files!
+                 version|V!
+                 help|?!
+                 quiet|Q!
+                 debug|D!
+                 a=i b=i c=i d=i e=i f=i g=i h=i i=i j=i k=i m=i n=i o=i p=s r=i s=i t=i u=i v=i w=s x=s y=i z=i
+         )
+) or $L->logcroak('Failed to "GetOptions"');
+
+$opt{dir} ||= '.';
+
+# help
+$opt{help} && pod2usage(0);
+
+# version
+if ($opt{version}) {
+    print "$VERSION\n";
+    exit 0;
+}
+
+# debug level
+$opt{quiet} && $L->level($WARN);
+$opt{debug} && $L->level($DEBUG);
+
+if(@ARGV && !($ARGV[0] =~ /^-/)){
+	$opt{frg} = $ARGV[0];
+}
+$opt{frg} = '' if ! defined $opt{frg} || $opt{frg} eq '-';
+
+$opt{full_out} && ! $opt{out} && pod2usage("--full-out requires --out to be set");
+
+$L->info("Checking binaries");
+
+check_binary(bin('cap3'));
+
+
+##----------------------------------------------------------------------------##
+# tmp dir
+
+my $tmp = tempdir(
+                  "$ID-XXXXXX",
+                  DIR => $opt{tmp},
+                  CLEANUP => $opt{keep} ? 0 : 1,
+                 );
+
+
+##----------------------------------------------------------------------------##
+# MAIN
+
+# prep fragments
+my $udir = getcwd;
+my $frg = "frg.fa";
+my $cap_ctg = $frg.".cap.contigs";
+my $cap_sgl = $frg.".cap.singlets";
+my $cap_ace = $frg.".cap.ace";
+my $cap_inf = $frg.".cap.info";
+my $cap_log = $frg.".cap.log";
+
+if($opt{frg} eq ''){
+    chdir $tmp || $L->logdie($!);
+    $L->info("Reading fragments from STDIN");
+    my $c;
+    open(FRG, '>', $frg) or die "$! $frg";
+    print FRG $c while read(STDIN, $c, 100000);
+    close FRG;
+}else{
+    $opt{frg} = File::Spec->rel2abs($opt{frg});
+    chdir $tmp || $L->logdie($!);
+    qx(ln -s $opt{frg} $frg);
+}
+
+$L->logdie("Failed to read fragments $opt{tmp}/$frg") unless -e $frg;
+
+$L->info("Running assembly");
+my $cap3 = bin('cap3');
+my $i=0;
+my @cap3_opt_use = map{++$i%2 ? "-".$_ : $_}(%opt{grep{defined $opt{$_}}@cap3_opt});
+
+my $cap3_cmd = "$cap3 $frg @cap3_opt_use &>$cap_log";
+
+$L->info("$cap3_cmd");
+qx($cap3_cmd);
+$? && $L->logdie("ERROR running CAP3");
+
+if ($opt{out}) {
+    system("mv $cap_ctg $udir/$opt{out}");
+    if ($opt{full_out}) {
+        my $pre = basename($opt{out}, qw(.fa .fna .fasta .FA .FASTA));
+        system("mv $cap_sgl $udir/$pre.singlets.fa");
+        system("mv $cap_ace $udir/$pre.ace");
+        system("mv $cap_inf $udir/$pre.info");
+        system("mv $cap_log $udir/$pre.log");
+    }
+}else {
+    system("cat $cap_ctg");
+}
+$L->info("Done");
+
+##----------------------------------------------------------------------------##
+# supplementary
+
+
+sub bin{
+    my ($bin) = @_;
+    if (exists $opt{$bin."_path"} && length($opt{$bin."_path"})) {
+        return $opt{$bin."_path"}."/".$bin;
+    } else {
+        return $bin;
+    }
+}
+
+
+sub check_binary{
+    my($bin, $ver) = (@_);
+    my $fbin = $bin;
+    unless(-e $fbin && -x $fbin){
+        if ($fbin = which($bin)) {
+            $L->logdie("Binary '$fbin' not executable") unless -e $fbin && -x $fbin;
+        } else {
+            $L->logdie("Binary '$bin' neither in PATH nor executable");
+        }
+    }
+
+    $bin = basename($fbin);
+
+    my $v;
+    if ($ver) {
+        $L->logdie("ARRAY ref required") unless ref $ver eq "ARRAY";
+
+        my $vs = qx($fbin $ver->[0]);
+        if ($? or ! $vs) {
+            $L->logdie("Couldn't determine version of $bin, at least $ver->[1] required");
+        }
+
+        ($v) = $vs =~ /(\S+?)\D*$/m;
+
+        if (version->parse($v) < version->parse($ver->[1])) {
+            $L->logdie("Version $v of '$bin' < $v");
+        }
+
+    }
+
+    $L->info(sprintf("  [ok] %-15s %s", $bin.($v ? "-$v" : ""), dirname($fbin)));
+}

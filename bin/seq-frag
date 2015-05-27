@@ -1,0 +1,293 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper;
+use Math::Random qw(random_negative_binomial);
+use Fasta::Parser;
+use Fasta::Seq;
+
+use Fastq::Parser;
+use Fastq::Seq;
+
+=head1 SYNOPSIS
+
+  seq-frag MODE -l LENGTH -c COVERAGE [options ..] < FASTA
+  # 50X 100bp single end reads
+  seq-frag se -l 100 -c 50 < genome.fa
+  # 50X 100bp paired end, 180bp insert
+  seq-frag pe -l 100 -c 50 -i 180 < genome.fa
+  # 50X mate pair, 2000bp insert
+  seq-frag mp -l 100 -c 50 -i 2000 < genome.fa
+  # 20X pacbio style fragments, mean length 2000bp
+  seq-frag pacbio -l 2000 -c 20 < genome.fa
+
+=head1 OPTIONS
+
+=over
+
+=item -m/--mode
+
+  se       single end, fixed read length, fastq
+  pe       paired end, fixed read length, insert size from normal
+           dist., fastq, interleaved opposing-inward (><)
+  mp       as pe, but opposing outward (<>)
+  pacbio   length from neg. binomial dist., mean at -l, fastq
+  contig   non-overlapping, length from neg. binomial dist., mean at -l, fasta
+
+=item -l/--length 
+
+Length of reads/sub-sequences to generate.
+
+=item [-i/--insert-size] [180]
+
+Insert size for pe/mp mode.
+
+=item [-p]
+
+Prefix.
+
+=back
+
+=cut
+
+=head1 MAIN
+
+SE
+  fixed length, fastq
+PE
+  fixed length, varying insert
+PB
+  varying length
+contigs
+  varing length, non-overlapping
+
+=cut
+
+my $VERSION = 0.1.0;
+
+my %def = (
+           mode => undef,
+           length => undef,
+           insert_size => 180,
+           coverage => undef,
+           region_length => 200_000,
+           prefix => "r",
+       );
+
+my %opt = ();
+GetOptions(                     # use %opt (Cfg) as defaults
+           \%opt, qw(
+                        mode|m=s
+                        length|l=i
+                        coverage|c=i
+                        insert_size|insert-size|i=i
+                        prefix=s
+                        version|V!
+                        debug|D!
+                        help|h!
+                   )
+          ) or die 'Failed to "GetOptions"';
+
+# help
+$opt{help} && pod2usage(1);
+
+# version
+if ($opt{version}) {
+    print "$VERSION\n"; 
+    exit 0;
+}
+
+# primary options length
+if(!$opt{mode} && @ARGV && !($ARGV[0] =~ /^-/)){
+        $opt{mode} = shift @ARGV;
+}
+
+%opt = (%def, %opt);
+
+(my $mode = grep{$opt{mode} eq $_}qw(pe se mp pacbio contig)) || pod2usage("unknown mode $opt{mode}");
+$opt{length} || pod2usage("required: --length");
+$opt{coverage} || pod2usage("required: --coverage");
+my $insert_lib_mode = grep{$opt{mode} eq $_}qw(pe se mp);
+
+my %frag = (
+    se => \&frag_se,
+    pe => \&frag_pe,
+    mp => \&frag_pe,
+    pacbio => \&frag_pacbio,
+    contig => \&frag_contig,
+);
+
+# fragment counter
+my $c = 1;
+
+my $fp = Fasta::Parser->new(file=>$ARGV[0]);
+while (my $fa = $fp->next_seq) {
+    # seq length is bottle neck (not sort or rand)
+    # => split long seqs (>900k) into manageable regions
+    $frag{$opt{mode}}($_) for fa_regions($fa);
+}
+
+
+
+
+
+
+
+=head2 fa_regions
+
+Split long fastas in regions to speed up substring
+
+=cut
+
+sub fa_regions{
+    my $fa = shift;
+    my $seq_len = length($fa->seq);
+    return ($fa) if ( $seq_len <= $opt{region_length});
+    
+    my @fa_regions;
+    my @coords;
+
+    my $l = $opt{region_length} + ($insert_lib_mode ? $opt{insert_size} : $opt{length});
+    my $o = 0;
+    while ($o+$l < $seq_len) {
+        push @coords, [$o, $l];
+        $o+=$opt{region_length};
+    }
+    push @coords, [$o];
+    @fa_regions = $fa->substr_seq(@coords);
+
+    return @fa_regions;
+}
+
+
+=head2 frag_se
+
+=cut
+
+sub frag_se{
+    my $fa = shift;
+    my $seq_len = length($fa->seq);
+    return if $seq_len < $opt{length};
+    my $read_len = $opt{length};
+    my $frag_len = $opt{length};
+    my $frag_num = $seq_len * ( $opt{coverage} / $read_len );
+
+    # sort is bottle neck, either ignore and return reads in random order
+    # or limit manageable regions for long seq
+    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$frag_len));
+    foreach my $frag_off ( @frag_offs) {
+
+        my $frag = Fastq::Seq->new(
+            '@'.$opt{prefix}.$c,
+            substr($fa->seq, $frag_off, $read_len),
+            "+",
+            "I" x $read_len
+        );
+
+        # both strands
+        int(rand(2)) && $frag->reverse_complement;
+
+        print $frag;
+                    
+        $c++;
+    }
+}
+
+=head2 frag_pacbio
+
+Math::Random::random_negative_binomial($n,$ne,$p)
+
+mean = $ne/$p
+$p == 1
+  largest spread, med << mean, mass at 0
+$p++
+  mass shift from 0 mean
+
+=cut
+
+sub frag_pacbio{
+    my $fa = shift;
+    my $seq_len = length($fa->seq);
+    return if $seq_len < $opt{length};
+    my $read_len = $opt{length};
+    my $frag_num = $seq_len * ( $opt{coverage} / $read_len );
+
+    # seq length is bottle neck (not sort or rand)
+    # => split long seqs (>100k) into manageable regions
+    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$read_len));
+    my @frag_lens = Math::Random::random_negative_binomial($frag_num,5,5/$read_len);
+    for ( my $i=0; $i<@frag_offs; $i++) {
+        my $frag_off = $frag_offs[$i];
+        my $frag_len = int($frag_lens[$i]);
+        next if $frag_off + $frag_len > $seq_len;
+        #print STDERR join("\t", $frag_off, $frag_len, $frag_off+$frag_len, $seq_len),"\n";                    
+        my $frag = Fastq::Seq->new(
+            '@'.$opt{prefix}.$c,
+            substr($fa->seq, $frag_off, $frag_len),
+            "+",
+            "I" x $frag_len
+        );
+
+        # both strands
+        int(rand(2)) && $frag->reverse_complement;
+
+        print $frag;
+                
+        $c++;
+    }
+}
+
+
+=head2 frag_pe
+
+=cut
+
+sub frag_pe{
+    my $fa = shift;
+    my $seq_len = length($fa->seq);
+    return if $seq_len < $opt{insert_size};
+    my $read_len = $opt{length};
+    my $frag_num = $seq_len * ( $opt{coverage} / $read_len/2 ); # pe
+
+    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$opt{insert_size}));
+    #            my @frag_offs = Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$opt{insert_size});
+    my @frag_lens = Math::Random::random_normal($frag_num, $opt{insert_size}, $opt{insert_size}*0.12);
+    for ( my $i=0; $i<@frag_offs; $i++) {
+        my $frag_off = $frag_offs[$i];
+        my $frag_len = int($frag_lens[$i]);
+        next if $frag_off + $frag_len > $seq_len;
+        $frag_len < $read_len && ($frag_len=$read_len);
+        my $frag = Fasta::Seq->new(id=>"dummy", seq => substr($fa->seq, $frag_off, $frag_len));
+
+        # both strands
+        int(rand(2)) && $frag->reverse_complement;
+
+        my $r = Fastq::Seq->new(
+            '@'.$opt{prefix}.$c."/1",
+            substr($frag->seq, 0, $read_len),
+            "+",
+            "I" x $read_len
+        );
+        my $m = Fastq::Seq->new(
+            '@'.$opt{prefix}.$c."/2",
+            substr($frag->seq, -$read_len),
+            "+",
+            "I" x $read_len
+        );
+
+        $opt{mode} eq 'pe' ? $m->reverse_complement : $r->reverse_complement;
+        print $r, $m;
+        $c++;
+    }
+}
+
+=head2 frag_contig
+
+=cut
+
+sub frag_contig{
+    die "contig mode not yet implemented\n";
+}

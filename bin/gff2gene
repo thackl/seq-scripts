@@ -1,0 +1,162 @@
+#!/usr/bin/env perl
+
+# modified gffseq.pl (Felix)
+
+use warnings;
+use strict;
+
+use Getopt::Long;
+use Pod::Usage;
+
+use Bio::Tools::GFF;
+use Bio::FeatureIO::gff;
+use Bio::SeqIO;
+
+=head1 OPTIONS
+
+=over
+
+=item --gff
+
+Input gff file
+
+=item [--version] [3]
+
+Gff version.
+
+=item --source
+
+Feature annotation source, e.g. maker, snap_masked ...
+
+=back
+
+=head1 AUTHOR
+
+Thomas Hackl S<thomas.hackl@uni-wuerzburg.de>
+
+=cut
+
+my ($gff,$version,$type,$source,$aa,$help,$man) = ("",3,"gene","",0,0,0);
+
+GetOptions(
+           'gff=s'=>\$gff,
+           'version=i'=>\$version,
+           'type=s'=>\$type ,
+           'source=s'=>\$source,
+           'help|?'=>\$help ,
+           'man'=>\$man
+          ) or pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+$gff || pod2usage("required: --gff");
+$type || pod2usage("required: --type");
+$source || pod2usage("required: --source");
+
+# Initialise input stream
+my $gffio = Bio::Tools::GFF->new(-file => $gff, -gff_version => $version) or die $!;
+
+# Initialise sequence storage
+my %sequences = ();
+
+# Initialise storage for features
+my %genes = ();
+
+# Loop over the input stream
+while(my $feature = $gffio->next_feature())
+{ 
+
+    my $primary_tag =  $feature->primary_tag();
+    my $source_tag =  $feature->source_tag();
+	
+    # Apollo is not placing a source field into the gffs
+    # Therefore also a dot as source is needed
+    next unless ( $primary_tag eq $type && ( $source_tag eq $source || $source_tag eq "." ) );
+
+    my ($id) = $feature->get_tag_values('ID');  
+    $genes{$id} = $feature;   
+}
+
+# Close input stream
+$gffio->close() or die $!;
+
+# Fill sequence storage
+%sequences = map { ($_->display_id , $_->seq()) } $gffio->get_seqs();
+
+# Start looping to transcripts
+foreach my $id (keys %genes)
+{
+    # Use first CDS element to get strand of transcript
+    my $strand = $genes{$id}->strand();
+
+    # Use first CDS element to get contig name
+    my $contig = $genes{$id}->seq_id();
+
+    # Report Progress
+    print STDERR "Working on gene $id (contig $contig, strand $strand)\n";
+
+    # Get Coding sequence
+    my $gene_seq = get_seq($genes{$id}, \%sequences, $strand);   
+
+    # Get Gene Locus
+    my ($gene_start,$gene_end) = ($genes{$id}->start,$genes{$id}->end);
+
+    # Get Coding sequence length
+    my $gene_length = length($gene_seq);
+
+    print ">$id CNT:$contig LOC:$gene_start-$gene_end LEN:$gene_length SRC:$source\n$gene_seq\n";
+
+}
+
+#-------------------------------------------------------------------------------
+#------------------------------- FUNCTIONS -------------------------------------
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+
+sub get_seq {
+
+    my $seq   = shift;
+    my $sequences = shift;
+    my $strand = shift;
+    
+    my $seq_string;
+    
+    # Get Start of CDS
+    my $start = $seq->start();
+    
+    # Get End of CDS
+    my $end = $seq->end();
+    
+    # Get Length of CDS
+    my $length = abs($start-$end)+1;
+    
+    # Get parent sequence of CDS
+    my $seq_id = $seq->seq_id();
+    
+    # Check for reverse strand
+    if($strand == -1){	    
+        # Extract coding sequence
+        my $temp = substr($sequences->{$seq_id},$start-1,$length);
+        
+        # Get complement seuqence
+        $temp =~ tr/atugcyrswkmbdhvnATUGCYRSWKMBDHVN/taacgryswmkvhdbnTAACGRYSWMKVHDBN/;
+	    
+        # Reverse sequence
+        $seq_string = reverse($temp);
+        
+    }elsif($strand == 1){
+        # Check for forward strand
+        # Extract coding sequence
+        $seq_string = substr($sequences->{$seq_id},$start-1,$length);
+    }
+
+
+    # Return coding sequence
+    return $seq_string;
+}
+
+#-------------------------------------------------------------------------------
