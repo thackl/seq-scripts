@@ -198,7 +198,11 @@ $L->logdie("Failed to read fragments $opt{tmp}/$frg") unless -e $frg;
 $L->info("Running assembly");
 my $cap3 = bin('cap3');
 my $i=0;
-my @cap3_opt_use = map{++$i%2 ? "-".$_ : $_}(@opt{grep{defined $opt{$_}}@cap3_opt});
+my @cap3_opt_use;
+
+foreach(@cap3_opt){
+    push @cap3_opt_use, "-$_", $opt{$_} if defined $opt{$_};
+}
 
 my $cap3_cmd = "$cap3 $frg @cap3_opt_use &>$cap_log";
 
