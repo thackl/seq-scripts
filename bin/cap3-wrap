@@ -204,7 +204,11 @@ my $cap3_cmd = "$cap3 $frg @cap3_opt_use &>$cap_log";
 
 $L->info("$cap3_cmd");
 qx($cap3_cmd);
-$? && $L->logdie("ERROR running CAP3");
+if($?){
+    my $log = do { local(@ARGV, $/) = $cap_log; <> };
+    chdir $udir;
+    $L->logdie("ERROR running CAP3:\n", $log);
+}
 
 if ($opt{out}) {
     system("mv $cap_ctg $udir/$opt{out}");
