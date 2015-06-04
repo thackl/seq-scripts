@@ -1,0 +1,273 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use Pod::Usage;
+use Getopt::Long;
+use Log::Log4perl qw(:no_extra_logdie_message);
+use Log::Log4perl::Level;
+use FindBin qw($Script);
+use File::Basename;
+use File::Which;
+
+use Bio::Tools::GFF;
+use Bio::FeatureIO::gff;
+use Bio::SeqIO;
+
+use lib '.';
+use SVG;
+# http://perlmaven.com/scalable-vector-graphics-with-perl
+# https://metacpan.org/pod/SVG
+
+use SVG::Bio 'Style';
+
+use Sam::Parser;
+
+
+## Debug
+use Data::Dumper;
+$Data::Dumper::Sortkeys=1;
+
+
+##---------------------------------------------------------------------------##
+# Globals
+
+our $VERSION  = '0.1.0';
+
+Log::Log4perl->init( \(q(
+        log4perl.rootLogger                     = INFO, Screen
+        log4perl.appender.Screen                = Log::Log4perl::Appender::Screen
+        log4perl.appender.Screen.stderr         = 1
+        log4perl.appender.Screen.layout         = PatternLayout
+        log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$Script.q(] %m%n
+)));
+
+my $L = Log::Log4perl->get_logger();
+
+
+##---------------------------------------------------------------------------##
+# Main
+
+#my $gff = 'MaV-gen-2.0~c12-is-MaV.local.gff';
+my %opt = (
+    gff => 'MaV-gen-2.0.gff',
+    gff_version => 3,
+    bam => 'MaV-gen-2.0.bam',
+    samtools_path => undef,
+    samtools => undef,
+    region => "",
+);
+
+prep();
+#setup_canvas();
+gff2svg();
+bam2svg();
+
+#print STDERR Dumper($svg);
+
+
+
+print $svg->xmlify;
+
+
+##---------------------------------------------------------------------------##
+# subs
+##---------------------------------------------------------------------------##
+
+=head prep
+
+=cut
+
+sub prep{
+    my (%p) = @_;
+
+    $L->info("Preparing...");
+    if ($opt{bam}) {
+        my $samtools = bin("samtools");
+        check_binary($samtools, ["--version", "1.1"]);
+        $opt{samtools} = bin("samtools");    
+    }
+}
+
+
+=head2 gff2svg
+
+=cut
+
+sub gff2svg{
+    my (%p) = @_;
+    $L->info("Processing GFF");
+
+    my $track = $svg->track(
+        class => "genes",
+        #Style("arrow1")
+    );
+    
+    # Initialise input stream
+    my $gffio = Bio::Tools::GFF->new(-file => $opt{gff}, -gff_version => $opt{gff_version}) or die $!;
+
+    # TODO: scale (/axis)
+    #$track->line(x1=>0, x2=>1000, y1=>50, y2=>50, Style("genome1"));
+
+    # Initialise storage for features
+    my %genes = ();
+
+    #my $type = "region";
+    my $type = "gene";
+    #my $source = "BLAST";
+    my $source = "prokka";
+
+    # Loop over the input stream
+    while (my $feature = $gffio->next_feature()) { 
+        my $primary_tag =  $feature->primary_tag();
+        my $source_tag =  $feature->source_tag();
+
+        next unless ( $primary_tag eq $type && $source_tag eq $source );
+
+        my ($id) = $feature->get_tag_values('ID');  
+        $genes{$id} = $feature;
+    }
+
+    foreach my $gi (sort{$genes{$a}->start <=> $genes{$b}->start}keys %genes) {
+        $track->arrow($genes{$gi}->start, $genes{$gi}->end, $genes{$gi}->strand);
+    }
+
+}
+
+
+=head2 bam2svg
+
+=cut
+
+sub bam2svg{
+    my (%p) = @_;
+    $L->info("Processing BAM");
+
+    my $track = $svg->track(
+        -layout => {track_base => 400},
+        -valign => "packed",
+        Style("arrow2"),
+    );
+
+    # init sam parser
+    my $sam_cmd = "$opt{samtools} view -h $opt{bam} |";
+    $L->debug($sam_cmd);
+    open(SAM, $sam_cmd) or $L->logdie($!);
+    my $sp = Sam::Parser->new(fh => \*SAM);
+
+    open(SAM, "$opt{samtools} view $opt{bam} $opt{region} |") or $L->logdie($!);
+
+    my @stack = (0);
+    
+    while(my $aln = $sp->next_aln()){
+        next if $aln->is(0x4 | 0x100 | 0x800); # unmapped or secondary or supplementary
+        $track->block(
+            from => $aln->pos,
+            length => length($aln->seq_aligned),
+            class => $aln->is(0x16) ? "read rc" : "read",
+        );
+    }    
+}
+
+
+
+
+
+
+
+
+
+
+##---------------------------------------------------------------------------##
+# auxiliaries
+##---------------------------------------------------------------------------##
+
+=head2 bin
+
+Return full binary path based on $opt{<bin_path}.
+
+=cut
+
+sub bin{
+    my ($bin) = @_;
+    if (exists $opt{$bin."_path"} && $opt{$bin."_path"}) {
+        return $opt{$bin."_path"}."/".$bin;
+    } else {
+        return $bin;
+    }
+}
+
+=head2 check_binary
+
+Check whether a required binary (and version) exists.
+
+=cut
+
+
+sub check_binary{
+    my($bin, $ver) = (@_);
+    my $fbin = $bin;
+    unless(-e $fbin && -x $fbin){
+        if ($fbin = which($bin)) {
+            $L->logdie("Binary '$fbin' not executable") unless -e $fbin && -x $fbin;
+        } else {
+            $L->logdie("Binary '$bin' neither in PATH nor executable");
+        }
+    }
+
+    $bin = basename($fbin);
+
+    my $v;
+    if ($ver) {
+        $L->logdie("ARRAY ref required") unless ref $ver eq "ARRAY";
+
+        my $vs = qx($fbin $ver->[0]);
+        if ($? or ! $vs) {
+            $L->logdie("Couldn't determine version of $bin, at least $ver->[1] required");
+        }
+
+        ($v) = $vs =~ /(\S+?)\D*$/m;
+
+        if (version->parse($v) < version->parse($ver->[1])) {
+            $L->logdie("Version $v of '$bin' < $v");
+        }
+
+    }
+
+    $L->info(sprintf("  [ok] %-15s %s", $bin.($v ? "-$v" : ""), dirname($fbin)));
+
+}
+
+=head2 setup_canvas
+
+=cut
+
+sub setup_canvas{
+    my $svg = SVG::Bio->new();
+    $svg->{'-document'}{viewBox} = "0 0 20000 400";
+
+    my $css = $svg->style(type=>"text/css");
+    my $css_spec;
+    {
+        local $/ = undef;
+        $css_spec = <DATA>;
+    }
+    $css->CDATA($css_spec);
+}
+
+
+__DATA__
+rect.read {
+    fill: chocolate;
+    stroke: chocolate;
+    stroke-linejoin: round;
+}
+rect.rc {
+    fill: brown;
+    stroke: brown;
+}
+.genes {
+    fill: darkblue;
+    stroke: darkblue;
+    stroke-linejoin: round;
+}
