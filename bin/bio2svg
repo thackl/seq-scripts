@@ -248,13 +248,17 @@ sub gff2svg{
     my $source = "prokka";
 
     # Loop over the input stream
-    while (my $feature = $gffio->next_feature()) { 
+    while (my $feature = $gffio->next_feature()) {
         my $primary_tag =  $feature->primary_tag();
         my $source_tag =  $feature->source_tag();
 
         next unless ( $primary_tag eq $type && $source_tag eq $source );
 
-        my ($id) = $feature->get_tag_values('ID');  
+        if ( defined($opt{to})) {
+            next unless _overlaps_ranges([$feature->start, $feature->end], [[$opt{from}, $opt{to}]]);
+        }
+
+        my ($id) = $feature->get_tag_values('ID');
         $genes{$id} = $feature;
     }
 
@@ -371,23 +375,41 @@ sub check_binary{
 
 }
 
-=head2 setup_canvas
+
+=head2 _overlaps_ranges
+
+Test if a value/range overlaps a given set of ranges. ranges are expected in
+[FROM, TO] format.
+
+  _is_in_range(5, [[0, 3], [4,7]])
+  _is_in_range([2,2], [[0, 3], [4,7]])
 
 =cut
 
-sub setup_canvas{
-    my $svg = SVG::Bio->new();
-    $svg->{'-document'}{viewBox} = "0 0 20000 400";
+sub _overlaps_ranges{
+    my ($c, $ranges) = @_;
+    die __PACKAGE__."::_is_in_range: requires exactly to arguments: VALUE or RANGE[OFFSET, LENGTH],  RANGES[[OFFSET, LENGTH][OFFSET, LENGTH]]" unless @_ == 2;
 
-    my $css = $svg->style(type=>"text/css");
-    my $css_spec;
-    {
-        local $/ = undef;
-        $css_spec = <DATA>;
+    if (ref $c eq "ARRAY") {
+        my $c1 = $c->[0];
+        my $c2 = $c->[1];
+        for my $r (@$ranges){
+            if (
+                ($c1 >= $r->[0] && $c1 <= $r->[1]) ||
+                ($c2 >= $r->[0] && $c2 <= $r->[1])
+            ){
+                return 1;
+            }
+        }
+    }elsif (! ref $c) {
+        for my $r (@$ranges){
+            return 1 if $c >= $r->[0] && $c <= $r->[1];
+        }
+    }else {
+        die __PACKAGE__."::_is_in_range: first arguments needs to be SCALAR or ARRAY ref";
     }
-    $css->CDATA($css_spec);
+    return 0;
 }
-
 
 __DATA__
 rect.read {
