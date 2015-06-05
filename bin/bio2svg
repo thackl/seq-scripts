@@ -19,20 +19,41 @@ use SVG;
 # http://perlmaven.com/scalable-vector-graphics-with-perl
 # https://metacpan.org/pod/SVG
 
-use SVG::Bio 'Style';
+use SVG::Bio qw(Style Layout);
 
 use Sam::Parser;
-
+use Fasta::Parser;
 
 ## Debug
 use Data::Dumper;
 $Data::Dumper::Sortkeys=1;
 
+=head1 NAME
+
+bio2svg
+
+=head1 SYNOPSIS
+
+  bio2svg --gff my.gff --bam my.bam --out my.svg
+
+=head1 OPTIONS
+
+=over
+
+=item --gff
+
+=back
+
+=head1 MAIN
+
+=cut
+
 
 ##---------------------------------------------------------------------------##
 # Globals
+##---------------------------------------------------------------------------##
 
-our $VERSION  = '0.1.0';
+our $VERSION  = '0.2.0';
 
 Log::Log4perl->init( \(q(
         log4perl.rootLogger                     = INFO, Screen
@@ -47,46 +68,154 @@ my $L = Log::Log4perl->get_logger();
 
 ##---------------------------------------------------------------------------##
 # Main
+##---------------------------------------------------------------------------##
 
-#my $gff = 'MaV-gen-2.0~c12-is-MaV.local.gff';
-my %opt = (
-    gff => 'MaV-gen-2.0.gff',
-    gff_version => 3,
-    bam => 'MaV-gen-2.0.bam',
-    samtools_path => undef,
-    samtools => undef,
-    region => "",
-);
 
-prep();
-#setup_canvas();
+my %opt = prep();
+my $svg = init_svg();
+
+fasta2svg();
 gff2svg();
 bam2svg();
 
 #print STDERR Dumper($svg);
 
+finish_svg();
+
+print {$opt{ofh}} $svg->xmlify;
 
 
-print $svg->xmlify;
-
-
-##---------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 # subs
-##---------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 
-=head prep
+=head2 prep
 
 =cut
 
 sub prep{
     my (%p) = @_;
 
-    $L->info("Preparing...");
+    # GetOptions
+    my $argv = join(" ", @ARGV);
+
+    my %opt = (
+        gff => 'MaV-gen-2.0.gff',
+        gff_version => 3,
+        bam => 'MaV-gen-2.0.bam',
+        samtools_path => undef,
+        samtools => undef,
+        region => "",
+        margin => 100,
+    );
+
+    GetOptions(
+        \%opt, qw(
+                     out=s
+                     fa|fasta=s
+                     gff=s
+                     gff_version=s
+                     bam=s
+                     samtools_path=s
+                     region=s
+                     version|V!
+                     debug|D!
+                     help|h!
+             )
+    ) or $L->logcroak('Failed to "GetOptions"');
+
+    $opt{argv} = $argv; # store it just in case
+
+    # help
+    $opt{help} && pod2usage(1);
+
+    # version
+    if ($opt{version}) {
+        print "$VERSION\n";
+        exit 0;
+    }
+
+    # Config + Opt
+
+    $L->logdie("unused argument: @ARGV") if @ARGV;
+
+    if ( $opt{out} && $opt{out} ne '-' ){
+        open(my $ofh, '>', $opt{out}) or $L->logdie("$!: $opt{out}");
+        $opt{ofh} = $ofh;
+    }else {
+        $opt{ofh} = \*STDOUT;
+    }
+
+    # required stuff
+    for (qw(fa)) {
+       if (ref $opt{$_} eq 'ARRAY') {
+           pod2usage("required: --$_") unless @{$opt{$_}}
+       } else {
+           pod2usage("required: --$_") unless defined ($opt{$_})
+       }
+    }
+
+
+    # debug level
+    $L->level($DEBUG) if $opt{debug};
+    $L->debug('Verbose level set to DEBUG');
+
+    $L->debug(Dumper(\%opt));
+
+    # check binaries
     if ($opt{bam}) {
         my $samtools = bin("samtools");
         check_binary($samtools, ["--version", "1.1"]);
-        $opt{samtools} = bin("samtools");    
+        $opt{samtools} = bin("samtools");
     }
+    return %opt;
+}
+
+
+=head2 init_svg
+
+=cut
+
+sub init_svg{
+    my (%p) = @_;
+
+    $L->info("Setting up canvas");
+
+
+    my $svg = SVG::Bio->new();
+
+    my $css = $svg->style(type=>"text/css");
+    my $css_spec;
+    {
+        local $/ = undef;
+        $css_spec = <DATA>;
+    }
+    $css->CDATA($css_spec);
+
+    return $svg;
+}
+
+
+=head2 finish_svg
+
+=cut
+
+sub finish_svg{
+    my (%p) = @_;
+
+    # sum up track heights + margins
+    my $vb_height = 1000 + $opt{margin}*2;
+
+    # region + margins
+    my $vb_width = $opt{to} - $opt{from} + $opt{margin}*2;
+
+    $svg->{-document}{width} = $vb_width;
+    $svg->{-document}{height} = $vb_height;
+
+    $L->debug("$opt{margin} $opt{margin} $vb_width $vb_height");
+    $svg->{-document}{viewBox} = ($opt{margin} + $opt{from} )." -$opt{margin} $vb_width $vb_height";
+
+
 }
 
 
@@ -158,7 +287,7 @@ sub bam2svg{
     open(SAM, "$opt{samtools} view $opt{bam} $opt{region} |") or $L->logdie($!);
 
     my @stack = (0);
-    
+
     while(my $aln = $sp->next_aln()){
         next if $aln->is(0x4 | 0x100 | 0x800); # unmapped or secondary or supplementary
         $track->block(
