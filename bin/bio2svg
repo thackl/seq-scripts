@@ -229,9 +229,10 @@ sub gff2svg{
 
     my $track = $svg->track(
         class => "genes",
-        #Style("arrow1")
+        type => "gff",
+#        -layout => {},
     );
-    
+
     # Initialise input stream
     my $gffio = Bio::Tools::GFF->new(-file => $opt{gff}, -gff_version => $opt{gff_version}) or die $!;
 
@@ -273,9 +274,12 @@ sub bam2svg{
     $L->info("Processing BAM");
 
     my $track = $svg->track(
-        -layout => {track_base => 400},
-        -valign => "packed",
-        Style("arrow2"),
+        type => "bam",
+        class => "reads",
+        -layout => {
+            track_base => 400,
+            stacking => "packed",
+        },
     );
 
     # init sam parser
