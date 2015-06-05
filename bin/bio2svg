@@ -303,11 +303,32 @@ sub bam2svg{
             length => length($aln->seq_aligned),
             class => $aln->is(0x16) ? "read rc" : "read",
         );
-    }    
+    }
 }
 
 
+sub fasta2svg{
+    my (%p) = @_;
 
+    $L->info("Processing FASTA");
+
+    unless ( -e $opt{fa}.".fai") {
+        qx($opt{samtools} faidx $opt{fa});
+    }
+
+    my $fa = Fasta::Seq->new(scalar qx($opt{samtools} faidx $opt{fa} $opt{region}));
+    if ( $opt{region} =~ /:([0-9,]+)(?:-[0-9,]+)$/ ){
+        $opt{from} = $1;
+        $opt{from} =~ s/,//g;
+    }else {
+        $opt{from} = 0;
+    }
+
+    $opt{to} = $opt{from} + length($fa->seq);
+
+    my $track = $svg->track();
+    $track->arrow($opt{from}, $opt{to});
+}
 
 
 
