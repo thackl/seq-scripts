@@ -19,7 +19,7 @@ use SVG;
 # http://perlmaven.com/scalable-vector-graphics-with-perl
 # https://metacpan.org/pod/SVG
 
-use SVG::Bio qw(Style Layout);
+use SVG::Bio;
 
 use Sam::Parser;
 use Fasta::Parser;
@@ -53,7 +53,7 @@ bio2svg
 # Globals
 ##---------------------------------------------------------------------------##
 
-our $VERSION  = '0.2.0';
+our $VERSION  = '0.3.0';
 
 Log::Log4perl->init( \(q(
         log4perl.rootLogger                     = INFO, Screen
@@ -204,7 +204,12 @@ sub finish_svg{
     my (%p) = @_;
 
     # sum up track heights + margins
-    my $vb_height = 1000 + $opt{margin}*2;
+    my $ptl = $svg->{-tracks}[-1]{-layout};
+    my $vb_height = $ptl->{track_base}
+        + $ptl->{track_height}
+            + $ptl->{track_padding}
+                + $opt{margin}*2;
+
 
     # region + margins
     my $vb_width = $opt{to} - $opt{from} + $opt{margin}*2;
@@ -213,7 +218,7 @@ sub finish_svg{
     $svg->{-document}{height} = $vb_height;
 
     $L->debug("$opt{margin} $opt{margin} $vb_width $vb_height");
-    $svg->{-document}{viewBox} = ($opt{margin} + $opt{from} )." -$opt{margin} $vb_width $vb_height";
+    $svg->{-document}{viewBox} = ($opt{from}-$opt{margin})." -$opt{margin} $vb_width $vb_height";
 
 
 }
@@ -229,8 +234,7 @@ sub gff2svg{
 
     my $track = $svg->track(
         class => "genes",
-        type => "gff",
-#        -layout => {},
+        -type => "gff",
     );
 
     # Initialise input stream
@@ -263,8 +267,15 @@ sub gff2svg{
     }
 
     foreach my $gi (sort{$genes{$a}->start <=> $genes{$b}->start}keys %genes) {
-        $track->arrow($genes{$gi}->start, $genes{$gi}->end, $genes{$gi}->strand);
+        $track->arrow(
+            x => $genes{$gi}->start,
+            to => $genes{$gi}->end,
+            -strand => $genes{$gi}->strand,
+            class => "gene",
+        );
     }
+
+    $track->track_refine;
 
 }
 
@@ -278,11 +289,9 @@ sub bam2svg{
     $L->info("Processing BAM");
 
     my $track = $svg->track(
-        type => "bam",
+        -type => "bam",
         class => "reads",
         -layout => {
-            track_base => 400,
-            stacking => "packed",
         },
     );
 
@@ -299,11 +308,14 @@ sub bam2svg{
     while(my $aln = $sp->next_aln()){
         next if $aln->is(0x4 | 0x100 | 0x800); # unmapped or secondary or supplementary
         $track->block(
-            from => $aln->pos,
-            length => length($aln->seq_aligned),
-            class => $aln->is(0x16) ? "read rc" : "read",
+            x => $aln->pos,
+            width => length($aln->seq_aligned),
+            -strand => $aln->is(0x16) ? '-' : '+',
+            class => "read",
         );
     }
+
+    $track->track_refine;
 }
 
 
@@ -326,8 +338,14 @@ sub fasta2svg{
 
     $opt{to} = $opt{from} + length($fa->seq);
 
-    my $track = $svg->track();
-    $track->arrow($opt{from}, $opt{to});
+    my $track = $svg->track(
+        -layout => {
+            track_row_height => 10
+        }
+    );
+    $track->block( x => $opt{from}, to => $opt{to});
+
+    $track->track_refine;
 }
 
 
@@ -433,17 +451,22 @@ sub _overlaps_ranges{
 }
 
 __DATA__
-rect.read {
+.read {
     fill: chocolate;
     stroke: chocolate;
     stroke-linejoin: round;
 }
-rect.rc {
+.read.rc {
     fill: brown;
     stroke: brown;
 }
-.genes {
+.gene {
     fill: darkblue;
     stroke: darkblue;
+    stroke-linejoin: round;
+}
+.gene.rc {
+    fill: darkgreen;
+    stroke: darkgreen;
     stroke-linejoin: round;
 }
