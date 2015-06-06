@@ -308,9 +308,6 @@ sub bam2svg{
     my $sp = Sam::Parser->new(fh => \*SAM);
 
     open(SAM, "$opt{samtools} view $opt{bam} $opt{region} |") or $L->logdie($!);
-
-    my @stack = (0);
-
     while(my $aln = $sp->next_aln()){
         next if $aln->is(0x4 | 0x100 | 0x800); # unmapped or secondary or supplementary
         $track->block(
@@ -350,9 +347,14 @@ sub fasta2svg{
             track_row_height => 10
         }
     );
-    $track->block( x => $opt{from}, to => $opt{to});
 
-    $track->track_refine;
+    $track->axis(
+        x => $opt{from},
+        to => $opt{to},
+        class => "axis",
+    );
+
+     $track->track_refine;
 }
 
 
@@ -476,4 +478,8 @@ __DATA__
     fill: darkgreen;
     stroke: darkgreen;
     stroke-linejoin: round;
+}
+line {
+    stroke: black;
+    stroke-width: 5;
 }
