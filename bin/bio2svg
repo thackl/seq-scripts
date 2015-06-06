@@ -53,7 +53,7 @@ bio2svg
 # Globals
 ##---------------------------------------------------------------------------##
 
-our $VERSION  = '0.3.0';
+our $VERSION  = '0.4.0';
 
 Log::Log4perl->init( \(q(
         log4perl.rootLogger                     = INFO, Screen
@@ -107,6 +107,7 @@ sub prep{
         samtools => undef,
         region => "",
         margin => 100,
+        width => 1000,
     );
 
     GetOptions(
@@ -118,6 +119,8 @@ sub prep{
                      bam=s
                      samtools_path=s
                      region=s
+                     margin=i
+                     width=i
                      version|V!
                      debug|D!
                      help|h!
@@ -214,12 +217,14 @@ sub finish_svg{
     # region + margins
     my $vb_width = $opt{to} - $opt{from} + $opt{margin}*2;
 
-    $svg->{-document}{width} = $vb_width;
-    $svg->{-document}{height} = $vb_height;
+    my $width = $opt{width};
+    my $height = int(($vb_height * $width / $vb_width)+.5);
+
+    $svg->{-document}{width} = $width;
+    $svg->{-document}{height} = $height;
 
     $L->debug("$opt{margin} $opt{margin} $vb_width $vb_height");
     $svg->{-document}{viewBox} = ($opt{from}-$opt{margin})." -$opt{margin} $vb_width $vb_height";
-
 
 }
 
@@ -268,6 +273,7 @@ sub gff2svg{
 
     foreach my $gi (sort{$genes{$a}->start <=> $genes{$b}->start}keys %genes) {
         $track->arrow(
+            id => $gi,
             x => $genes{$gi}->start,
             to => $genes{$gi}->end,
             -strand => $genes{$gi}->strand,
@@ -308,6 +314,7 @@ sub bam2svg{
     while(my $aln = $sp->next_aln()){
         next if $aln->is(0x4 | 0x100 | 0x800); # unmapped or secondary or supplementary
         $track->block(
+            id => $aln->qname,
             x => $aln->pos,
             width => length($aln->seq_aligned),
             -strand => $aln->is(0x16) ? '-' : '+',
