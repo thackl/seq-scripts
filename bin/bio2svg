@@ -9,6 +9,7 @@ use Log::Log4perl::Level;
 use FindBin qw($Script);
 use File::Basename;
 use File::Which;
+use File::Temp;
 
 use Bio::Tools::GFF;
 use Bio::FeatureIO::gff;
@@ -53,7 +54,7 @@ bio2svg
 # Globals
 ##---------------------------------------------------------------------------##
 
-our $VERSION  = '0.5.0';
+our $VERSION  = '0.6.0';
 
 Log::Log4perl->init( \(q(
         log4perl.rootLogger                     = INFO, Screen
@@ -202,11 +203,15 @@ sub init_svg{
 
 =cut
 
+# finalize sound better
 sub finish_svg{
     my (%p) = @_;
 
     # sum up track heights + margins
-    my $ptl = $cvs->{-tracks}[-1]{-layout};
+    my $pt = $cvs->{-tracks}[-1];
+    $pt->track_refine;
+    my $ptl = $pt->{-layout};
+
     my $cv_height = $ptl->{track_base}
         + $ptl->{track_height}
             + $ptl->{track_padding};
@@ -285,7 +290,7 @@ sub gff2svg{
         );
     }
 
-    $track->track_refine;
+    #$track->track_refine;
 
 }
 
@@ -322,8 +327,6 @@ sub bam2svg{
             class => "read",
         );
     }
-
-    $track->track_refine;
 }
 
 
@@ -346,19 +349,43 @@ sub fasta2svg{
 
     $opt{to} = $opt{from} + length($fa->seq);
 
-    my $track = $cvs->track(
+    my $axis_track = $cvs->track(
         -layout => {
             track_row_height => 10
         }
     );
 
-    $track->axis(
+    $axis_track->axis(
         x => $opt{from},
         to => $opt{to},
         class => "axis",
     );
 
-     $track->track_refine;
+    # GC
+    my $faf = File::Temp->new( SUFFIX => '.fa' )->filename;
+    my $w = 20;
+    qx($opt{samtools} faidx $opt{fa} $opt{region} > $faf);
+    open(my $gh, "seq-gc -w $w $faf | cut -f2 |") or $L->logdie($!);
+    my @y = <$gh>; chomp(@y);
+    close $gh;
+
+    my @x;
+    my $ww = $opt{from}+$w/2;
+    $x[0] = $ww;
+    for (my $i=1; $i<@y; $i++) {
+        $x[$i] = ($ww+=$w);
+    }
+
+    my $gc_track = $cvs->track(
+        -type => 'plot',
+    );
+
+    $gc_track->curve(
+        x => \@x,
+        y => \@y,
+        -ymin => 0,
+        -ymax => 1,
+    );
 }
 
 
@@ -465,6 +492,9 @@ sub _overlaps_ranges{
 
 __DATA__
 
+rect{
+    fill: black;
+}
 .read {
     fill: chocolate;
     stroke: chocolate;
@@ -487,4 +517,9 @@ __DATA__
 line {
     stroke: black;
     stroke-width: 5;
+}
+.curve {
+    stroke: black;
+    stroke-width: 5;
+    fill: none;
 }
