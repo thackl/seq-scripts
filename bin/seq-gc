@@ -131,3 +131,5 @@ else
           }
       }'
 fi;
+
+rm $PRE.bed $PRE.len;
