@@ -248,9 +248,11 @@ sub gff2svg{
     my (%p) = @_;
     $L->info("Processing GFF");
 
-    my $track = $cvs->track(
-        class => "genes",
-        -type => "gff",
+    my %target_types = (
+        gene => 1,
+        CDS => 1,
+        exon => 1,
+        mRNA => 1,
     );
 
     # Initialise input stream
@@ -263,44 +265,93 @@ sub gff2svg{
         }
     ) or die $!;
 
-    # TODO: scale (/axis)
-    #$track->line(x1=>0, x2=>1000, y1=>50, y2=>50, Style("genome1"));
+    $gp->add_condition(sub{ $target_types{$_[0]->type} });
 
-    # Initialise storage for features
-    my %genes = ();
-
-    #my $type = "region";
-    my $type = "gene";
-    #my $source = "BLAST";
-    my $source = "prokka";
-
-    # Loop over the input stream
-    while (my $feature = $gffio->next_feature()) {
-        my $primary_tag =  $feature->primary_tag();
-        my $source_tag =  $feature->source_tag();
-
-        next unless ( $primary_tag eq $type && $source_tag eq $source );
-
-        if ( defined($opt{to})) {
-            next unless _overlaps_ranges([$feature->start, $feature->end], [[$opt{from}, $opt{to}]]);
+    my $track = $cvs->track(
+        class => "genes",
+        -type => "gff",
+        -layout => {
+            stacking => undef,
         }
+    );
 
-        my ($id) = $feature->get_tag_values('ID');
-        $genes{$id} = $feature;
+    while (my $gs = $gp->next_groups) {
+
+        foreach my $g ( sort{$a->{primary}->start <=> $b->{primary}->start}@{$gs->{groups}{gene}} ) {
+            my $gene = $g->{primary};
+
+            $track->arrow(
+                id => $gene->id,
+                x => $gene->start,
+                to => $gene->end,
+                -strand => $gene->strand,
+                class => "gene",
+                -layout => {
+                    arrow_rel_height => 3,
+                    arrow_rel_width => 2.5,
+                    feature_rel_height => .2,
+
+                },
+            );
+
+            #my @exons = sort{$a->start <=> $b->start}@{$g->{children}{exon}};
+            next unless (exists $g->{children}{CDS} && @{$g->{children}{CDS}});
+            my @cdss = sort{$a->start <=> $b->start}@{$g->{children}{CDS}};
+
+            my $rc = $gene->strand eq '-';
+
+            if ($rc) {
+                # @exons = reverse @exons;
+                @cdss = reverse @cdss;
+            }
+
+            #            my $last_exon = pop @exons;
+            my $last_cds = pop @cdss;
+
+            # $track->arrow(
+            #     id => $last_exon->id,
+            #     class => "exon",
+            #     x => $last_exon->start,
+            #     to => $last_exon->end,
+            #     -strand => $last_exon->strand,
+            # );
+
+            # foreach (@exons) {
+            #     $track->block(
+            #         id => $_->id,
+            #         class => "exon",
+            #         x => $_->start,
+            #         to => $_->end,
+            #         -strand => $_->strand,
+            #     );
+            # }
+
+            $track->arrow(
+                id => $last_cds->id,
+                class => "CDS",
+                x => $last_cds->start,
+                to => $last_cds->end,
+                -strand => $last_cds->strand,
+                -layout => {
+                    feature_rel_height => .6,
+                    arrow_rel_width => 1.2,
+                },
+            );
+
+            foreach (@cdss) {
+                $track->block(
+                    id => $_->id,
+                    class => "CDS",
+                    x => $_->start,
+                    to => $_->end,
+                    -strand => $_->strand,
+                    -layout => {
+                        feature_rel_height => .6,
+                    },
+                );
+            }
+        }
     }
-
-    foreach my $gi (sort{$genes{$a}->start <=> $genes{$b}->start}keys %genes) {
-        $track->arrow(
-            id => $gi,
-            x => $genes{$gi}->start,
-            to => $genes{$gi}->end,
-            -strand => $genes{$gi}->strand,
-            class => "gene",
-        );
-    }
-
-    #$track->track_refine;
-
 }
 
 
@@ -522,6 +573,14 @@ rect{
     fill: darkgreen;
     stroke: darkgreen;
     stroke-linejoin: round;
+}
+.CDS {
+    fill: gold;
+    stroke-width: 0;
+/*
+    stroke: brown;
+    stroke-linejoin: round;
+*/
 }
 line {
     stroke: black;
