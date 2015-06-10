@@ -11,19 +11,15 @@ use File::Basename;
 use File::Which;
 use File::Temp;
 
-use Bio::Tools::GFF;
-use Bio::FeatureIO::gff;
-use Bio::SeqIO;
-
-use lib '.';
-use SVG;
-# http://perlmaven.com/scalable-vector-graphics-with-perl
-# https://metacpan.org/pod/SVG
-
-use SVG::Bio;
-
 use Sam::Parser;
 use Fasta::Parser;
+
+use Gff::Parser 0.2.0;
+use Gff::Feature 0.2.0;
+
+use SVG;
+use SVG::Bio 0.5.1;
+
 
 ## Debug
 use Data::Dumper;
@@ -78,8 +74,8 @@ my $svg = init_svg();
 my $cvs = $svg->canvas();
 
 fasta2svg();
-gff2svg();
-bam2svg();
+gff2svg() if $opt{gff};
+bam2svg() if $opt{bam};
 
 #print STDERR Dumper($svg);
 
@@ -103,9 +99,9 @@ sub prep{
     my $argv = join(" ", @ARGV);
 
     my %opt = (
-        gff => 'MaV-gen-2.0.gff',
+        gff => '',
         gff_version => 3,
-        bam => 'MaV-gen-2.0.bam',
+        bam => '',
         samtools_path => undef,
         samtools => undef,
         region => "",
@@ -169,11 +165,10 @@ sub prep{
     $L->debug(Dumper(\%opt));
 
     # check binaries
-    if ($opt{bam}) {
-        my $samtools = bin("samtools");
-        check_binary($samtools, ["--version", "1.1"]);
-        $opt{samtools} = bin("samtools");
-    }
+    my $samtools = bin("samtools");
+    check_binary($samtools, ["--version", "1.1"]);
+    $opt{samtools} = bin("samtools");
+
     return %opt;
 }
 
@@ -252,7 +247,14 @@ sub gff2svg{
     );
 
     # Initialise input stream
-    my $gffio = Bio::Tools::GFF->new(-file => $opt{gff}, -gff_version => $opt{gff_version}) or die $!;
+    my $gp = Gff::Parser->new(
+        file => $opt{gff},
+        region => {
+            id => $opt{id},
+            from => $opt{from},
+            to => $opt{to}
+        }
+    ) or die $!;
 
     # TODO: scale (/axis)
     #$track->line(x1=>0, x2=>1000, y1=>50, y2=>50, Style("genome1"));
