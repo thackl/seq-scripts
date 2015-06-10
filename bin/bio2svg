@@ -106,7 +106,8 @@ sub prep{
         samtools => undef,
         region => "",
         margin => 100,
-        width => 1000,
+        width => undef,
+        height => undef,
     );
 
     GetOptions(
@@ -120,6 +121,7 @@ sub prep{
                      region=s
                      margin=i
                      width=i
+                     height=i
                      version|V!
                      debug|D!
                      help|h!
@@ -218,8 +220,13 @@ sub finish_svg{
     my $vb_width = $cv_width + $opt{margin}*2;
 
     my $width = $opt{width};
-    my $height = int(($vb_height * $width / $vb_width)+.5);
+    my $height = $opt{height};
+    $width || $height || ($height = 200);
 
+    $height ||= int(($vb_height * $width / $vb_width)+.5);
+    $width ||= int(($vb_width * $height / $vb_height)+.5);
+
+    $svg->{-document}{preserveAspectRatio} = "none";
     $svg->{-document}{width} = $width;
     $svg->{-document}{height} = $height;
 
@@ -342,11 +349,11 @@ sub fasta2svg{
     }
 
     my $fa = Fasta::Seq->new(scalar qx($opt{samtools} faidx $opt{fa} $opt{region}));
-    if ( $opt{region} =~ /:([0-9,]+)(?:-[0-9,]+)$/ ){
-        $opt{from} = $1;
+    $opt{id} = $opt{region};
+    if ( defined $opt{id} ) {
+        $opt{id} =~ s/:([0-9,]+)(?:-[0-9,]+)$//;
+        $opt{from} = $1 || 0;
         $opt{from} =~ s/,//g;
-    }else {
-        $opt{from} = 0;
     }
 
     $opt{to} = $opt{from} + length($fa->seq);
