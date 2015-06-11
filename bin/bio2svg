@@ -425,7 +425,7 @@ sub fasta2svg{
 
     # GC
     my $faf = File::Temp->new( SUFFIX => '.fa' )->filename;
-    my $w = 20;
+    my $w = 50;
     qx($opt{samtools} faidx $opt{fa} $opt{region} > $faf);
     open(my $gh, "seq-gc -w $w $faf | cut -f2 |") or $L->logdie($!);
     my @y = <$gh>; chomp(@y);
@@ -440,6 +440,9 @@ sub fasta2svg{
 
     my $gc_track = $cvs->track(
         -type => 'plot',
+        -layout => {
+            track_height => 400,
+        }
     );
 
     $gc_track->curve(
@@ -447,6 +450,17 @@ sub fasta2svg{
         y => \@y,
         -ymin => 0,
         -ymax => 1,
+    );
+
+    my $median = (sort{$a<=>$b}@y)[@y/2];
+    $gc_track->curve(
+        x => [$opt{from}, $opt{to}],
+        y => [$median,$median],
+        -ymin => 0,
+        -ymax => 1,
+        style => {
+            'stroke-dasharray' => "50,100",
+        }
     );
 }
 
@@ -590,6 +604,6 @@ line {
 }
 .curve {
     stroke: black;
-    stroke-width: 5;
+    stroke-width: 10;
     fill: none;
 }
