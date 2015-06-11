@@ -73,9 +73,11 @@ my $svg = init_svg();
 
 my $cvs = $svg->canvas();
 
+print Dumper(\%opt);
+
 fasta2svg();
 gff2svg() if $opt{gff};
-bam2svg() if $opt{bam};
+bam2svg(bam => $_) foreach @{$opt{bam}};
 
 #print STDERR Dumper($svg);
 
@@ -99,12 +101,12 @@ sub prep{
     my $argv = join(" ", @ARGV);
 
     my %opt = (
-        gff => '',
+        gff => undef,
         gff_version => 3,
-        bam => '',
+        bam => undef,
         samtools_path => undef,
         samtools => undef,
-        region => "",
+        region => undef,
         margin => 100,
         width => undef,
         height => undef,
@@ -116,7 +118,7 @@ sub prep{
                      fa|fasta=s
                      gff=s
                      gff_version=s
-                     bam=s
+                     bam=s@
                      samtools_path=s
                      region=s
                      margin=i
@@ -151,7 +153,7 @@ sub prep{
     }
 
     # required stuff
-    for (qw(fa)) {
+    for (qw(fa region)) {
        if (ref $opt{$_} eq 'ARRAY') {
            pod2usage("required: --$_") unless @{$opt{$_}}
        } else {
@@ -371,12 +373,12 @@ sub bam2svg{
     );
 
     # init sam parser
-    my $sam_cmd = "$opt{samtools} view -h $opt{bam} |";
+    my $sam_cmd = "$opt{samtools} view -h $p{bam} |";
     $L->debug($sam_cmd);
     open(SAM, $sam_cmd) or $L->logdie($!);
     my $sp = Sam::Parser->new(fh => \*SAM);
 
-    open(SAM, "$opt{samtools} view $opt{bam} $opt{region} |") or $L->logdie($!);
+    open(SAM, "$opt{samtools} view $p{bam} $opt{region} |") or $L->logdie($!);
     while(my $aln = $sp->next_aln()){
         next if $aln->is(0x4 | 0x100 | 0x800); # unmapped or secondary or supplementary
         $track->block(
