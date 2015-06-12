@@ -1,0 +1,174 @@
+#!/usr/bin/env perl
+# Created: 10 Jun 2015
+
+use warnings;
+use strict;
+
+use Pod::Usage;
+use Getopt::Long;
+use Log::Log4perl qw(:no_extra_logdie_message);
+use Log::Log4perl::Level;
+use FindBin qw($Script);
+
+use Gff::Parser 0.2.0;
+use Gff::Feature 0.2.0;
+
+## Debug
+use Data::Dumper;
+$Data::Dumper::Sortkeys=1;
+
+=head1 NAME
+
+gff-shift
+
+=head1 SYNOPSIS
+
+gff-shift [options] GFF
+
+=head1 OPTIONS
+
+=over
+
+=item --by
+
+Number of basepairs to shift entries by.
+
+=back
+
+=head1 MAIN
+
+=cut
+
+
+##----------------------------------------------------------------------------##
+# Globals
+##----------------------------------------------------------------------------##
+
+our $VERSION = 0.1.0;
+
+Log::Log4perl->init( \(q(
+        log4perl.rootLogger                     = INFO, Screen
+        log4perl.appender.Screen                = Log::Log4perl::Appender::Screen
+        log4perl.appender.Screen.stderr         = 1
+        log4perl.appender.Screen.layout         = PatternLayout
+        log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$Script.q(] %m%n
+)));
+
+my $L = Log::Log4perl->get_logger();
+
+my %opt = prep();
+
+##----------------------------------------------------------------------------##
+# Main
+##----------------------------------------------------------------------------##
+
+
+# read gff from first param or stdin
+$L->info("Reading from ", ( defined($opt{gff}) ? $opt{gff} : "STDIN") );
+
+my $gp = Gff::Parser->new( defined($opt{gff}) ? (file => $opt{gff}) : () );
+
+my $fh = $gp->fh;
+
+while ( <$fh> ) {
+    next if /^\s*$/;
+    if (/^#/) {
+        if (/^##FASTA/){
+            $gp->next_segment() || last; #eof
+        }
+        print;
+        next;
+    }
+
+    # return gff feat object
+    my $feat = Gff::Feature->new($_);
+
+    $gp->eval_feature($feat) || next;
+
+    next if $feat->start + $opt{by} < 1; # ignore negative features
+    
+    $feat->start( $feat->start + $opt{by} );
+    $feat->end( $feat->end + $opt{by} );
+
+    print "$feat";
+}
+
+
+
+
+##----------------------------------------------------------------------------##
+# subs
+##----------------------------------------------------------------------------##
+
+=head2 prep
+
+=cut
+
+sub prep{
+    my (%p) = @_;
+
+    # GetOptions
+    my $argv = join(" ", @ARGV);
+
+    my %opt = ();
+
+    GetOptions(
+        \%opt, qw(
+                     out=s
+                     gff=s
+                     by=i
+                     version|V!
+                     debug|D!
+                     help|h!
+             )
+    ) or $L->logcroak('Failed to "GetOptions"');
+
+    $opt{argv} = $argv; # store it just in case
+
+    # help
+    $opt{help} && pod2usage(1);
+
+    # version
+    if ($opt{version}) {
+        print "$VERSION\n";
+        exit 0;
+    }
+
+    # Config + Opt
+    $opt{gff} //= shift @ARGV;
+    $L->logdie("unused argument: @ARGV") if @ARGV;
+
+    if ( $opt{out} && $opt{out} ne '-' ){
+        open(my $ofh, '>', $opt{out}) or $L->logdie("$!: $opt{out}");
+        $opt{ofh} = $ofh;
+    }else {
+        $opt{ofh} = \*STDOUT;
+    }
+
+    # required stuff
+    for (qw(by)) {
+       if (ref $opt{$_} eq 'ARRAY') {
+           pod2usage("required: --$_") unless @{$opt{$_}}
+       } else {
+           pod2usage("required: --$_") unless defined ($opt{$_})
+       }
+    }
+
+
+    # debug level
+    $L->level($DEBUG) if $opt{debug};
+    $L->debug('Verbose level set to DEBUG');
+
+    $L->debug(Dumper(\%opt));
+
+    return %opt;
+}
+
+
+
+
+=head1 AUTHOR
+
+Thomas Hackl, E<lt>thackl@lim4.deE<gt>
+
+=cut
