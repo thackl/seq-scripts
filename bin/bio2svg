@@ -274,6 +274,7 @@ sub gff2svg{
         -type => "gff",
         -layout => {
             stacking => undef,
+	    track_row_height => 500,
         }
     );
 
@@ -321,7 +322,7 @@ sub gff2svg{
                 -strand => $last_cds->strand,
                 -layout => {
                     feature_rel_height => .6,
-                    arrow_rel_width => 1.2,
+                    arrow_rel_width => .8,
                 },
             );
 
@@ -367,8 +368,9 @@ sub bam2svg{
 
     my $track = $cvs->track(
         -type => "bam",
-        class => "reads",
+	class => "reads",
         -layout => {
+	    	    track_row_height => 100,
         },
     );
 
@@ -413,7 +415,7 @@ sub fasta2svg{
 
     my $axis_track = $cvs->track(
         -layout => {
-            track_row_height => 10
+            track_row_height => 100
         }
     );
 
@@ -441,7 +443,7 @@ sub fasta2svg{
     my $gc_track = $cvs->track(
         -type => 'plot',
         -layout => {
-            track_height => 400,
+            track_height => 1000,
         }
     );
 
@@ -566,44 +568,64 @@ sub _overlaps_ranges{
     return 0;
 }
 
-__DATA__
-
-rect{
-    fill: black;
+sub unspecial{
+    my ($string) = @_;
+    $string =~ s/[^-\w]/_/g;
+    return $string;
 }
-.read {
+
+__DATA__
+/*rect{
+    fill: black;
+}*/
+.reads {
     fill: chocolate;
     stroke: chocolate;
     stroke-linejoin: round;
 }
-.read.rc {
+.reads .rc {
     fill: brown;
     stroke: brown;
 }
 .gene {
-    fill: darkblue;
-    stroke: darkblue;
-    stroke-linejoin: round;
+    fill: midnightblue;
+    stroke: midnightblue;
+    stroke-linejoin: "round";
 }
 .gene.rc {
-    fill: darkgreen;
-    stroke: darkgreen;
-    stroke-linejoin: round;
+    fill: midnightblue;
+    stroke: midnightblue;
+    stroke-linejoin: "round";
 }
 .CDS {
-    fill: gold;
+    fill: mediumslateblue;
     stroke-width: 0;
 /*
     stroke: brown;
-    stroke-linejoin: round;
+    stroke-linejoin: "round";
 */
 }
 line {
     stroke: black;
-    stroke-width: 5;
+    stroke-width: 20;
 }
 .curve {
     stroke: black;
-    stroke-width: 10;
+    stroke-width: 20;
     fill: none;
+}
+#track_3.reads .rc{
+    fill: #bc6800;
+}
+#track_3.reads{
+    fill: #fb8b00;
+}
+#track_4.reads .rc{
+    fill: #cccc00;
+}
+#track_4.reads{
+    fill: #aaaa00;
+}
+#track_5.reads, #track_5.reads .rc{
+    fill: green;
 }
