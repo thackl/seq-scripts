@@ -281,21 +281,6 @@ sub gff2svg{
 
         foreach my $g ( sort{$a->{primary}->start <=> $b->{primary}->start}@{$gs->{groups}{gene}} ) {
             my $gene = $g->{primary};
-
-            $track->arrow(
-                id => $gene->id,
-                x => $gene->start,
-                to => $gene->end,
-                -strand => $gene->strand,
-                class => "gene",
-                -layout => {
-                    arrow_rel_height => 3,
-                    arrow_rel_width => 2.5,
-                    feature_rel_height => .2,
-
-                },
-            );
-
             #my @exons = sort{$a->start <=> $b->start}@{$g->{children}{exon}};
             next unless (exists $g->{children}{CDS} && @{$g->{children}{CDS}});
             my @cdss = sort{$a->start <=> $b->start}@{$g->{children}{CDS}};
@@ -352,6 +337,21 @@ sub gff2svg{
                     },
                 );
             }
+
+            $track->arrow(
+                id => $gene->id,
+                x => $gene->start,
+                to => $gene->end,
+                -strand => $gene->strand,
+                class => "gene",
+                -layout => {
+                    arrow_rel_height => 3,
+                    arrow_rel_width => 2.4,
+                    feature_rel_height => .2,
+
+                },
+            );
+
         }
     }
 }
