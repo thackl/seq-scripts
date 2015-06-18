@@ -1,0 +1,103 @@
+#!/usr/bin/env perl
+# Created: 18 Jun 2015
+
+use warnings;
+use strict;
+
+use Fasta::Parser;
+
+=head1 NAME
+
+deiupac
+
+=head1 SYNOPSIS
+
+deiupac <IN.fa >OUT.fa
+
+=head1 OPTIONS
+
+=cut
+
+##----------------------------------------------------------------------------##
+# Main
+##----------------------------------------------------------------------------##
+
+my $fp = Fasta::Parser->new();
+my %deiupac = load_deiupac();
+
+while (my $fa = $fp->next_seq) {
+    my $c;
+    foreach ( deiupac([split(//, $fa->seq)]) ){
+        $c++;
+        print Fasta::Seq->new(
+            id => $fa->id().".$c",
+            seq => $_,
+        )->string(80);
+    }
+}
+
+
+
+
+##----------------------------------------------------------------------------##
+# subs
+##----------------------------------------------------------------------------##
+
+sub deiupac{
+    my ($seq, $off) = (@_, 0);
+    my @seq = @$seq;
+    for (my $i=$off; $i<@seq; $i++) {
+        exists $deiupac{$seq[$i]} or die "unknown nuc: $seq[$i]\n";
+        my @cs = @{$deiupac{$seq[$i]}};
+        if ( @cs > 1 ){
+            return map{
+                $seq[$i] = $_;
+                deiupac(\@seq, $i+1)
+            }@cs; # recurse
+        }
+    }
+    return join("", @seq);
+}
+
+
+sub load_deiupac{
+    return (
+            a => [qw/a/],
+            t => [qw/t/],
+            c => [qw/c/],
+            g => [qw/g/],
+            r => [qw/a g/],          # a or g
+            y => [qw/c t/],          # c or t
+            s => [qw/g c/],          # g or c
+            w => [qw/a t/],          # a or t
+            k => [qw/g t/],          # g or t
+            m => [qw/a c/],          # a or c
+            b => [qw/c g t/],        # c or g or t
+            d => [qw/a g t/],        # a or g or t
+            h => [qw/a c t/],        # a or c or t
+            v => [qw/a c g/],        # a or c or g
+            n => [qw/a c g t/],      # any base
+            A => [qw/A/],
+            T => [qw/T/],
+            C => [qw/C/],
+            G => [qw/G/],
+            R => [qw/A G/],          # A OR G
+            Y => [qw/C T/],          # C OR T
+            S => [qw/G C/],          # G OR C
+            W => [qw/A T/],          # A OR T
+            K => [qw/G T/],          # G OR T
+            M => [qw/A C/],          # A OR C
+            B => [qw/C G T/],        # C OR G OR T
+            D => [qw/A G T/],        # A OR G OR T
+            H => [qw/A C T/],        # A OR C OR T
+            V => [qw/A C G/],        # A OR C OR G
+            N => [qw/A C G T/],    # any base
+        );
+}
+
+
+=head1 AUTHOR
+
+Thomas Hackl, E<lt>thackl@lim4E<gt>
+
+=cut
