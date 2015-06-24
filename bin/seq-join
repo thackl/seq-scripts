@@ -1,0 +1,86 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+use Getopt::Long;
+use Pod::Usage;
+
+use Fasta::Parser;
+use Fasta::Seq;
+
+=head1 SYNOPSIS
+
+  seq-join -n "new-seq-id" < multi-seq-FASTA > single-seq-FASTA
+
+=head1 OPTIONS
+
+=over
+
+=item [-n/--name] [ID of first sequence]
+
+Name of joined sequence.
+
+=item [-w/--line-width] [80]
+
+Width of FASTA lines.
+
+=back
+
+=cut
+
+my $VERSION = 0.1.0;
+
+##----------------------------------------------------------------------------##
+# main
+##----------------------------------------------------------------------------##
+
+
+my %opt = init();
+
+my $fp = Fasta::Parser->new;
+
+my $fa = $fp->next_seq;
+
+while (my $fn = $fp->next_seq) {
+    $fa.=$fn;
+}
+
+$fa->id($opt{name}) if defined $opt{name};
+
+print $fa->string($opt{width});
+
+
+
+##----------------------------------------------------------------------------##
+# subs
+##----------------------------------------------------------------------------##
+
+=head2 init
+
+=cut
+
+sub init{
+    %opt = (
+        width => 80,
+    );
+    
+    GetOptions(                 # use %opt (Cfg) as defaults
+        \%opt, qw(
+                     width|line-width|line_width|w=i
+                     name|n=s
+                     version|V!
+                     debug|D!
+                     help|h!
+             )
+    ) or die 'Failed to "GetOptions"';
+
+    # help
+    $opt{help} && pod2usage(1);
+
+    # version
+    if ($opt{version}) {
+        print "$VERSION\n"; 
+        exit 0;
+    }
+    return %opt;
+}
