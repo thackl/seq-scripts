@@ -82,7 +82,7 @@ netChainSubset $PRE.net $PRE.chain $PRE.final.chain
 
 for GFF in $@; do
     GFP=`basename $GFF`
-    GFP=${QRY%.*};
+    GFP=${GFP%.*};
 
     # doesn't work properly
     #    ldHgGene -out=$GFF.gp dummy dummy /dev/fd/0
