@@ -1,0 +1,46 @@
+#!/bin/bash
+
+## subs
+usage(){
+    echo -e "Usage:\n  gff-liftover REF QUERY GFF [GFF ...]";
+    exit 0;
+}
+
+check_bin(){
+    hash $1 || { echo "$1 required in PATH" >&2; exit 1;}
+}
+
+## prep
+[[ $# -eq 0 ]] && usage;
+
+# required bins
+for BIN in samtools blat axtChain chainNet netChainSubset liftOver; do
+    check_bin $BIN;
+done
+
+REF=$1;
+QRY=$2;
+PRE=${QRY%.*};
+shift; shift;
+
+## main
+samtools faidx $REF;
+cut -f 1,2 $REF.fai > $REF.len
+samtools faidx $QRY;
+cut -f 1,2 $QRY.fai > $QRY.len
+
+blat $REF $QRY -tileSize=12 -minIdentity=98 $PRE.psl
+axtChain -linearGap=medium -faQ -faT -psl $PRE.psl $REF $QRY $PRE.chain
+chainNet $PRE.chain $REF.len $QRY.len $PRE.net /dev/null
+netChainSubset $PRE.net $PRE.chain $PRE.final.chain
+
+for GFF in $@; do
+    # doesn't work properly
+    #    ldHgGene -out=$GFF.gp dummy dummy /dev/fd/0
+
+    # cannot handle Maker attribute tags _AED, ...
+    #    gff3ToGenePred $GFF $GFF.gp
+
+    sed '/##FASTA/ Q' $GFF | liftOver -gff /dev/fd/0 $PRE.final.chain $PRE.gff unmapped.txt
+done;
+
