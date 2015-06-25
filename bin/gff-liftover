@@ -1,9 +1,15 @@
 #!/bin/bash
+## Version 0.2.0
 
 ## subs
 usage(){
-    echo -e "Usage:\n  gff-liftover REF QUERY GFF [GFF ...]";
-    exit 0;
+cat <<EOF
+Usage:
+  gff-liftover REF QUERY GFF [GFF ...]
+
+Lift over gff annotations from one to another genome build
+EOF
+exit 0;
 }
 
 check_bin(){
@@ -13,6 +19,40 @@ check_bin(){
 ## prep
 [[ $# -eq 0 ]] && usage;
 
+
+# Execute getopt
+ARGS=`getopt --name "gff-liftover" \
+    --options "khV" \
+    -- "$@"`
+
+#Bad arguments
+[ $? -ne 0 ] && exit 1;
+
+# A little magic
+eval set -- "$ARGS"
+
+# Now go through all the options
+while true; do
+    case "$1" in
+        -k)
+            KEEP=1;
+            shift;;
+        -h)
+	    usage && exit 0;;
+
+        -V)
+            grep -m1 'Version' "$0" | sed 's/.*Version\s*//';
+            exit 0;;
+        --)
+            shift
+            break;;
+        *)
+            echo "$1: Unknown option" 1>&2 && exit 1;;
+    esac
+done
+
+
+
 # required bins
 for BIN in samtools blat axtChain chainNet netChainSubset liftOver; do
     check_bin $BIN;
@@ -20,8 +60,13 @@ done
 
 REF=$1;
 QRY=$2;
+[[ -z $QRY ]] && { echo "QUERY required" 1>&2; usage;};
+
+PRE=`basename $QRY`;
 PRE=${QRY%.*};
 shift; shift;
+
+[[ $# -eq 0 ]] && { echo "GFF required" 1>&2; usage;};
 
 ## main
 samtools faidx $REF;
@@ -34,13 +79,22 @@ axtChain -linearGap=medium -faQ -faT -psl $PRE.psl $REF $QRY $PRE.chain
 chainNet $PRE.chain $REF.len $QRY.len $PRE.net /dev/null
 netChainSubset $PRE.net $PRE.chain $PRE.final.chain
 
+
 for GFF in $@; do
+    GFP=`basename $GFF`
+    GFP=${QRY%.*};
+
     # doesn't work properly
     #    ldHgGene -out=$GFF.gp dummy dummy /dev/fd/0
 
     # cannot handle Maker attribute tags _AED, ...
     #    gff3ToGenePred $GFF $GFF.gp
 
-    sed '/##FASTA/ Q' $GFF | liftOver -gff /dev/fd/0 $PRE.final.chain $PRE.gff unmapped.txt
+    sed '/^###/ d; /^##FASTA/ Q;' $GFF | liftOver -gff /dev/fd/0 $PRE.final.chain $GFP.lifted.gff /dev/fd/2;
 done;
+
+# rm tmp file
+if [[ $KEEP -lt 1 ]]; then
+    rm $REF.fai $REF.len $QRY.fai $QRY.len $PRE.psl $PRE.chain $PRE.net $PRE.final.chain;
+fi;
 
