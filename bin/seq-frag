@@ -109,7 +109,11 @@ if(!$opt{mode} && @ARGV && !($ARGV[0] =~ /^-/)){
 
 (my $mode = grep{$opt{mode} eq $_}qw(pe se mp pacbio contig)) || pod2usage("unknown mode $opt{mode}");
 $opt{length} || pod2usage("required: --length");
-$opt{coverage} || pod2usage("required: --coverage");
+if ( $opt{mode} ne "contig" ){
+    $opt{coverage} || pod2usage("required: --coverage");
+}else {
+    $opt{coverage} //= 1; # default cov of 1 for contig mode
+}
 my $insert_lib_mode = grep{$opt{mode} eq $_}qw(pe se mp);
 
 my %frag = (
@@ -215,8 +219,6 @@ sub frag_pacbio{
     my $read_len = $opt{length};
     my $frag_num = $seq_len * ( $opt{coverage} / $read_len );
 
-    # seq length is bottle neck (not sort or rand)
-    # => split long seqs (>100k) into manageable regions
     my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$read_len));
     my @frag_lens = Math::Random::random_negative_binomial($frag_num,5,5/$read_len);
     for ( my $i=0; $i<@frag_offs; $i++) {
@@ -289,5 +291,51 @@ sub frag_pe{
 =cut
 
 sub frag_contig{
-    die "contig mode not yet implemented\n";
+    my $fa = shift;
+    my $seq_len = length($fa->seq);
+    return if $seq_len < $opt{length};
+    my $read_len = $opt{length};
+    my $frag_num = $seq_len / $read_len;
+    # seq length is bottle neck (not sort or rand)
+    # => split long seqs (>100k) into manageable regions
+    my $fuzz = Math::Random::random_negative_binomial(1,5,0.01)-400;
+    $fuzz = 0 if $fuzz < 0 || $fuzz > $seq_len; # respect max seq len
+
+    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$read_len), $fuzz);
+    my @frag_lens;
+
+    for (my $i=0; $i<$#frag_offs; $i++) {
+        my $len = $frag_offs[$i+1] - $frag_offs[$i];
+        my $fuzz = Math::Random::random_negative_binomial(1,5,0.01) - 400; # max 400 bp overlap
+        $fuzz = int($len/2) if $len - $fuzz < 1; # no neg fuzz
+        $fuzz = 0 if $frag_offs[$i] + $fuzz > $seq_len; # respect max seq len
+        $frag_lens[$i] = $len - $fuzz;
+    }
+    
+    $fuzz = Math::Random::random_negative_binomial(1,5,0.01)-400;
+    $fuzz = 0 if $fuzz < 0 || $fuzz > $seq_len; # respect max seq len
+    push @frag_lens, $seq_len - $frag_offs[$#frag_offs] - $fuzz;
+    if ($frag_lens[-2] - $frag_lens[-1] > -10) {
+        pop @frag_offs;
+        pop @frag_lens;
+    }
+
+    
+    for ( my $i=0; $i<@frag_offs; $i++) {
+        my $frag_off = $frag_offs[$i];
+        my $frag_len = int($frag_lens[$i]);
+        if ($frag_off + $frag_len > $seq_len){next;};
+        print STDERR join("\t", $frag_off, $frag_len, $frag_off+$frag_len, $seq_len),"\n";                    
+        my $frag = Fasta::Seq->new(
+            id => '>'.$opt{prefix}.$c,
+            seq => substr($fa->seq, $frag_off, $frag_len),
+        );
+
+        # both strands
+        int(rand(2)) && $frag->reverse_complement;
+
+        print $frag;
+                
+        $c++;
+    }
 }
