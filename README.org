@@ -1,0 +1,23 @@
+*** bio2svg
+**** Dependencies
+- [[http://search.cpan.org/~ronan/SVG-2.33/][SVG-2.33]]
+
+#+BEGIN_SRC sh
+git clone https://github.com/thackl/perl5lib-Gff.git
+git clone https://github.com/thackl/perl5lib-SVG-Bio.git
+
+export PERL5LIB:/path/to/perl5lib-Gff/lib:/path/to/perl5lib-SVG-Bio/lib:$PERL5LIB;
+
+bio2svg --fasta FA --region REGION --gff GFF --bam BAM > SVG
+
+bio2svg --width 10000 --fa MaV-is-CrEc-001.ctg.fa --region MaV-is-CrEc-001 \
+ --gff mav-regions.gff --gff MaV-gen-2.0.maker.lifted.gff \
+ --gff CrEc-gen-dp-1.0.all.lifted.gff \
+ --bam PCR\~MaV-is-CrEc-001.ctg.bam \
+ --bam pr-all\~MaV-is-CrEc-001.ctg-support.bam \
+ --bam pr-all~MaV-is-CrEc-001.ctg-bridge.bam \
+ > MaV-is-CrEc-001.ctg.svg
+
+#+END_SRC
+
+[[./etc/bio2svg-sample.svg]]
