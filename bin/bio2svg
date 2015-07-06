@@ -592,58 +592,69 @@ sub unspecial{
     return $string;
 }
 
+sub idfy{
+    my ($id) = @_;
+    my $oid = $id = unspecial($id);
+
+    my $x = 1;
+    while ($cvs->getElementByID( $id )){
+        $x++;
+        $id = "$oid:$x";
+    }
+    return $id;
+}
+
 __DATA__
 /*rect{
     fill: black;
 }*/
 .reads {
     fill: chocolate;
-    stroke: chocolate;
-    stroke-linejoin: round;
 }
 .reads .rc {
     fill: brown;
-    stroke: brown;
 }
 .gene {
-    fill: midnightblue;
-    stroke: midnightblue;
-    stroke-linejoin: "round";
+    fill: black;
 }
 .gene.rc {
-    fill: midnightblue;
-    stroke: midnightblue;
-    stroke-linejoin: "round";
+    fill: black;
 }
 .CDS {
     fill: mediumslateblue;
-    stroke-width: 0;
-/*
-    stroke: brown;
-    stroke-linejoin: "round";
-*/
+    fill-opacity: 0.8;
 }
-line {
+.axis{
     stroke: black;
     stroke-width: 20;
 }
 .curve {
-    stroke: black;
-    stroke-width: 20;
-    fill: none;
+    fill: grey;
 }
-#track_3.reads .rc{
-    fill: #bc6800;
+
+#track_2{
+    fill: #cccccc;
 }
-#track_3.reads{
-    fill: #fb8b00;
+
+#track_4 .CDS{
+    fill: palevioletred;
+    fill-opacity: 0.8;
 }
-#track_4.reads .rc{
-    fill: #cccc00;
-}
-#track_4.reads{
-    fill: #aaaa00;
-}
+
 #track_5.reads, #track_5.reads .rc{
     fill: green;
+}
+
+#track_6.reads{
+    fill: #fb8b00;
+}
+#track_6.reads .rc{
+    fill: #bc6800;
+}
+
+#track_7.reads{
+    fill: #aaaa00;
+}
+#track_7.reads .rc{
+    fill: #cccc00;
 }
