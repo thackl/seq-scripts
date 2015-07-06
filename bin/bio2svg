@@ -388,9 +388,9 @@ sub bam2svg{
 
     open(SAM, "$opt{samtools} view $p{bam} $opt{region} |") or $L->logdie($!);
     while(my $aln = $sp->next_aln()){
-        next if $aln->is(0x4 | 0x100 | 0x800); # unmapped or secondary or supplementary
+        next if $aln->is(0x4);# | 0x100 | 0x800); # unmapped or secondary or supplementary
         $track->block(
-            id => $aln->qname,
+            id => idfy($aln->qname),
             x => $aln->pos,
             width => length($aln->seq_aligned),
             -strand => $aln->is(0x16) ? '-' : '+',
