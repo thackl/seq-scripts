@@ -1,134 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   height="210mm"
-   preserveAspectRatio="none"
-   viewBox="-100 -100 4251.1224 3005.575"
-   width="297mm"
-   id="svg2"
-   version="1.1"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="MaV-is-CrEc-001.ctg.svg">
-  <path
-     inkscape:connector-curvature="0"
-     id="path4529"
-     d="m 461.76031,129.94168 0,1416.51392"
-     style="fill:#888888;fill-rule:evenodd;stroke:#888888;stroke-width:4.03941917;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4.03941929, 8.07883858;stroke-dashoffset:0;stroke-opacity:1" />
-  <path
-     style="fill:#888888;fill-rule:evenodd;stroke:#888888;stroke-width:4.03941917;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4.03941929, 8.07883858;stroke-dashoffset:0;stroke-opacity:1"
-     d="m 3914.8095,129.94168 0,1416.51392"
-     id="path4531"
-     inkscape:connector-curvature="0" />
-  <line
-     class="axis_line"
-     x1="39.627258"
-     x2="3916.8479"
-     y1="610.61102"
-     y2="610.61102"
-     id="line4513"
-     style="fill:#888888;stroke:#888888;stroke-width:4.03941917;stroke-miterlimit:4;stroke-dasharray:4.03941935, 32.31535475;stroke-dashoffset:0" />
-  <line
-     style="fill:#888888;stroke:#888888;stroke-width:4.03941917;stroke-miterlimit:4;stroke-dasharray:4.03941935, 32.31535475;stroke-dashoffset:0"
-     id="line4517"
-     y2="356.13901"
-     y1="356.13901"
-     x2="3916.8479"
-     x1="39.627258"
-     class="axis_line" />
-  <line
-     class="axis_line"
-     x1="39.627258"
-     x2="3916.8479"
-     y1="828.72992"
-     y2="828.72992"
-     id="line4519"
-     style="fill:#888888;stroke:#888888;stroke-width:4.03941917;stroke-miterlimit:4;stroke-dasharray:4.03941935, 32.31535475;stroke-dashoffset:0" />
-  <line
-     style="fill:#888888;stroke:#888888;stroke-width:4.03941917;stroke-miterlimit:4;stroke-dasharray:4.03941935, 32.31535475;stroke-dashoffset:0"
-     id="line4521"
-     y2="1317.4778"
-     y1="1317.4778"
-     x2="3916.8479"
-     x1="39.627258"
-     class="axis_line" />
-  <path
-     inkscape:connector-curvature="0"
-     id="path4523"
-     d="m 3058.9518,129.68923 0,1416.51387"
-     style="fill:#888888;fill-rule:evenodd;stroke:#888888;stroke-width:4.03941917;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4.03941929, 8.07883858;stroke-dashoffset:0;stroke-opacity:1" />
-  <path
-     inkscape:connector-curvature="0"
-     id="path4505"
-     d="m 1320.4089,129.94168 0,0.012"
-     style="fill:#888888;fill-rule:evenodd;stroke:#000000;stroke-width:6.05912893;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-  <path
-     style="fill:#888888;fill-rule:evenodd;stroke:#888888;stroke-width:4.03941929;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4.03941929,8.07883858;stroke-dashoffset:0;stroke-opacity:1"
-     d="m 1320.4089,129.94168 0,1416.51392"
-     id="path4501"
-     inkscape:connector-curvature="0" />
-  <metadata
-     id="metadata140">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-  <sodipodi:namedview
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1"
-     objecttolerance="10"
-     gridtolerance="10"
-     guidetolerance="10"
-     inkscape:pageopacity="0"
-     inkscape:pageshadow="2"
-     inkscape:window-width="1859"
-     inkscape:window-height="1170"
-     id="namedview138"
-     showgrid="false"
-     inkscape:zoom="0.70710678"
-     inkscape:cx="608.81767"
-     inkscape:cy="739.78371"
-     inkscape:window-x="61"
-     inkscape:window-y="30"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="svg2"
-     units="mm"
-     inkscape:document-units="px"
-     fit-margin-top="0"
-     fit-margin-left="0"
-     fit-margin-right="0"
-     fit-margin-bottom="0"
-     inkscape:snap-bbox="true"
-     inkscape:object-paths="true"
-     inkscape:snap-intersection-paths="true"
-     inkscape:object-nodes="true" />
-  <defs
-     id="defs4">
-    <clipPath
-       id="canvas-clip">
-      <rect
-         height="13800"
-         id="canvas-clip-rect"
-         width="40196"
-         x="0"
-         y="0" />
-    </clipPath>
-  </defs>
-  <style
-     type="text/css"
-     id="style8"><![CDATA[/*rect{
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg height="3466" preserveAspectRatio="none" viewBox="-100 -100 40396 14000" width="10000" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs >
+		<clipPath id="canvas-clip">
+			<rect height="13800" id="canvas-clip-rect" width="40196" x="0" y="0" />
+		</clipPath>
+	</defs>
+	<style type="text/css"><![CDATA[/*rect{
     fill: black;
 }*/
 .reads {
@@ -163,7 +41,7 @@
     fill: palevioletred;
     fill-opacity: 0.8;
 }
-    
+
 #track_5.reads, #track_5.reads .rc{
     fill: green;
 }
@@ -182,1011 +60,128 @@
     fill: #cccc00;
 }
 ]]></style>
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line16"
-     y2="138.5423"
-     y1="129.94168"
-     x2="674.76099"
-     x1="674.76099"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line18"
-     y2="138.5423"
-     y1="129.94168"
-     x2="889.77618"
-     x1="889.77618"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line20"
-     y2="138.5423"
-     y1="129.94168"
-     x2="1104.7916"
-     x1="1104.7916"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line22"
-     y2="138.5423"
-     y1="129.94168"
-     x2="1319.8069"
-     x1="1319.8069"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line24"
-     y2="138.5423"
-     y1="129.94168"
-     x2="1534.8221"
-     x1="1534.8221"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line26"
-     y2="138.5423"
-     y1="129.94168"
-     x2="1749.8375"
-     x1="1749.8375"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line28"
-     y2="138.5423"
-     y1="129.94168"
-     x2="1964.8527"
-     x1="1964.8527"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line30"
-     y2="138.5423"
-     y1="129.94168"
-     x2="2179.8682"
-     x1="2179.8682"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line32"
-     y2="138.5423"
-     y1="129.94168"
-     x2="2394.8835"
-     x1="2394.8835"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line34"
-     y2="138.5423"
-     y1="129.94168"
-     x2="2609.8987"
-     x1="2609.8987"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line36"
-     y2="138.5423"
-     y1="129.94168"
-     x2="2824.9141"
-     x1="2824.9141"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line38"
-     y2="138.5423"
-     y1="129.94168"
-     x2="3039.9294"
-     x1="3039.9294"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line40"
-     y2="138.5423"
-     y1="129.94168"
-     x2="3254.9446"
-     x1="3254.9446"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line42"
-     y2="138.5423"
-     y1="129.94168"
-     x2="3469.96"
-     x1="3469.96"
-     class="axis_tick" />
-  <line
-     style="stroke:#000000;stroke-width:6.05912893;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line44"
-     y2="138.5423"
-     y1="129.94168"
-     x2="3684.9753"
-     x1="3684.9753"
-     class="axis_tick" />
-  <g
-     id="track_1"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,95.539237)">
-    <polyline
-       style="fill:#808080"
-       id="polyline47"
-       points="25,2400 25,1600 75,1740 125,1660 175,1560 225,1640 275,1700 325,1620 375,1640 425,1740 475,1680 525,1600 575,1660 625,1680 675,1680 725,1660 775,1740 825,1620 875,1680 925,1760 975,1680 1025,1640 1075,1760 1125,1920 1175,1780 1225,1800 1275,1720 1325,1740 1375,1760 1425,1760 1475,1740 1525,1820 1575,1600 1625,1640 1675,1640 1725,1680 1775,1660 1825,1720 1875,1800 1925,1700 1975,1680 2025,1740 2075,1740 2125,1740 2175,1760 2225,1600 2275,1680 2325,1800 2375,1700 2425,1640 2475,1640 2525,1640 2575,1780 2625,1680 2675,1680 2725,1700 2775,1780 2825,1720 2875,1680 2925,1780 2975,1700 3025,1640 3075,1680 3125,1700 3175,1860 3225,1700 3275,1620 3325,1800 3375,1680 3425,1760 3475,1700 3525,1680 3575,1700 3625,1740 3675,1680 3725,1660 3775,1660 3825,1620 3875,1800 3925,1720 3975,1720 4025,1720 4075,1720 4125,1700 4175,1740 4225,1700 4275,1720 4325,1640 4375,1760 4425,1680 4475,1800 4525,1740 4575,1760 4625,1740 4675,1820 4725,1600 4775,1680 4825,1760 4875,1680 4925,1820 4975,1780 5025,1780 5075,1780 5125,1540 5175,1820 5225,1740 5275,1700 5325,1860 5375,1800 5425,1680 5475,1840 5525,1720 5575,1780 5625,1700 5675,1780 5725,1800 5775,1640 5825,1760 5875,1720 5925,1720 5975,1640 6025,1700 6075,1780 6125,1640 6175,1680 6225,1620 6275,1680 6325,1700 6375,1780 6425,1800 6475,1640 6525,1700 6575,1620 6625,1820 6675,1800 6725,1740 6775,1800 6825,1780 6875,1640 6925,1740 6975,1820 7025,1840 7075,1680 7125,1920 7175,1680 7225,1780 7275,1740 7325,1820 7375,1720 7425,1700 7475,1800 7525,1640 7575,1700 7625,1680 7675,1700 7725,1740 7775,1720 7825,1740 7875,1680 7925,1680 7975,1660 8025,1700 8075,1740 8125,1760 8175,1760 8225,1700 8275,1660 8325,1700 8375,1760 8425,1720 8475,1780 8525,1760 8575,1700 8625,1680 8675,1620 8725,1580 8775,1840 8825,1720 8875,1800 8925,1760 8975,1740 9025,1660 9075,1720 9125,1700 9175,1760 9225,1600 9275,1780 9325,1860 9375,1700 9425,1760 9475,1760 9525,1780 9575,1740 9625,1740 9675,1760 9725,1600 9775,1780 9825,1620 9875,1660 9925,1680 9975,1760 10025,1940 10075,1880 10125,1900 10175,1900 10225,2140 10275,2080 10325,2060 10375,2260 10425,1780 10475,2160 10525,2060 10575,2200 10625,2200 10675,2180 10725,2180 10775,2120 10825,2100 10875,2140 10925,2160 10975,2140 11025,2260 11075,2200 11125,2220 11175,1960 11225,2120 11275,2000 11325,2020 11375,2060 11425,2120 11475,2060 11525,2140 11575,2080 11625,1940 11675,2100 11725,2000 11775,1980 11825,2000 11875,1820 11925,1900 11975,2000 12025,2040 12075,1940 12125,2060 12175,2060 12225,1960 12275,2100 12325,2040 12375,2120 12425,2120 12475,2020 12525,2060 12575,2040 12625,2060 12675,2020 12725,2020 12775,1920 12825,2120 12875,2240 12925,2260 12975,2080 13025,2100 13075,2000 13125,2020 13175,2020 13225,2000 13275,1960 13325,2040 13375,1960 13425,2060 13475,2060 13525,1960 13575,1940 13625,2120 13675,2100 13725,2020 13775,2040 13825,2020 13875,2060 13925,2040 13975,2100 14025,2000 14075,2120 14125,2080 14175,2020 14225,1940 14275,2020 14325,2060 14375,2060 14425,2060 14475,2120 14525,2140 14575,2040 14625,2060 14675,2060 14725,1980 14775,2340 14825,2260 14875,2240 14925,2080 14975,2180 15025,2160 15075,2200 15125,2040 15175,2000 15225,2140 15275,2120 15325,2120 15375,2180 15425,1980 15475,2020 15525,2020 15575,1980 15625,2100 15675,2140 15725,1960 15775,2180 15825,2180 15875,2140 15925,2040 15975,2040 16025,2100 16075,2040 16125,2060 16175,2080 16225,2220 16275,2180 16325,2040 16375,2220 16425,2240 16475,2080 16525,2060 16575,2100 16625,2140 16675,2040 16725,2100 16775,2220 16825,2100 16875,2200 16925,2200 16975,2160 17025,2140 17075,2060 17125,2020 17175,2120 17225,2060 17275,2140 17325,2060 17375,2300 17425,2180 17475,2180 17525,2300 17575,2220 17625,2260 17675,2120 17725,2260 17775,2000 17825,2220 17875,2280 17925,2160 17975,2140 18025,2240 18075,2180 18125,2060 18175,2260 18225,2120 18275,2060 18325,2140 18375,2140 18425,2300 18475,2020 18525,2040 18575,2000 18625,2120 18675,2140 18725,2140 18775,2000 18825,2160 18875,2000 18925,2140 18975,2000 19025,2080 19075,2120 19125,2160 19175,1880 19225,1920 19275,1940 19325,2000 19375,2080 19425,2020 19475,2120 19525,2040 19575,2020 19625,1960 19675,1960 19725,2000 19775,2040 19825,2000 19875,2120 19925,2060 19975,2140 20025,2120 20075,2120 20125,2140 20175,2040 20225,2040 20275,2080 20325,2000 20375,2180 20425,2100 20475,2160 20525,2000 20575,2120 20625,2200 20675,2020 20725,1960 20775,2020 20825,2160 20875,2040 20925,2120 20975,2140 21025,2120 21075,1940 21125,2060 21175,2080 21225,2120 21275,2220 21325,2100 21375,2180 21425,2220 21475,2260 21525,2140 21575,2220 21625,2120 21675,2280 21725,2140 21775,2140 21825,2300 21875,2040 21925,2120 21975,2120 22025,2160 22075,2100 22125,2200 22175,2140 22225,2060 22275,2160 22325,2140 22375,1960 22425,2320 22475,2040 22525,2040 22575,1940 22625,2040 22675,2040 22725,1880 22775,1980 22825,2220 22875,2220 22925,2260 22975,2100 23025,2080 23075,2040 23125,2220 23175,2160 23225,2320 23275,2060 23325,2160 23375,2180 23425,2120 23475,2120 23525,2080 23575,2020 23625,2040 23675,2060 23725,2120 23775,2240 23825,2080 23875,2120 23925,1920 23975,2100 24025,2120 24075,2040 24125,2320 24175,2140 24225,2120 24275,2120 24325,2060 24375,2000 24425,2040 24475,2220 24525,2280 24575,2080 24625,2080 24675,2120 24725,2040 24775,2080 24825,2120 24875,2180 24925,2020 24975,2140 25025,2080 25075,2080 25125,2200 25175,2160 25225,2000 25275,2120 25325,2040 25375,2140 25425,2160 25475,2220 25525,2140 25575,2040 25625,2220 25675,1940 25725,2120 25775,2060 25825,2160 25875,2160 25925,1980 25975,2060 26025,1900 26075,2080 26125,2100 26175,2120 26225,2080 26275,2080 26325,2080 26375,2180 26425,2220 26475,2340 26525,2140 26575,2200 26625,2040 26675,2100 26725,2080 26775,2180 26825,2060 26875,2220 26925,2100 26975,2200 27025,2040 27075,2080 27125,2060 27175,1940 27225,2100 27275,2140 27325,2080 27375,2000 27425,2160 27475,2060 27525,2100 27575,2280 27625,2200 27675,2060 27725,2140 27775,2140 27825,2040 27875,2060 27925,1980 27975,2180 28025,2120 28075,1960 28125,2060 28175,2080 28225,2000 28275,2160 28325,2080 28375,2020 28425,2140 28475,2140 28525,2140 28575,2120 28625,2140 28675,2180 28725,2080 28775,2160 28825,2140 28875,2120 28925,1940 28975,1860 29025,2020 29075,2140 29125,2100 29175,2060 29225,2160 29275,2120 29325,2120 29375,2100 29425,2020 29475,2140 29525,1920 29575,2260 29625,2220 29675,2060 29725,2160 29775,1800 29825,2220 29875,2060 29925,2080 29975,2140 30025,1940 30075,1900 30125,1880 30175,1920 30225,1740 30275,1840 30325,1660 30375,1740 30425,1640 30475,1720 30525,1760 30575,1720 30625,1680 30675,1700 30725,1760 30775,1700 30825,1820 30875,1760 30925,1780 30975,1720 31025,1840 31075,1760 31125,1800 31175,1680 31225,1680 31275,1700 31325,1680 31375,1800 31425,1760 31475,1840 31525,1800 31575,1780 31625,1760 31675,1700 31725,1840 31775,1820 31825,1800 31875,1700 31925,1820 31975,1640 32025,1720 32075,1580 32125,1680 32175,1860 32225,1700 32275,1920 32325,1700 32375,1680 32425,1680 32475,1660 32525,1700 32575,1880 32625,1800 32675,1840 32725,1760 32775,1860 32825,1760 32875,1680 32925,1740 32975,1780 33025,1720 33075,1780 33125,1720 33175,1780 33225,1740 33275,1700 33325,1820 33375,1780 33425,1700 33475,1860 33525,1780 33575,1620 33625,1760 33675,1660 33725,1700 33775,1740 33825,1680 33875,1680 33925,1680 33975,1780 34025,1720 34075,1660 34125,1700 34175,1700 34225,1760 34275,1820 34325,1680 34375,1700 34425,1780 34475,1740 34525,1740 34575,1740 34625,1740 34675,1780 34725,1760 34775,1680 34825,1720 34875,1760 34925,1800 34975,1860 35025,1780 35075,1680 35125,1800 35175,1680 35225,1760 35275,1780 35325,1660 35375,1800 35425,1660 35475,1740 35525,1680 35575,1740 35625,1680 35675,1820 35725,1780 35775,1780 35825,1760 35875,1700 35925,1720 35975,1820 36025,1760 36075,1740 36125,1720 36175,1740 36225,1720 36275,1700 36325,1740 36375,1700 36425,1660 36475,1760 36525,1760 36575,1700 36625,1800 36675,1760 36725,1660 36775,1820 36825,1820 36875,1840 36925,1880 36975,1820 37025,1720 37075,1720 37125,1800 37175,1620 37225,1680 37275,1620 37325,1780 37375,1740 37425,1800 37475,1760 37525,1720 37575,1820 37625,1840 37675,1680 37725,1700 37775,1680 37825,1860 37875,1660 37925,1740 37975,1760 38025,1800 38075,1780 38125,1680 38175,1760 38225,1700 38275,1700 38325,1840 38375,1720 38425,1620 38475,1700 38525,1820 38575,1800 38625,1760 38675,1680 38725,1760 38775,1700 38825,1740 38875,1780 38925,1760 38975,1800 39025,1760 39075,1740 39125,1720 39175,1760 39225,1740 39275,1700 39325,1700 39375,1780 39425,1720 39475,1720 39525,1740 39575,1760 39625,1660 39675,1720 39725,1760 39775,1860 39825,1660 39875,1740 39925,1780 39975,1800 40025,1740 40075,1760 40125,1760 40175,1595.652 40175,2400 "
-       class="curve" />
-    <polyline
-       id="polyline49"
-       style="fill:#808080;stroke-dasharray:50, 100"
-       points="0,1880 40196,1880 "
-       class="curve" />
-  </g>
-  <g
-     style="fill:#cccccc"
-     id="track_2"
-     class="genes"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,111.69619)">
-    <polygon
-       x="10007"
-       width="615"
-       to="10622"
-       points="10007,3500 10322,3500 10622,3700 10322,3900 10007,3900 "
-       id="MaV-tir-A_2"
-       class="match" />
-    <polygon
-       x="10623"
-       width="18958"
-       transform="matrix(-1,0,0,-1,40204,7400)"
-       to="29581"
-       points="10623,3500 29281,3500 29581,3700 29281,3900 10623,3900 "
-       id="Mav-gen-no-tir_1"
-       class="match rc" />
-    <polygon
-       x="29582"
-       width="614"
-       transform="matrix(-1,0,0,-1,59778,7400)"
-       to="30196"
-       points="29582,3500 29896,3500 30196,3700 29896,3900 29582,3900 "
-       id="MaV-tir-A_1"
-       class="match rc" />
-  </g>
-  <polygon
-     class="gene"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_19"
-     points="10936,5600 10628,5600 10628,5400 10936,5400 11086,5500 "
-     to="11086"
-     width="458"
-     x="10628"
-     style="fill:#000000"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="CDS"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_19-mRNA-1_cds"
-     points="10686,5900 10628,5900 10628,5100 10686,5100 11086,5500 "
-     to="11086"
-     width="458"
-     x="10628"
-     style="fill:#eed368;fill-opacity:0.80000001"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_11"
-     points="12728,5600 11130,5600 11130,5400 12728,5400 12878,5500 "
-     to="12878"
-     transform="matrix(-0.08600612,0,0,-0.08600612,2524.5806,1001.2142)"
-     width="1748"
-     x="11130"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_11-mRNA-1_cds"
-     points="12478,5900 11130,5900 11130,5100 12478,5100 12878,5500 "
-     to="12878"
-     transform="matrix(-0.08600612,0,0,-0.08600612,2524.5806,1001.2142)"
-     width="1748"
-     x="11130"
-     style="fill:#eed368;fill-opacity:0.80000001" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_10"
-     points="14607,5600 12937,5600 12937,5400 14607,5400 14757,5500 "
-     to="14757"
-     transform="matrix(-0.08600612,0,0,-0.08600612,2841.5992,1001.2142)"
-     width="1820"
-     x="12937"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_10-mRNA-1_cds"
-     points="14357,5900 12937,5900 12937,5100 14357,5100 14757,5500 "
-     to="14757"
-     transform="matrix(-0.08600612,0,0,-0.08600612,2841.5992,1001.2142)"
-     width="1820"
-     x="12937"
-     style="fill:#687eee;fill-opacity:0.80000001" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_9"
-     points="15633,5600 14872,5600 14872,5400 15633,5400 15783,5500 "
-     to="15783"
-     transform="matrix(-0.08600612,0,0,-0.08600612,3096.2633,1001.2142)"
-     width="911"
-     x="14872"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_9-mRNA-1_cds"
-     points="15383,5900 14872,5900 14872,5100 15383,5100 15783,5500 "
-     to="15783"
-     transform="matrix(-0.08600612,0,0,-0.08600612,3096.2633,1001.2142)"
-     width="911"
-     x="14872"
-     style="fill:#687eee;fill-opacity:0.80000001" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_8"
-     points="16244,5600 15825,5600 15825,5400 16244,5400 16394,5500 "
-     to="16394"
-     transform="matrix(-0.08600612,0,0,-0.08600612,3230.7769,1001.2142)"
-     width="569"
-     x="15825"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_8-mRNA-1_cds"
-     points="15994,5900 15825,5900 15825,5100 15994,5100 16394,5500 "
-     to="16394"
-     transform="matrix(-0.08600612,0,0,-0.08600612,3230.7769,1001.2142)"
-     width="569"
-     x="15825"
-     style="fill:#687eee;fill-opacity:0.80000001" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_7"
-     points="17210,5600 16428,5600 16428,5400 17210,5400 17360,5500 "
-     to="17360"
-     transform="matrix(-0.08600612,0,0,-0.08600612,3365.7205,1001.2142)"
-     width="932"
-     x="16428"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_7-mRNA-1_cds"
-     points="16960,5900 16428,5900 16428,5100 16960,5100 17360,5500 "
-     to="17360"
-     transform="matrix(-0.08600612,0,0,-0.08600612,3365.7205,1001.2142)"
-     width="932"
-     x="16428"
-     style="fill:#687eee;fill-opacity:0.80000001" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_6"
-     points="18221,5600 17556,5600 17556,5400 18221,5400 18371,5500 "
-     to="18371"
-     transform="matrix(-0.08600612,0,0,-0.08600612,3549.6875,1001.2142)"
-     width="815"
-     x="17556"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_6-mRNA-1_cds"
-     points="17971,5900 17556,5900 17556,5100 17971,5100 18371,5500 "
-     to="18371"
-     transform="matrix(-0.08600612,0,0,-0.08600612,3549.6875,1001.2142)"
-     width="815"
-     x="17556"
-     style="fill:#eed368;fill-opacity:0.80000001" />
-  <polygon
-     class="gene"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_18"
-     points="20434,5600 18446,5600 18446,5400 20434,5400 20584,5500 "
-     to="20584"
-     width="2138"
-     x="18446"
-     style="fill:#000000"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="CDS"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_18-mRNA-1_cds"
-     points="20184,5900 18446,5900 18446,5100 20184,5100 20584,5500 "
-     to="20584"
-     width="2138"
-     x="18446"
-     style="fill:#eed368;fill-opacity:0.80000001"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="gene"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_17"
-     points="21118,5600 20633,5600 20633,5400 21118,5400 21268,5500 "
-     to="21268"
-     width="635"
-     x="20633"
-     style="fill:#000000"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="CDS"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_17-mRNA-1_cds"
-     points="20868,5900 20633,5900 20633,5100 20868,5100 21268,5500 "
-     to="21268"
-     width="635"
-     x="20633"
-     style="fill:#eed368;fill-opacity:0.80000001"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="gene"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_16"
-     points="21310,5600 21296,5600 21296,5400 21310,5400 21460,5500 "
-     to="21460"
-     width="164"
-     x="21296"
-     style="fill:#000000"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <path
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)"
-     style="fill:#eed368;fill-opacity:0.8"
-     d="m 21296,5900 0,0 0,-800 0,0 164,400 z"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_16-mRNA-1_cds"
-     inkscape:connector-curvature="0"
-     sodipodi:nodetypes="cccccc" />
-  <polygon
-     class="gene"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_15"
-     points="21637,5600 21500,5600 21500,5400 21637,5400 21787,5500 "
-     to="21787"
-     width="287"
-     x="21500"
-     style="fill:#000000"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <path
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)"
-     style="fill:#eed368;fill-opacity:0.8"
-     d="m 21500,5900 0,0 0,-800 0,0 287,400 z"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_15-mRNA-1_cds"
-     inkscape:connector-curvature="0"
-     sodipodi:nodetypes="cccccc" />
-  <polygon
-     class="gene"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_14"
-     points="22255,5600 21833,5600 21833,5400 22255,5400 22405,5500 "
-     to="22405"
-     width="572"
-     x="21833"
-     style="fill:#000000"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="CDS"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_14-mRNA-1_cds"
-     points="22005,5900 21833,5900 21833,5100 22005,5100 22405,5500 "
-     to="22405"
-     width="572"
-     x="21833"
-     style="fill:#eed368;fill-opacity:0.80000001"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="gene"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_13"
-     points="22671,5600 22453,5600 22453,5400 22671,5400 22821,5500 "
-     to="22821"
-     width="368"
-     x="22453"
-     style="fill:#000000"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <path
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)"
-     style="fill:#eed368;fill-opacity:0.8"
-     d="m 22453,5900 0,0 0,-800 0,0 368,400 z"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_13-mRNA-1_cds"
-     inkscape:connector-curvature="0"
-     sodipodi:nodetypes="cccccc" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_5"
-     points="22961,5600 22893,5600 22893,5400 22961,5400 23111,5500 "
-     to="23111"
-     transform="matrix(-0.08600612,0,0,-0.08600612,4416.3712,1001.2142)"
-     width="218"
-     x="22893"
-     style="fill:#000000" />
-  <path
-     transform="matrix(-0.08600612,0,0,-0.08600612,4416.3712,1001.2142)"
-     style="fill:#eed368;fill-opacity:0.8"
-     d="m 22893,5900 0,0 0,-800 0,0 218,400 z"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_5-mRNA-1_cds"
-     inkscape:connector-curvature="0"
-     sodipodi:nodetypes="cccccc" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_4"
-     points="23589,5600 23242,5600 23242,5400 23589,5400 23739,5500 "
-     to="23739"
-     transform="matrix(-0.08600612,0,0,-0.08600612,4500.3992,1001.2142)"
-     width="497"
-     x="23242"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_4-mRNA-1_cds"
-     points="23339,5900 23242,5900 23242,5100 23339,5100 23739,5500 "
-     to="23739"
-     transform="matrix(-0.08600612,0,0,-0.08600612,4500.3992,1001.2142)"
-     width="497"
-     x="23242"
-     style="fill:#eed368;fill-opacity:0.80000001" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_3"
-     points="23934,5600 23800,5600 23800,5400 23934,5400 24084,5500 "
-     to="24084"
-     transform="matrix(-0.08600612,0,0,-0.08600612,4578.0627,1001.2142)"
-     width="284"
-     x="23800"
-     style="fill:#000000" />
-  <path
-     transform="matrix(-0.08600612,0,0,-0.08600612,4578.0627,1001.2142)"
-     style="fill:#eed368;fill-opacity:0.8"
-     d="m 23800,5900 0,0 0,-800 0,0 284,400 z"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_3-mRNA-1_cds"
-     inkscape:connector-curvature="0"
-     sodipodi:nodetypes="cccccc" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_2"
-     points="24329,5600 24141,5600 24141,5400 24329,5400 24479,5500 "
-     to="24479"
-     transform="matrix(-0.08600612,0,0,-0.08600612,4641.3632,1001.2142)"
-     width="338"
-     x="24141"
-     style="fill:#000000" />
-  <path
-     transform="matrix(-0.08600612,0,0,-0.08600612,4641.3632,1001.2142)"
-     style="fill:#eed368;fill-opacity:0.8"
-     d="m 24141,5900 0,0 0,-800 0,0 338,400 z"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_2-mRNA-1_cds"
-     inkscape:connector-curvature="0"
-     sodipodi:nodetypes="cccccc" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_1"
-     points="26234,5600 24531,5600 24531,5400 26234,5400 26384,5500 "
-     to="26384"
-     transform="matrix(-0.08600612,0,0,-0.08600612,4838.7473,1001.2142)"
-     width="1853"
-     x="24531"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_1-mRNA-1_cds"
-     points="25984,5900 24531,5900 24531,5100 25984,5100 26384,5500 "
-     to="26384"
-     transform="matrix(-0.08600612,0,0,-0.08600612,4838.7473,1001.2142)"
-     width="1853"
-     x="24531"
-     style="fill:#ee686f;fill-opacity:0.80000001" />
-  <polygon
-     class="gene"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_12"
-     points="27421,5600 26495,5600 26495,5400 27421,5400 27571,5500 "
-     to="27571"
-     width="1076"
-     x="26495"
-     style="fill:#000000"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="CDS"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_12-mRNA-1_cds"
-     points="27171,5900 26495,5900 26495,5100 27171,5100 27571,5500 "
-     to="27571"
-     width="1076"
-     x="26495"
-     style="fill:#ee686f;fill-opacity:0.80000001"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,55.146852)" />
-  <polygon
-     class="gene rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_0"
-     points="29431,5600 27623,5600 27623,5400 29431,5400 29581,5500 "
-     to="29581"
-     transform="matrix(-0.08600612,0,0,-0.08600612,5379.6398,1001.2142)"
-     width="1958"
-     x="27623"
-     style="fill:#000000" />
-  <polygon
-     class="CDS rc"
-     id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_0-mRNA-1_cds"
-     points="29181,5900 27623,5900 27623,5100 29181,5100 29581,5500 "
-     to="29581"
-     transform="matrix(-0.08600612,0,0,-0.08600612,5379.6398,1001.2142)"
-     width="1958"
-     x="27623"
-     style="fill:#ee686f;fill-opacity:0.80000001" />
-  <g
-     id="track_4"
-     class="genes"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,95.539237)">
-    <polygon
-       style="fill:#000000"
-       x="2336"
-       width="1616"
-       to="3952"
-       points="3802,7200 3952,7300 3802,7400 2336,7400 2336,7200 "
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11"
-       class="gene" />
-    <path
-       style="fill:#db7093;fill-opacity:0.8"
-       d="m 3584,6900 270,400 -270,400 0,0 0,-800 z"
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11-mRNA-1_cds_4"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cccccc" />
-    <rect
-       style="fill:#db7093;fill-opacity:0.8"
-       y="6900"
-       x="2336"
-       width="471"
-       to="2807"
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11-mRNA-1_cds"
-       height="800"
-       class="CDS" />
-    <rect
-       style="fill:#db7093;fill-opacity:0.8"
-       y="6900"
-       x="2847"
-       width="169"
-       to="3016"
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11-mRNA-1_cds_2"
-       height="800"
-       class="CDS" />
-    <rect
-       style="fill:#db7093;fill-opacity:0.8"
-       y="6900"
-       x="3204"
-       width="235"
-       to="3439"
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11-mRNA-1_cds_3"
-       height="800"
-       class="CDS" />
-    <polygon
-       style="fill:#000000"
-       x="3963"
-       width="2083"
-       transform="matrix(-1,0,0,-1,10009,14600)"
-       to="6046"
-       points="5896,7200 6046,7300 5896,7400 3963,7400 3963,7200 "
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_49"
-       class="gene rc" />
-    <polygon
-       style="fill:#db7093;fill-opacity:0.8"
-       x="4224"
-       width="876"
-       transform="matrix(-1,0,0,-1,9324,14600)"
-       to="5100"
-       points="4700,6900 5100,7300 4700,7700 4224,7700 4224,6900 "
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_49-mRNA-1_cds_3"
-       class="CDS rc" />
-    <rect
-       style="fill:#db7093;fill-opacity:0.8"
-       y="6900"
-       x="6022"
-       width="24"
-       to="6046"
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_49-mRNA-1_cds"
-       height="800"
-       class="CDS rc" />
-    <rect
-       style="fill:#db7093;fill-opacity:0.8"
-       y="6900"
-       x="5293"
-       width="501"
-       to="5794"
-       id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_49-mRNA-1_cds_2"
-       height="800"
-       class="CDS rc" />
-  </g>
-  <g
-     style="fill:#008000"
-     id="track_5"
-     class="reads"
-     transform="matrix(0.08600612,0,0,0.15741054,459.74567,57.479396)">
-    <rect
-       style="fill:#008000"
-       y="8600"
-       x="9801"
-       width="1388"
-       to="11189"
-       id="PCR-product_3__ins_site_contig6old9new"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#008000"
-       y="8600"
-       x="29011"
-       width="1857"
-       to="30868"
-       id="PCR-product_5__ins_site_contig6old9new"
-       height="200"
-       class="read rc" />
-  </g>
-  <g
-     style="fill:#fb8b00"
-     id="track_6"
-     class="reads"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,95.539237)">
-    <rect
-       y="9600"
-       x="6461"
-       width="3706"
-       to="10167"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_130350_1093_15216_2"
-       height="200"
-       class="read" />
-    <rect
-       style="fill:#bc6800"
-       y="9800"
-       x="7217"
-       width="6016"
-       to="13233"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_57562_1792_7815"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#bc6800"
-       y="10000"
-       x="7788"
-       width="3197"
-       to="10985"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_15481_7078_10593"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#bc6800"
-       y="9600"
-       x="25107"
-       width="9977"
-       to="35084"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_155679_8101_18973"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#bc6800"
-       y="9800"
-       x="27914"
-       width="6565"
-       to="34479"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_154780_10366_17866_1"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#bc6800"
-       y="10000"
-       x="28671"
-       width="1868"
-       to="30539"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_38084_7012_19540_1"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#bc6800"
-       y="10200"
-       x="29027"
-       width="10563"
-       to="39590"
-       id="m141206_044934_42207_c100718112550000001823147005141543_s1_X0_97986_9177_20910"
-       height="200"
-       class="read rc" />
-    <rect
-       y="10400"
-       x="29673"
-       width="5803"
-       to="35476"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_76454_9266_17368_1"
-       height="200"
-       class="read" />
-    <rect
-       style="fill:#bc6800"
-       y="10600"
-       x="30075"
-       width="7335"
-       to="37410"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_131568_9365_17206"
-       height="200"
-       class="read rc" />
-  </g>
-  <g
-     style="fill:#aaaa00"
-     id="track_7"
-     class="reads"
-     transform="matrix(0.08600612,0,0,0.08600612,459.74567,95.539237)">
-    <rect
-       style="fill:#cccc00"
-       y="11600"
-       x="4282"
-       width="5725"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_154402_0_10145"
-       height="200"
-       class="read rc" />
-    <rect
-       y="11800"
-       x="5125"
-       width="4882"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_116456_4345_13762_1"
-       height="200"
-       class="read" />
-    <rect
-       style="fill:#cccc00"
-       y="12000"
-       x="5404"
-       width="4603"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_83159_3097_16696_1"
-       height="200"
-       class="read rc" />
-    <rect
-       y="12200"
-       x="6458"
-       width="3549"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_5901_2114_7120"
-       height="200"
-       class="read" />
-    <rect
-       y="12400"
-       x="6784"
-       width="3223"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_94286_4677_12002"
-       height="200"
-       class="read" />
-    <rect
-       style="fill:#cccc00"
-       y="12600"
-       x="7234"
-       width="2773"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_100134_12616_21087_1"
-       height="200"
-       class="read rc" />
-    <rect
-       y="12800"
-       x="8218"
-       width="1789"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_148313_0_25416_1"
-       height="200"
-       class="read" />
-    <rect
-       style="fill:#cccc00"
-       y="13000"
-       x="9324"
-       width="683"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_65634_40252_46388"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#cccc00"
-       y="13200"
-       x="9671"
-       width="336"
-       to="10007"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_1419_24988_42731_1"
-       height="200"
-       class="read rc" />
-    <rect
-       y="11600"
-       x="30197"
-       width="1178"
-       to="31375"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_5901_2114_7120:2"
-       height="200"
-       class="read" />
-    <rect
-       y="11800"
-       x="30197"
-       width="3869"
-       to="34066"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_94286_4677_12002:2"
-       height="200"
-       class="read" />
-    <rect
-       y="12000"
-       x="30197"
-       width="4225"
-       to="34422"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_116456_4345_13762_1:2"
-       height="200"
-       class="read" />
-    <rect
-       y="12200"
-       x="30197"
-       width="7617"
-       to="37814"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_148313_0_25416_1:2"
-       height="200"
-       class="read" />
-    <rect
-       style="fill:#cccc00"
-       y="12400"
-       x="30197"
-       width="1038"
-       to="31235"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_1419_24988_42731_1:2"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#cccc00"
-       y="12600"
-       x="30197"
-       width="5069"
-       to="35266"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_65634_40252_46388:2"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#cccc00"
-       y="12800"
-       x="30197"
-       width="2167"
-       to="32364"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_83159_3097_16696_1:2"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#cccc00"
-       y="13000"
-       x="30197"
-       width="4710"
-       to="34907"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_100134_12616_21087_1:2"
-       height="200"
-       class="read rc" />
-    <rect
-       style="fill:#cccc00"
-       y="13200"
-       x="30197"
-       width="4119"
-       to="34316"
-       id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_154402_0_10145:2"
-       height="200"
-       class="read rc" />
-  </g>
-  <!-- 
+	<g class="canvas" clip-path="url(#canvas-clip)" id="canvas_0">
+		<g id="track_0">
+			<g class="axis axis" to="40196" width="40196" x="0" y="400">
+				<line class="axis_line" x1="0" x2="40196" y1="400" y2="400" />
+				<line class="axis_tick" x1="2500" x2="2500" y1="400" y2="500" />
+				<line class="axis_tick" x1="5000" x2="5000" y1="400" y2="500" />
+				<line class="axis_tick" x1="7500" x2="7500" y1="400" y2="500" />
+				<line class="axis_tick" x1="10000" x2="10000" y1="400" y2="500" />
+				<line class="axis_tick" x1="12500" x2="12500" y1="400" y2="500" />
+				<line class="axis_tick" x1="15000" x2="15000" y1="400" y2="500" />
+				<line class="axis_tick" x1="17500" x2="17500" y1="400" y2="500" />
+				<line class="axis_tick" x1="20000" x2="20000" y1="400" y2="500" />
+				<line class="axis_tick" x1="22500" x2="22500" y1="400" y2="500" />
+				<line class="axis_tick" x1="25000" x2="25000" y1="400" y2="500" />
+				<line class="axis_tick" x1="27500" x2="27500" y1="400" y2="500" />
+				<line class="axis_tick" x1="30000" x2="30000" y1="400" y2="500" />
+				<line class="axis_tick" x1="32500" x2="32500" y1="400" y2="500" />
+				<line class="axis_tick" x1="35000" x2="35000" y1="400" y2="500" />
+				<line class="axis_tick" x1="37500" x2="37500" y1="400" y2="500" />
+			</g>
+		</g>
+		<g id="track_1">
+			<polyline class="curve" points="25,2400 25,1600 75,1740 125,1660 175,1560 225,1640 275,1700 325,1620 375,1640 425,1740 475,1680 525,1600 575,1660 625,1680 675,1680 725,1660 775,1740 825,1620 875,1680 925,1760 975,1680 1025,1640 1075,1760 1125,1920 1175,1780 1225,1800 1275,1720 1325,1740 1375,1760 1425,1760 1475,1740 1525,1820 1575,1600 1625,1640 1675,1640 1725,1680 1775,1660 1825,1720 1875,1800 1925,1700 1975,1680 2025,1740 2075,1740 2125,1740 2175,1760 2225,1600 2275,1680 2325,1800 2375,1700 2425,1640 2475,1640 2525,1640 2575,1780 2625,1680 2675,1680 2725,1700 2775,1780 2825,1720 2875,1680 2925,1780 2975,1700 3025,1640 3075,1680 3125,1700 3175,1860 3225,1700 3275,1620 3325,1800 3375,1680 3425,1760 3475,1700 3525,1680 3575,1700 3625,1740 3675,1680 3725,1660 3775,1660 3825,1620 3875,1800 3925,1720 3975,1720 4025,1720 4075,1720 4125,1700 4175,1740 4225,1700 4275,1720 4325,1640 4375,1760 4425,1680 4475,1800 4525,1740 4575,1760 4625,1740 4675,1820 4725,1600 4775,1680 4825,1760 4875,1680 4925,1820 4975,1780 5025,1780 5075,1780 5125,1540 5175,1820 5225,1740 5275,1700 5325,1860 5375,1800 5425,1680 5475,1840 5525,1720 5575,1780 5625,1700 5675,1780 5725,1800 5775,1640 5825,1760 5875,1720 5925,1720 5975,1640 6025,1700 6075,1780 6125,1640 6175,1680 6225,1620 6275,1680 6325,1700 6375,1780 6425,1800 6475,1640 6525,1700 6575,1620 6625,1820 6675,1800 6725,1740 6775,1800 6825,1780 6875,1640 6925,1740 6975,1820 7025,1840 7075,1680 7125,1920 7175,1680 7225,1780 7275,1740 7325,1820 7375,1720 7425,1700 7475,1800 7525,1640 7575,1700 7625,1680 7675,1700 7725,1740 7775,1720 7825,1740 7875,1680 7925,1680 7975,1660 8025,1700 8075,1740 8125,1760 8175,1760 8225,1700 8275,1660 8325,1700 8375,1760 8425,1720 8475,1780 8525,1760 8575,1700 8625,1680 8675,1620 8725,1580 8775,1840 8825,1720 8875,1800 8925,1760 8975,1740 9025,1660 9075,1720 9125,1700 9175,1760 9225,1600 9275,1780 9325,1860 9375,1700 9425,1760 9475,1760 9525,1780 9575,1740 9625,1740 9675,1760 9725,1600 9775,1780 9825,1620 9875,1660 9925,1680 9975,1760 10025,1940 10075,1880 10125,1900 10175,1900 10225,2140 10275,2080 10325,2060 10375,2260 10425,1780 10475,2160 10525,2060 10575,2200 10625,2200 10675,2180 10725,2180 10775,2120 10825,2100 10875,2140 10925,2160 10975,2140 11025,2260 11075,2200 11125,2220 11175,1960 11225,2120 11275,2000 11325,2020 11375,2060 11425,2120 11475,2060 11525,2140 11575,2080 11625,1940 11675,2100 11725,2000 11775,1980 11825,2000 11875,1820 11925,1900 11975,2000 12025,2040 12075,1940 12125,2060 12175,2060 12225,1960 12275,2100 12325,2040 12375,2120 12425,2120 12475,2020 12525,2060 12575,2040 12625,2060 12675,2020 12725,2020 12775,1920 12825,2120 12875,2240 12925,2260 12975,2080 13025,2100 13075,2000 13125,2020 13175,2020 13225,2000 13275,1960 13325,2040 13375,1960 13425,2060 13475,2060 13525,1960 13575,1940 13625,2120 13675,2100 13725,2020 13775,2040 13825,2020 13875,2060 13925,2040 13975,2100 14025,2000 14075,2120 14125,2080 14175,2020 14225,1940 14275,2020 14325,2060 14375,2060 14425,2060 14475,2120 14525,2140 14575,2040 14625,2060 14675,2060 14725,1980 14775,2340 14825,2260 14875,2240 14925,2080 14975,2180 15025,2160 15075,2200 15125,2040 15175,2000 15225,2140 15275,2120 15325,2120 15375,2180 15425,1980 15475,2020 15525,2020 15575,1980 15625,2100 15675,2140 15725,1960 15775,2180 15825,2180 15875,2140 15925,2040 15975,2040 16025,2100 16075,2040 16125,2060 16175,2080 16225,2220 16275,2180 16325,2040 16375,2220 16425,2240 16475,2080 16525,2060 16575,2100 16625,2140 16675,2040 16725,2100 16775,2220 16825,2100 16875,2200 16925,2200 16975,2160 17025,2140 17075,2060 17125,2020 17175,2120 17225,2060 17275,2140 17325,2060 17375,2300 17425,2180 17475,2180 17525,2300 17575,2220 17625,2260 17675,2120 17725,2260 17775,2000 17825,2220 17875,2280 17925,2160 17975,2140 18025,2240 18075,2180 18125,2060 18175,2260 18225,2120 18275,2060 18325,2140 18375,2140 18425,2300 18475,2020 18525,2040 18575,2000 18625,2120 18675,2140 18725,2140 18775,2000 18825,2160 18875,2000 18925,2140 18975,2000 19025,2080 19075,2120 19125,2160 19175,1880 19225,1920 19275,1940 19325,2000 19375,2080 19425,2020 19475,2120 19525,2040 19575,2020 19625,1960 19675,1960 19725,2000 19775,2040 19825,2000 19875,2120 19925,2060 19975,2140 20025,2120 20075,2120 20125,2140 20175,2040 20225,2040 20275,2080 20325,2000 20375,2180 20425,2100 20475,2160 20525,2000 20575,2120 20625,2200 20675,2020 20725,1960 20775,2020 20825,2160 20875,2040 20925,2120 20975,2140 21025,2120 21075,1940 21125,2060 21175,2080 21225,2120 21275,2220 21325,2100 21375,2180 21425,2220 21475,2260 21525,2140 21575,2220 21625,2120 21675,2280 21725,2140 21775,2140 21825,2300 21875,2040 21925,2120 21975,2120 22025,2160 22075,2100 22125,2200 22175,2140 22225,2060 22275,2160 22325,2140 22375,1960 22425,2320 22475,2040 22525,2040 22575,1940 22625,2040 22675,2040 22725,1880 22775,1980 22825,2220 22875,2220 22925,2260 22975,2100 23025,2080 23075,2040 23125,2220 23175,2160 23225,2320 23275,2060 23325,2160 23375,2180 23425,2120 23475,2120 23525,2080 23575,2020 23625,2040 23675,2060 23725,2120 23775,2240 23825,2080 23875,2120 23925,1920 23975,2100 24025,2120 24075,2040 24125,2320 24175,2140 24225,2120 24275,2120 24325,2060 24375,2000 24425,2040 24475,2220 24525,2280 24575,2080 24625,2080 24675,2120 24725,2040 24775,2080 24825,2120 24875,2180 24925,2020 24975,2140 25025,2080 25075,2080 25125,2200 25175,2160 25225,2000 25275,2120 25325,2040 25375,2140 25425,2160 25475,2220 25525,2140 25575,2040 25625,2220 25675,1940 25725,2120 25775,2060 25825,2160 25875,2160 25925,1980 25975,2060 26025,1900 26075,2080 26125,2100 26175,2120 26225,2080 26275,2080 26325,2080 26375,2180 26425,2220 26475,2340 26525,2140 26575,2200 26625,2040 26675,2100 26725,2080 26775,2180 26825,2060 26875,2220 26925,2100 26975,2200 27025,2040 27075,2080 27125,2060 27175,1940 27225,2100 27275,2140 27325,2080 27375,2000 27425,2160 27475,2060 27525,2100 27575,2280 27625,2200 27675,2060 27725,2140 27775,2140 27825,2040 27875,2060 27925,1980 27975,2180 28025,2120 28075,1960 28125,2060 28175,2080 28225,2000 28275,2160 28325,2080 28375,2020 28425,2140 28475,2140 28525,2140 28575,2120 28625,2140 28675,2180 28725,2080 28775,2160 28825,2140 28875,2120 28925,1940 28975,1860 29025,2020 29075,2140 29125,2100 29175,2060 29225,2160 29275,2120 29325,2120 29375,2100 29425,2020 29475,2140 29525,1920 29575,2260 29625,2220 29675,2060 29725,2160 29775,1800 29825,2220 29875,2060 29925,2080 29975,2140 30025,1940 30075,1900 30125,1880 30175,1920 30225,1740 30275,1840 30325,1660 30375,1740 30425,1640 30475,1720 30525,1760 30575,1720 30625,1680 30675,1700 30725,1760 30775,1700 30825,1820 30875,1760 30925,1780 30975,1720 31025,1840 31075,1760 31125,1800 31175,1680 31225,1680 31275,1700 31325,1680 31375,1800 31425,1760 31475,1840 31525,1800 31575,1780 31625,1760 31675,1700 31725,1840 31775,1820 31825,1800 31875,1700 31925,1820 31975,1640 32025,1720 32075,1580 32125,1680 32175,1860 32225,1700 32275,1920 32325,1700 32375,1680 32425,1680 32475,1660 32525,1700 32575,1880 32625,1800 32675,1840 32725,1760 32775,1860 32825,1760 32875,1680 32925,1740 32975,1780 33025,1720 33075,1780 33125,1720 33175,1780 33225,1740 33275,1700 33325,1820 33375,1780 33425,1700 33475,1860 33525,1780 33575,1620 33625,1760 33675,1660 33725,1700 33775,1740 33825,1680 33875,1680 33925,1680 33975,1780 34025,1720 34075,1660 34125,1700 34175,1700 34225,1760 34275,1820 34325,1680 34375,1700 34425,1780 34475,1740 34525,1740 34575,1740 34625,1740 34675,1780 34725,1760 34775,1680 34825,1720 34875,1760 34925,1800 34975,1860 35025,1780 35075,1680 35125,1800 35175,1680 35225,1760 35275,1780 35325,1660 35375,1800 35425,1660 35475,1740 35525,1680 35575,1740 35625,1680 35675,1820 35725,1780 35775,1780 35825,1760 35875,1700 35925,1720 35975,1820 36025,1760 36075,1740 36125,1720 36175,1740 36225,1720 36275,1700 36325,1740 36375,1700 36425,1660 36475,1760 36525,1760 36575,1700 36625,1800 36675,1760 36725,1660 36775,1820 36825,1820 36875,1840 36925,1880 36975,1820 37025,1720 37075,1720 37125,1800 37175,1620 37225,1680 37275,1620 37325,1780 37375,1740 37425,1800 37475,1760 37525,1720 37575,1820 37625,1840 37675,1680 37725,1700 37775,1680 37825,1860 37875,1660 37925,1740 37975,1760 38025,1800 38075,1780 38125,1680 38175,1760 38225,1700 38275,1700 38325,1840 38375,1720 38425,1620 38475,1700 38525,1820 38575,1800 38625,1760 38675,1680 38725,1760 38775,1700 38825,1740 38875,1780 38925,1760 38975,1800 39025,1760 39075,1740 39125,1720 39175,1760 39225,1740 39275,1700 39325,1700 39375,1780 39425,1720 39475,1720 39525,1740 39575,1760 39625,1660 39675,1720 39725,1760 39775,1860 39825,1660 39875,1740 39925,1780 39975,1800 40025,1740 40075,1760 40125,1760 40175,1595.652 40175,2400 " />
+			<polyline class="curve" points="0,1880 40196,1880 " style="stroke-dasharray: 50,100" />
+		</g>
+		<g class="genes" id="track_2">
+			<polygon class="match" id="MaV-tir-A_2" points="10007,3500 10322,3500 10622,3700 10322,3900 10007,3900 " to="10622" width="615" x="10007" />
+			<polygon class="match rc" id="Mav-gen-no-tir_1" points="10623,3500 29281,3500 29581,3700 29281,3900 10623,3900 " to="29581" transform="rotate(180 20102 3700)" width="18958" x="10623" />
+			<polygon class="match rc" id="MaV-tir-A_1" points="29582,3500 29896,3500 30196,3700 29896,3900 29582,3900 " to="30196" transform="rotate(180 29889 3700)" width="614" x="29582" />
+		</g>
+		<g class="genes" id="track_3">
+			<polygon class="gene" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_19" points="10628,5400 10936,5400 11086,5500 10936,5600 10628,5600 " to="11086" width="458" x="10628" />
+			<polygon class="CDS" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_19-mRNA-1_cds" points="10628,5100 10686,5100 11086,5500 10686,5900 10628,5900 " to="11086" width="458" x="10628" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_11" points="11130,5400 12728,5400 12878,5500 12728,5600 11130,5600 " to="12878" transform="rotate(180 12004 5500)" width="1748" x="11130" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_11-mRNA-1_cds" points="11130,5100 12478,5100 12878,5500 12478,5900 11130,5900 " to="12878" transform="rotate(180 12004 5500)" width="1748" x="11130" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_10" points="12937,5400 14607,5400 14757,5500 14607,5600 12937,5600 " to="14757" transform="rotate(180 13847 5500)" width="1820" x="12937" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_10-mRNA-1_cds" points="12937,5100 14357,5100 14757,5500 14357,5900 12937,5900 " to="14757" transform="rotate(180 13847 5500)" width="1820" x="12937" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_9" points="14872,5400 15633,5400 15783,5500 15633,5600 14872,5600 " to="15783" transform="rotate(180 15327.5 5500)" width="911" x="14872" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_9-mRNA-1_cds" points="14872,5100 15383,5100 15783,5500 15383,5900 14872,5900 " to="15783" transform="rotate(180 15327.5 5500)" width="911" x="14872" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_8" points="15825,5400 16244,5400 16394,5500 16244,5600 15825,5600 " to="16394" transform="rotate(180 16109.5 5500)" width="569" x="15825" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_8-mRNA-1_cds" points="15825,5100 15994,5100 16394,5500 15994,5900 15825,5900 " to="16394" transform="rotate(180 16109.5 5500)" width="569" x="15825" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_7" points="16428,5400 17210,5400 17360,5500 17210,5600 16428,5600 " to="17360" transform="rotate(180 16894 5500)" width="932" x="16428" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_7-mRNA-1_cds" points="16428,5100 16960,5100 17360,5500 16960,5900 16428,5900 " to="17360" transform="rotate(180 16894 5500)" width="932" x="16428" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_6" points="17556,5400 18221,5400 18371,5500 18221,5600 17556,5600 " to="18371" transform="rotate(180 17963.5 5500)" width="815" x="17556" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_6-mRNA-1_cds" points="17556,5100 17971,5100 18371,5500 17971,5900 17556,5900 " to="18371" transform="rotate(180 17963.5 5500)" width="815" x="17556" />
+			<polygon class="gene" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_18" points="18446,5400 20434,5400 20584,5500 20434,5600 18446,5600 " to="20584" width="2138" x="18446" />
+			<polygon class="CDS" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_18-mRNA-1_cds" points="18446,5100 20184,5100 20584,5500 20184,5900 18446,5900 " to="20584" width="2138" x="18446" />
+			<polygon class="gene" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_17" points="20633,5400 21118,5400 21268,5500 21118,5600 20633,5600 " to="21268" width="635" x="20633" />
+			<polygon class="CDS" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_17-mRNA-1_cds" points="20633,5100 20868,5100 21268,5500 20868,5900 20633,5900 " to="21268" width="635" x="20633" />
+			<polygon class="gene" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_16" points="21296,5400 21310,5400 21460,5500 21310,5600 21296,5600 " to="21460" width="164" x="21296" />
+			<polygon class="CDS" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_16-mRNA-1_cds" points="21296,5100 21060,5100 21460,5500 21060,5900 21296,5900 " to="21460" width="164" x="21296" />
+			<polygon class="gene" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_15" points="21500,5400 21637,5400 21787,5500 21637,5600 21500,5600 " to="21787" width="287" x="21500" />
+			<polygon class="CDS" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_15-mRNA-1_cds" points="21500,5100 21387,5100 21787,5500 21387,5900 21500,5900 " to="21787" width="287" x="21500" />
+			<polygon class="gene" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_14" points="21833,5400 22255,5400 22405,5500 22255,5600 21833,5600 " to="22405" width="572" x="21833" />
+			<polygon class="CDS" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_14-mRNA-1_cds" points="21833,5100 22005,5100 22405,5500 22005,5900 21833,5900 " to="22405" width="572" x="21833" />
+			<polygon class="gene" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_13" points="22453,5400 22671,5400 22821,5500 22671,5600 22453,5600 " to="22821" width="368" x="22453" />
+			<polygon class="CDS" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_13-mRNA-1_cds" points="22453,5100 22421,5100 22821,5500 22421,5900 22453,5900 " to="22821" width="368" x="22453" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_5" points="22893,5400 22961,5400 23111,5500 22961,5600 22893,5600 " to="23111" transform="rotate(180 23002 5500)" width="218" x="22893" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_5-mRNA-1_cds" points="22893,5100 22711,5100 23111,5500 22711,5900 22893,5900 " to="23111" transform="rotate(180 23002 5500)" width="218" x="22893" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_4" points="23242,5400 23589,5400 23739,5500 23589,5600 23242,5600 " to="23739" transform="rotate(180 23490.5 5500)" width="497" x="23242" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_4-mRNA-1_cds" points="23242,5100 23339,5100 23739,5500 23339,5900 23242,5900 " to="23739" transform="rotate(180 23490.5 5500)" width="497" x="23242" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_3" points="23800,5400 23934,5400 24084,5500 23934,5600 23800,5600 " to="24084" transform="rotate(180 23942 5500)" width="284" x="23800" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_3-mRNA-1_cds" points="23800,5100 23684,5100 24084,5500 23684,5900 23800,5900 " to="24084" transform="rotate(180 23942 5500)" width="284" x="23800" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_2" points="24141,5400 24329,5400 24479,5500 24329,5600 24141,5600 " to="24479" transform="rotate(180 24310 5500)" width="338" x="24141" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_2-mRNA-1_cds" points="24141,5100 24079,5100 24479,5500 24079,5900 24141,5900 " to="24479" transform="rotate(180 24310 5500)" width="338" x="24141" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_1" points="24531,5400 26234,5400 26384,5500 26234,5600 24531,5600 " to="26384" transform="rotate(180 25457.5 5500)" width="1853" x="24531" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_1-mRNA-1_cds" points="24531,5100 25984,5100 26384,5500 25984,5900 24531,5900 " to="26384" transform="rotate(180 25457.5 5500)" width="1853" x="24531" />
+			<polygon class="gene" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_12" points="26495,5400 27421,5400 27571,5500 27421,5600 26495,5600 " to="27571" width="1076" x="26495" />
+			<polygon class="CDS" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_12-mRNA-1_cds" points="26495,5100 27171,5100 27571,5500 27171,5900 26495,5900 " to="27571" width="1076" x="26495" />
+			<polygon class="gene rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_0" points="27623,5400 29431,5400 29581,5500 29431,5600 27623,5600 " to="29581" transform="rotate(180 28602 5500)" width="1958" x="27623" />
+			<polygon class="CDS rc" id="maker-MaV-gen-2_0-exonerate_est2genome-gene-0_0-mRNA-1_cds" points="27623,5100 29181,5100 29581,5500 29181,5900 27623,5900 " to="29581" transform="rotate(180 28602 5500)" width="1958" x="27623" />
+		</g>
+		<g class="genes" id="track_4">
+			<polygon class="gene" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11" points="2336,7200 3802,7200 3952,7300 3802,7400 2336,7400 " to="3952" width="1616" x="2336" />
+			<polygon class="CDS" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11-mRNA-1_cds_4" points="3584,6900 3454,6900 3854,7300 3454,7700 3584,7700 " to="3854" width="270" x="3584" />
+			<rect class="CDS" height="800" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11-mRNA-1_cds" to="2807" width="471" x="2336" y="6900" />
+			<rect class="CDS" height="800" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11-mRNA-1_cds_2" to="3016" width="169" x="2847" y="6900" />
+			<rect class="CDS" height="800" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_11-mRNA-1_cds_3" to="3439" width="235" x="3204" y="6900" />
+			<polygon class="gene rc" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_49" points="3963,7200 5896,7200 6046,7300 5896,7400 3963,7400 " to="6046" transform="rotate(180 5004.5 7300)" width="2083" x="3963" />
+			<polygon class="CDS rc" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_49-mRNA-1_cds_3" points="4224,6900 4700,6900 5100,7300 4700,7700 4224,7700 " to="5100" transform="rotate(180 4662 7300)" width="876" x="4224" />
+			<rect class="CDS rc" height="800" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_49-mRNA-1_cds" to="6046" width="24" x="6022" y="6900" />
+			<rect class="CDS rc" height="800" id="maker-9_contig_425031_length-exonerate_est2genome-gene-0_49-mRNA-1_cds_2" to="5794" width="501" x="5293" y="6900" />
+		</g>
+		<g class="reads" id="track_5">
+			<rect class="read rc" height="200" id="PCR-product_3__ins_site_contig6old9new" to="11189" width="1388" x="9801" y="8600" />
+			<rect class="read rc" height="200" id="PCR-product_5__ins_site_contig6old9new" to="30868" width="1857" x="29011" y="8600" />
+		</g>
+		<g class="reads" id="track_6">
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_130350_1093_15216_2" to="10167" width="3706" x="6461" y="9600" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_57562_1792_7815" to="13233" width="6016" x="7217" y="9800" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_15481_7078_10593" to="10985" width="3197" x="7788" y="10000" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_155679_8101_18973" to="35084" width="9977" x="25107" y="9600" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_154780_10366_17866_1" to="34479" width="6565" x="27914" y="9800" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_38084_7012_19540_1" to="30539" width="1868" x="28671" y="10000" />
+			<rect class="read rc" height="200" id="m141206_044934_42207_c100718112550000001823147005141543_s1_X0_97986_9177_20910" to="39590" width="10563" x="29027" y="10200" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_76454_9266_17368_1" to="35476" width="5803" x="29673" y="10400" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_131568_9365_17206" to="37410" width="7335" x="30075" y="10600" />
+		</g>
+		<g class="reads" id="track_7">
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_154402_0_10145" to="10007" width="5725" x="4282" y="11600" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_116456_4345_13762_1" to="10007" width="4882" x="5125" y="11800" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_83159_3097_16696_1" to="10007" width="4603" x="5404" y="12000" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_5901_2114_7120" to="10007" width="3549" x="6458" y="12200" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_94286_4677_12002" to="10007" width="3223" x="6784" y="12400" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_100134_12616_21087_1" to="10007" width="2773" x="7234" y="12600" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_148313_0_25416_1" to="10007" width="1789" x="8218" y="12800" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_65634_40252_46388" to="10007" width="683" x="9324" y="13000" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_1419_24988_42731_1" to="10007" width="336" x="9671" y="13200" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_5901_2114_7120:2" to="31375" width="1178" x="30197" y="11600" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_94286_4677_12002:2" to="34066" width="3869" x="30197" y="11800" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_116456_4345_13762_1:2" to="34422" width="4225" x="30197" y="12000" />
+			<rect class="read" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_148313_0_25416_1:2" to="37814" width="7617" x="30197" y="12200" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_1419_24988_42731_1:2" to="31235" width="1038" x="30197" y="12400" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_65634_40252_46388:2" to="35266" width="5069" x="30197" y="12600" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_83159_3097_16696_1:2" to="32364" width="2167" x="30197" y="12800" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_100134_12616_21087_1:2" to="34907" width="4710" x="30197" y="13000" />
+			<rect class="read rc" height="200" id="m150416_121958_42207_c100759252550000001823162807221585_s1_p0_154402_0_10145:2" to="34316" width="4119" x="30197" y="13200" />
+		</g>
+	</g>
+	<!-- 
 	Generated using the Perl SVG Module V2.59
 	by Ronan Oger
 	Info: http://www.roitsystems.com/
  -->
-  <text
-     xml:space="preserve"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     x="266.38559"
-     y="275.43472"
-     id="text4263"
-     sodipodi:linespacing="125%"
-     transform="scale(1.0000448,0.99995521)"><tspan
-       sodipodi:role="line"
-       id="tspan4265"
-       x="266.38559"
-       y="275.43472"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start">GC </tspan></text>
-  <text
-     transform="scale(1.0000448,0.99995521)"
-     sodipodi:linespacing="125%"
-     id="text4267"
-     y="520.7868"
-     x="80.961067"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     xml:space="preserve"><tspan
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start"
-       y="520.7868"
-       x="80.961067"
-       id="tspan4269"
-       sodipodi:role="line">Mavirus</tspan></text>
-  <text
-     xml:space="preserve"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     x="218.6068"
-     y="753.38843"
-     id="text4271"
-     sodipodi:linespacing="125%"
-     transform="scale(1.0000448,0.99995521)"><tspan
-       sodipodi:role="line"
-       id="tspan4273"
-       x="218.6068"
-       y="753.38843"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start"
-         id="tspan4275"> C. r.</tspan></tspan></text>
-  <text
-     transform="scale(1.0000448,0.99995521)"
-     sodipodi:linespacing="125%"
-     id="text4277"
-     y="1111.4854"
-     x="121.9662"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     xml:space="preserve"><tspan
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start"
-       y="1111.4854"
-       x="121.9662"
-       id="tspan4279"
-       sodipodi:role="line">PacBio</tspan></text>
-  <text
-     xml:space="preserve"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     x="224.11555"
-     y="1433.2354"
-     id="text4281"
-     sodipodi:linespacing="125%"
-     transform="scale(1.0000448,0.99995521)"><tspan
-       sodipodi:role="line"
-       id="tspan4283"
-       x="224.11555"
-       y="1433.2354"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:80.78838348px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start">PCR</tspan></text>
-  <text
-     transform="scale(1.0000448,0.99995521)"
-     sodipodi:linespacing="125%"
-     id="text4428"
-     y="85.564354"
-     x="443.66412"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:60.59128952px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     xml:space="preserve"><tspan
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:60.59128952px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start"
-       y="85.564354"
-       x="443.66412"
-       id="tspan4430"
-       sodipodi:role="line">0</tspan></text>
-  <text
-     xml:space="preserve"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:60.59128952px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     x="1264.2012"
-     y="85.564354"
-     id="text4432"
-     sodipodi:linespacing="125%"
-     transform="scale(1.0000448,0.99995521)"><tspan
-       sodipodi:role="line"
-       id="tspan4434"
-       x="1264.2012"
-       y="85.564354"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:60.59128952px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start">10 k</tspan></text>
-  <text
-     transform="scale(1.0000448,0.99995521)"
-     sodipodi:linespacing="125%"
-     id="text4436"
-     y="85.564354"
-     x="2122.6909"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:60.59128952px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     xml:space="preserve"><tspan
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:60.59128952px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start"
-       y="85.564354"
-       x="2122.6909"
-       id="tspan4438"
-       sodipodi:role="line">20 k</tspan></text>
-  <text
-     xml:space="preserve"
-     style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:60.59128952px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     x="2982.9575"
-     y="85.564354"
-     id="text4440"
-     sodipodi:linespacing="125%"
-     transform="scale(1.0000448,0.99995521)"><tspan
-       sodipodi:role="line"
-       id="tspan4442"
-       x="2982.9575"
-       y="85.564354"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:60.59128952px;line-height:125%;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Medium';text-align:start;writing-mode:lr-tb;text-anchor:start">30 k</tspan></text>
-  <path
-     style="fill:#888888;fill-rule:evenodd;stroke:#000000;stroke-width:6.05912893;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-     d="m 3058.8256,129.94168 0,0.012"
-     id="path4507"
-     inkscape:connector-curvature="0" />
-  <line
-     class="axis_line"
-     x1="459.74567"
-     x2="3916.8479"
-     y1="129.94168"
-     y2="129.94168"
-     id="line4511"
-     style="stroke:#000000;stroke-width:4.03941929;stroke-miterlimit:4;stroke-dasharray:none" />
-  <line
-     style="stroke:#000000;stroke-width:4.03941917;stroke-miterlimit:4;stroke-dasharray:none"
-     id="line4533"
-     y2="1539.7933"
-     y1="1539.7933"
-     x2="3916.8479"
-     x1="459.74567"
-     class="axis_line" />
 </svg>

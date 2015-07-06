@@ -21,6 +21,5 @@ bio2svg --width 10000 --fa MaV-is-CrEc-001.ctg.fa --region MaV-is-CrEc-001 \
 
 #+END_SRC
 
-[[./etc/bio2svg-sample.svg?raw=true]]
 [[etc/bio2svg-sample.png]]
-[[etc/bio2svg-sample.pdf]]
+[[etc/bio2svg-sample.svg]]
