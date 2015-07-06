@@ -73,10 +73,10 @@ my $svg = init_svg();
 
 my $cvs = $svg->canvas();
 
-print Dumper(\%opt);
+#print STDERR Dumper(\%opt);
 
 fasta2svg();
-gff2svg() if $opt{gff};
+gff2svg(gff => $_) foreach @{$opt{gff}};
 bam2svg(bam => $_) foreach @{$opt{bam}};
 
 #print STDERR Dumper($svg);
@@ -116,7 +116,7 @@ sub prep{
         \%opt, qw(
                      out=s
                      fa|fasta=s
-                     gff=s
+                     gff=s@
                      gff_version=s
                      bam=s@
                      samtools_path=s
@@ -248,9 +248,10 @@ sub finish_svg{
 
 sub gff2svg{
     my (%p) = @_;
-    $L->info("Processing GFF");
+    $L->info("Processing GFF\t[$p{gff}]");
 
     my %target_types = (
+        match => 1,
         gene => 1,
         CDS => 1,
         exon => 1,
@@ -259,7 +260,7 @@ sub gff2svg{
 
     # Initialise input stream
     my $gp = Gff::Parser->new(
-        file => $opt{gff},
+        file => $p{gff},
         region => {
             id => $opt{id},
             from => $opt{from},
@@ -296,62 +297,47 @@ sub gff2svg{
             #            my $last_exon = pop @exons;
             my $last_cds = pop @cdss;
 
-            # $track->arrow(
-            #     id => $last_exon->id,
-            #     class => "exon",
-            #     x => $last_exon->start,
-            #     to => $last_exon->end,
-            #     -strand => $last_exon->strand,
-            # );
-
-            # foreach (@exons) {
-            #     $track->block(
-            #         id => $_->id,
-            #         class => "exon",
-            #         x => $_->start,
-            #         to => $_->end,
-            #         -strand => $_->strand,
-            #     );
-            # }
 
             $track->arrow(
-                id => $last_cds->id,
-                class => "CDS",
-                x => $last_cds->start,
-                to => $last_cds->end,
-                -strand => $last_cds->strand,
-                -layout => {
-                    feature_rel_height => .6,
-                    arrow_rel_width => .8,
-                },
-            );
-
-            foreach (@cdss) {
-                $track->block(
-                    id => $_->id,
-                    class => "CDS",
-                    x => $_->start,
-                    to => $_->end,
-                    -strand => $_->strand,
-                    -layout => {
-                        feature_rel_height => .6,
-                    },
-                );
-            }
-
-            $track->arrow(
-                id => $gene->id,
+                id => idfy($gene->id),
                 x => $gene->start,
                 to => $gene->end,
                 -strand => $gene->strand,
                 class => "gene",
                 -layout => {
-                    arrow_rel_height => 3,
-                    arrow_rel_width => 2.4,
+#                    arrow_rel_height => 3,
+#                    arrow_rel_width => 2.4,
                     feature_rel_height => .2,
 
                 },
             );
+
+            $track->arrow(
+                id => idfy($last_cds->id),
+                class => "CDS",
+                x => $last_cds->start,
+                to => $last_cds->end,
+                -strand => $last_cds->strand,
+                -layout => {
+                    feature_rel_height => .8,
+                    arrow_rel_width => .5,
+                },
+            );
+
+
+            foreach (@cdss) {
+                $track->block(
+                    id => idfy($_->id),
+                    class => "CDS",
+                    x => $_->start,
+                    to => $_->end,
+                    -strand => $_->strand,
+                    -layout => {
+                        feature_rel_height => .8,
+                    },
+                );
+            }
+
 
         }
     }
@@ -364,13 +350,14 @@ sub gff2svg{
 
 sub bam2svg{
     my (%p) = @_;
-    $L->info("Processing BAM");
+    $L->info("Processing BAM\t[$p{bam}]");
 
     my $track = $cvs->track(
         -type => "bam",
 	class => "reads",
         -layout => {
-	    	    track_row_height => 100,
+            track_row_height => 200,
+            track_padding => 400,
         },
     );
 
@@ -397,7 +384,7 @@ sub bam2svg{
 sub fasta2svg{
     my (%p) = @_;
 
-    $L->info("Processing FASTA");
+    $L->info("Processing FASTA\t[$opt{fa}]");
 
     unless ( -e $opt{fa}.".fai") {
         qx($opt{samtools} faidx $opt{fa});
@@ -415,7 +402,9 @@ sub fasta2svg{
 
     my $axis_track = $cvs->track(
         -layout => {
-            track_row_height => 100
+            track_padding => 400,
+            track_row_height => 200,
+            axis_tick_height => 100,
         }
     );
 
@@ -424,6 +413,14 @@ sub fasta2svg{
         to => $opt{to},
         class => "axis",
     );
+
+    # $axis_track->text(
+    #     x => $opt{from}+200,
+    #     y => 500,
+    #     "font-size" => 300,
+    #     "font-family" => "Fira Mono",
+    #     "font-weight" => "bold"
+    # )->cdata("GC");
 
     # GC
     my $faf = File::Temp->new( SUFFIX => '.fa' )->filename;
@@ -443,6 +440,7 @@ sub fasta2svg{
     my $gc_track = $cvs->track(
         -type => 'plot',
         -layout => {
+            track_padding => 400,
             track_height => 1000,
         }
     );
@@ -452,6 +450,7 @@ sub fasta2svg{
         y => \@y,
         -ymin => 0,
         -ymax => 1,
+        -fillable => 1,
     );
 
     my $median = (sort{$a<=>$b}@y)[@y/2];
