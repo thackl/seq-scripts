@@ -274,13 +274,32 @@ sub gff2svg{
         class => "genes",
         -type => "gff",
         -layout => {
+            track_padding => 400,
             stacking => undef,
-	    track_row_height => 500,
+	    track_row_height => 1000,
         }
     );
 
     while (my $gs = $gp->next_groups) {
+        # matches
+        foreach my $g ( sort{$a->{primary}->start <=> $b->{primary}->start}@{$gs->{groups}{match}} ) {
+            my $match = $g->{primary};
+            $track->arrow(
+                id => idfy($match->id),
+                x => $match->start,
+                to => $match->end,
+                -strand => $match->strand,
+                class => "match",
+                -layout => {
+#                    arrow_rel_height => 3,
+#                    arrow_rel_width => 2.4,
+                    feature_rel_height => .4,
 
+                },
+            );
+        }
+
+        # genes
         foreach my $g ( sort{$a->{primary}->start <=> $b->{primary}->start}@{$gs->{groups}{gene}} ) {
             my $gene = $g->{primary};
             #my @exons = sort{$a->start <=> $b->start}@{$g->{children}{exon}};
