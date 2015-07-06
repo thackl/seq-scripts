@@ -1,8 +1,8 @@
-*** bio2svg
-**** Dependencies
+**** bio2svg
+***** Dependencies
 - [[http://search.cpan.org/~ronan/SVG-2.33/][SVG-2.33]]
 
-**** Usage
+***** Usage
 #+BEGIN_SRC sh
 git clone https://github.com/thackl/perl5lib-Gff.git
 git clone https://github.com/thackl/perl5lib-SVG-Bio.git
@@ -10,6 +10,12 @@ git clone https://github.com/thackl/perl5lib-SVG-Bio.git
 export PERL5LIB:/path/to/perl5lib-Gff/lib:/path/to/perl5lib-SVG-Bio/lib:$PERL5LIB;
 
 bio2svg --fasta FA --region REGION --gff GFF --bam BAM > SVG
+#+END_SRC
+
+Region can be either a sequence ID (Chr4) or an ID with range (Chr4:521-15521).
+
+***** Sample
+#+BEGIN_SRC 
 
 bio2svg --width 10000 --fa MaV-is-CrEc-001.ctg.fa --region MaV-is-CrEc-001 \
  --gff mav-regions.gff --gff MaV-gen-2.0.maker.lifted.gff \
