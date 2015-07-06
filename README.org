@@ -2,6 +2,7 @@
 **** Dependencies
 - [[http://search.cpan.org/~ronan/SVG-2.33/][SVG-2.33]]
 
+**** Usage
 #+BEGIN_SRC sh
 git clone https://github.com/thackl/perl5lib-Gff.git
 git clone https://github.com/thackl/perl5lib-SVG-Bio.git
@@ -20,4 +21,4 @@ bio2svg --width 10000 --fa MaV-is-CrEc-001.ctg.fa --region MaV-is-CrEc-001 \
 
 #+END_SRC
 
-[[./etc/bio2svg-sample.svg]]
+[[./etc/bio2svg-sample.svg?raw=true]]
