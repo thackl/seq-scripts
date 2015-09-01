@@ -1,0 +1,420 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+use Data::Dumper;
+use Log::Log4perl qw(:no_extra_logdie_message);
+use Log::Log4perl::Level;
+use FindBin qw($Script);
+
+use Getopt::Long;
+use Pod::Usage;
+
+use Handy 'require_exe';
+
+use Fasta::Parser;
+use Fasta::Seq;
+use Fasta::Store;
+
+use Cfg;
+
+our $VERSION = '1.0.0';
+
+=head1 SYNOPSIS
+
+  bcf-alt-consensus --ref genome.fa --bcf genome.bcf --var 500 --out genome-v500.fa
+
+=head1 OPTIONS
+
+=over
+
+=item --ref <FA>
+
+Reference genome file in FASTA format.
+
+=item --bcf <BCF/VCF>
+
+Variant annotations in BCF/VCF format, sorted by coordinates.
+
+=item [--out <FA>] [STDOUT]
+
+Output file for generated sequences.
+
+=item [--var <INT>] [MAX]
+
+Variance rate as 1/--var. Defaults to max available rate based on given number
+of available variance annotations.
+
+=item [--seed <INT>]
+
+Random seed.
+
+=item [--debug]
+
+Enable debugging messages.
+
+=back
+
+=head1 AUTHOR
+
+Thomas Hackl S<thackl@lim4.de>
+
+=cut
+
+# get a logger
+my $L = Log::Log4perl::get_logger();
+Log::Log4perl->init( \(q(
+        log4perl.rootLogger                     = INFO, Screen
+        log4perl.appender.Screen                = Log::Log4perl::Appender::Screen
+        log4perl.appender.Screen.stderr         = 1
+        log4perl.appender.Screen.layout         = PatternLayout
+        log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$Script.q(] %m%n
+)));
+
+$L->level($INFO);
+
+my %opt = init();
+
+use constant {
+    CHR => 0,
+    POS => 1,
+    ID => 2,
+    REF => 3,
+    ALT => 4,
+    QUA => 5,
+    FIL => 6,
+    INF => 7,
+    SPL => 8
+};
+
+##----------------------------------------------------------------------------##
+# analyse input
+
+$L->info("Indexing reference: $opt{ref}");
+my $fs = Fasta::Store->new(file => $opt{ref});
+
+my $var_tot = qx/bcftools stats -c all $opt{bcf} | grep '^SN' | grep -oP '(?<=records:)\\s+(\\d+)'/;
+chomp($var_tot);
+$L->info("Number of available variant annotations: $var_tot");
+
+open($opt{bfh}, "bcftools view -H $opt{bcf} |") or $L->logdie($!);
+
+open(FAI, $opt{ref}.".fai") or $L->logdie($!);
+my $ref_len = 0;
+my %ref_ids;
+while(my $fai = <FAI>){
+    my ($id, $len) = split("\t", $fai);
+    $ref_ids{$id} = 0;
+    $ref_len+= $len;
+}
+close FAI;
+
+my $var_max = sprintf("%.2f", $ref_len/$var_tot);
+my $var_sample;
+my $var = $opt{var};
+
+if($var){
+    if($var < $var_max){
+        $L->logdie("1/$var variants requested, but at max 1/$var_max variant annotations available");
+    }
+    $var_sample = $var_max/$var;
+    $L->info("Sampling ".sprintf("%.2f", $var_sample*100)."% of variants to result in estimated rate of: 1/". $var);
+}
+
+##----------------------------------------------------------------------------##
+# preping some globals
+
+my $c=0;   # var counter
+my $adj=0; # adjust coordinates by previously introduced indels
+my $d;     # debug msg
+my ($ds,$ds2);
+my %fa_ids;
+
+my %deiupac = load_deiupac();
+
+
+##----------------------------------------------------------------------------##
+# looping variances
+
+my $var_10 = int($var_sample * $var_tot / 10);
+my $var_p = 0;
+
+$L->info("Mutating");
+$|++;
+printf STDERR ("%-s%% ", 0) if $L->level <= $INFO;
+
+my $pos;
+my @vars = (); # cache vars at same pos
+my $min_var_pos = 0;
+my $fa; # current seq
+
+# Loop over the input stream
+while (my $var = readline($opt{bfh})) {
+    my @var = split("\t", $var);
+
+    if (!$pos || $pos != $var[POS]-1+$adj) {
+        process_vars_at_pos() if @vars;
+
+        if ( $var[POS] < $min_var_pos ){ # deletions can remove upcoming SNPs!
+            while ($var = readline($opt{bfh})) {
+                @var = split("\t", $var);
+                last unless $var[POS] < $min_var_pos
+            }
+        }
+
+        @vars = (\@var);
+        $pos = $var[POS]-1+$adj;
+    }else {
+        push @vars, \@var;
+    }
+}
+
+# TODO: last line!
+
+print STDERR "\n" if $L->level <= $INFO;
+$|--;
+
+close $opt{bfh};
+
+$L->info("Finishing off output");
+
+if($fa){
+    $ref_ids{$fa->id}++;
+    print {$opt{ofh}} $fa->string(80);
+}
+
+
+# output non-modified refseqs
+foreach my $rid (sort keys %ref_ids){
+    next if $ref_ids{$rid}; # modified and outputted
+    print {$opt{ofh}} $fs->fetch($rid)->string(80);
+}
+
+close FAO;
+
+
+
+##----------------------------------------------------------------------------##
+
+=head2 process_vars_at_pos
+
+=cut
+
+sub process_vars_at_pos{
+    # sampling
+    #if($var && (my $var_rand = rand(1)) > $var_sample){
+    #    $L->debug("Skipping $var_rand\n");
+    #    return;
+    #}
+
+    # pick random var at pos
+    my @var = @{$vars[int(rand(@vars))]};
+
+    # retrieve current seq
+    if (!$fa || $fa->id ne $var[CHR]) {
+        if($fa){
+            $ref_ids{$fa->id}++;
+            print FAO $fa->string(80);
+        }
+        $fa = $fs->fetch($var[CHR]);
+        $adj = 0; # reset adj if seq is loaded first on every new seq
+    }
+
+    $min_var_pos = $var[POS]+1;
+
+    my @alt = split(",",$var[ALT]);
+
+    if (length($var[REF]) == 1 && length($alt[0]) == 1 ) { # snp
+        my %nucs = ($var[REF] => 1);
+        foreach my $alt ( @alt ) {
+            $nucs{$_}++ for @{$deiupac{$alt}};
+        }
+        delete $nucs{$var[REF]};
+        my @true_alts = keys %nucs;
+        return unless @true_alts; # possible for N in ref etc...
+
+        my $rand_alt = $true_alts[int(rand(@true_alts))];
+
+        if ($L->level <= $DEBUG) {
+            $d = "SNP: $pos\n";
+            $d.= " "x 5 .".\n";
+            $d.= substr($fa->seq, $pos-5, 11)."\n";
+        }
+
+        substr($fa->{seq}, $pos, 1, $rand_alt);
+
+        if ($L->level <= $DEBUG){
+            $d.= substr($fa->seq, $pos-5, 11)."\n";
+        }
+
+    # } elsif ($var[LEN] > 0) { # ins
+    #     if ($L->level <= $DEBUG) {
+    #         $d = "INS: $pos+$adj\n";
+    #         $d.= " "x 5 .">\n";
+    #         $d.= substr($fa->seq, $pos-5, 5). " "x $var[LEN]. substr($fa->seq, $pos, 5)."\n";
+    #     }
+
+    #     substr($fa->{seq}, $pos, 0, deiupac($var[CBP]));
+    #     $adj+=$var[LEN];
+
+    #     if ($L->level >= $DEBUG){
+    #         $d.= substr($fa->seq, $pos-5, 10+ $var[LEN])."\n";
+    #     }
+
+    # } elsif ($var[LEN] < 0) { # del
+    #     if ($L->level >= $DEBUG) {
+    #         $d = "INS: $pos+$adj\n";
+    #         $d.= " "x 5 ."<\n";
+    #         $d.= substr($fa->seq, $pos-5, 10+abs($var[LEN]))."\n";
+    #     }
+
+    #     substr($fa->{seq}, $pos, abs($var[LEN]), "");
+    #     $adj+=$var[LEN];
+
+    #     if ($L->level <= $DEBUG){
+    #         $d.= substr($fa->seq, $pos-5, 5). " "x abs($var[LEN]). substr($fa->seq, $pos, 5);
+    #     }
+    } else {
+        if ($L->level >= $DEBUG) {
+            $ds = substr($fa->seq, $pos-5, 25);
+        }
+
+        my $rand_alt = $alt[int(rand(@alt))];
+        my $ref_alt = substr($fa->{seq}, $pos, length($var[REF]), $rand_alt);
+        my $delta = length($rand_alt) - length($ref_alt);
+        $adj+= $delta;
+
+        if ($L->level <= $DEBUG){
+
+            my $ds2 = substr($fa->seq, $pos-5, 25);
+            if ( $delta > 0 ){
+                $d = "INS: $pos\n";
+                substr($ds, 5+length($ref_alt), 0, "-" x $delta);
+            }elsif ( $delta < 0 ){
+                $d = "DEL: $pos\n";
+                substr($ds2, 5+length($rand_alt), 0, "-" x abs($delta));
+                $min_var_pos += abs($delta) +1;
+            }else {
+                $d = "SUB: $pos\n";
+            }
+
+            $d.= $ds."\n".$ds2."\n";
+        }
+    }
+
+    if ($L->level <= $DEBUG){
+        $L->debug("@var","$d\n");
+    }
+
+    if($L->level <= $INFO){
+        unless($c++%$var_10){
+            $var_p+=10;
+            printf STDERR ("%-s%% ", $var_p);
+        }
+    }
+}
+
+=head2 init
+
+=cut
+
+sub init{
+    no warnings 'qw';
+
+    my (%p) = @_;
+
+    # GetOptions
+    my $argv = join(" ", @ARGV);
+
+    my %def = ();
+    my %opt = ();
+
+    GetOptions(
+        \%opt, qw(
+                     ref=s
+                     bcf=s
+                     out=s
+                     var=i
+                     seed=i
+                     version|V!
+                     debug|D!
+                     help|h!
+             )
+    ) or $L->logcroak('Failed to "GetOptions"');
+
+    $opt{argv} = $argv; # store it just in case
+
+    # help
+    $opt{help} && pod2usage(1);
+
+    # version
+    if ($opt{version}) {
+        print "$VERSION\n";
+        exit 0;
+    }
+
+    $L->logdie("unused argument: @ARGV") if @ARGV;
+
+    %opt = (%def, %opt);
+
+    # required stuff
+    for (qw(ref bcf)) {
+        if (ref $opt{$_} eq 'ARRAY') {
+            pod2usage("required: --$_") unless @{$opt{$_}}
+        } else {
+            pod2usage("required: --$_") unless defined ($opt{$_})
+        }
+    }
+
+    require_exe("bcftools", version => "1.2");
+
+    if($opt{out}){
+        open($opt{ofh}, '>', $opt{out}) or $L->logdie($!);
+    }elsif(! $opt{out} || $opt{out} eq '-') {
+        open($opt{ofh}, ">&=STDOUT") or $L->logdie($!);
+    }
+
+    srand($opt{seed}) if defined $opt{seed};
+
+    # debug level
+    $L->level($DEBUG) if $opt{debug};
+    $L->debug('Verbose level set to DEBUG');
+    $L->debug(Dumper(\%opt));
+
+    return %opt;
+}
+
+sub load_deiupac{
+    return (
+	a => [qw/a/],
+	t => [qw/t/],
+	c => [qw/c/],
+	g => [qw/g/],
+	r => [qw/a g/],          # a or g
+	y => [qw/c t/],          # c or t
+	s => [qw/g c/],          # g or c
+	w => [qw/a t/],          # a or t
+	k => [qw/g t/],          # g or t
+	m => [qw/a c/],          # a or c
+	b => [qw/c g t/],        # c or g or t
+	d => [qw/a g t/],        # a or g or t
+	h => [qw/a c t/],        # a or c or t
+	v => [qw/a c g/],        # a or c or g
+	n => [qw/a c g t/],      # any base
+	A => [qw/A/],
+	T => [qw/T/],
+	C => [qw/C/],
+	G => [qw/G/],
+	R => [qw/A G/],          # A OR G
+	Y => [qw/C T/],          # C OR T
+	S => [qw/G C/],          # G OR C
+	W => [qw/A T/],          # A OR T
+	K => [qw/G T/],          # G OR T
+	M => [qw/A C/],          # A OR C
+	B => [qw/C G T/],        # C OR G OR T
+	D => [qw/A G T/],        # A OR G OR T
+	H => [qw/A C T/],        # A OR C OR T
+	V => [qw/A C G/],        # A OR C OR G
+	N => [qw/A C G T/],    # any base
+	);
+}
