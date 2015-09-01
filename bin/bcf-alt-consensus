@@ -202,10 +202,10 @@ close FAO;
 
 sub process_vars_at_pos{
     # sampling
-    #if($var && (my $var_rand = rand(1)) > $var_sample){
-    #    $L->debug("Skipping $var_rand\n");
-    #    return;
-    #}
+    if($var && (my $var_rand = rand(1)) > $var_sample){
+        $L->debug("Skipping $var_rand\n");
+        return;
+    }
 
     # pick random var at pos
     my @var = @{$vars[int(rand(@vars))]};
@@ -307,7 +307,7 @@ sub process_vars_at_pos{
     }
 
     if($L->level <= $INFO){
-        unless($c++%$var_10){
+        unless(++$c%$var_10){
             $var_p+=10;
             printf STDERR ("%-s%% ", $var_p);
         }
