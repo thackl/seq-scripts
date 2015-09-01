@@ -40,7 +40,7 @@ memory entirely. For very large files >100G, it may be necessary to increase -t.
 
 =cut
 
-my $VERSION = 0.2.0;
+my $VERSION = 0.2.1;
 
 my %def = (
            tmpn => 100,
@@ -87,14 +87,15 @@ my $sed;
 
 if ($is_fastq) {
     $rec=$opt{pe} ? "1~8" : "1~4";
-    $sed= '(echo -n '.$c.'; cat <&0) | sed "'.$rec.'{s/^/\x0/}"';
+    $sed= '(echo -n "'.$c.'"; cat <&0) | sed "'.$rec.'{s/^/\x0/}"';
 }elsif ($opt{pe}) {
     die "Paired end FASTA not supported";
 }else{
-     $sed = '(echo -n '.$c.'; cat <&0) | sed "s/^>/\x0>/"';
+    $sed = '(echo -n "'.$c.'"; cat <&0) | sed "s/^>/\x0>/"';
 }
 
 $/="\0";
+print STDERR $sed;
 open (SED, "$sed |") or die $!;
 # write records to random files
 while (<SED>){
