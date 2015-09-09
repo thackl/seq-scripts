@@ -386,18 +386,95 @@ sub bam2svg{
     open(SAM, $sam_cmd) or $L->logdie($!);
     my $sp = Sam::Parser->new(fh => \*SAM);
 
+    my $clen = 50000;
+    my @caln; # cache alignments that are $clen close to each other in a buffer
+              # first to allow to merge them into single graphical units
+    my %cids; # cache ids of cached alignments
+
+
+
     open(SAM, "$opt{samtools} view $p{bam} $opt{region} |") or $L->logdie($!);
     while(my $aln = $sp->next_aln()){
         next if $aln->is(0x4);# | 0x100 | 0x800); # unmapped or secondary or supplementary
-        $track->block(
-            id => idfy($aln->qname),
-            x => $aln->pos,
-            width => length($aln->seq_aligned),
-            -strand => $aln->is(0x16) ? '-' : '+',
-            class => "read",
-        );
+
+        if ( exists $cids{$aln->qname} ) {
+            push @{$cids{$aln->qname}}, $aln;
+        }else {
+            $cids{$aln->qname} = [$aln];
+            push @caln, $aln;
+        }
+
+        # process aln that run out of cache scope
+        while ($caln[0]->pos < $aln->pos - $clen) {
+            my $caln = shift @caln;
+            my @as = @{delete $cids{$caln->qname}};
+
+            if (@as == 1) { # single alignment
+                $track->block(
+                    id => idfy($caln->qname),
+                    x => $caln->pos,
+                    width => length($caln->seq_aligned),
+                    -strand => $caln->is(0x16) ? '-' : '+',
+                    class => "read",
+                );
+            } else { # multiple alignments from same read
+                track_add_multi_aln($track, @as);
+            }
+        }
+    }
+
+    # process the remaining alignments
+    foreach my $caln ( @caln ) {
+        my @as = @{delete $cids{$caln->qname}};
+
+        if (@as == 1) { # single alignment
+            $track->block(
+                id => idfy($caln->qname),
+                x => $caln->pos,
+                width => length($caln->seq_aligned),
+                -strand => $caln->is(0x16) ? '-' : '+',
+                class => "read",
+            );
+        } else { # multiple alignments from same read
+            track_add_multi_aln($track, @as);
+        }
     }
 }
+
+sub track_add_multi_aln{
+    my ($track, @as) = @_;
+    for (my $i =0; $i<$#as; $i++ ) {
+        $L->info(join(" ", map{$_->pos}@as));
+
+        my $end = $as[$i]->pos + length($as[$i]->seq_aligned);
+        $track->block(
+            id => idfy($as[$i]->qname),
+            x => $as[$i]->pos,
+            width => length($as[$i]->seq_aligned),
+            -strand => $as[$i]->is(0x16) ? '-' : '+',
+            class => "read",
+        );
+
+        $track->block(
+            id => idfy($as[$i]->qname),
+            x => $end+4,
+            width => ($as[$i+1]->pos - $end -8) ,
+            class => "gap",
+            -layout => {
+                feature_rel_height => .2,
+            },
+        );
+    }
+
+    $track->block(
+        id => idfy($as[-1]->qname),
+        x => $as[-1]->pos,
+        width => length($as[-1]->seq_aligned),
+        -strand => $as[-1]->is(0x16) ? '-' : '+',
+        class => "read",
+    );
+}
+
 
 
 sub fasta2svg{
@@ -631,7 +708,9 @@ __DATA__
 .curve {
     fill: grey;
 }
-
+.gap {
+    fill: black;
+}
 #track_2{
     fill: #cccccc;
 }
