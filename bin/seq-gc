@@ -132,4 +132,4 @@ else
       }'
 fi;
 
-rm $PRE.bed $PRE.len;
+rm -f $PRE.bed $PRE.len;
