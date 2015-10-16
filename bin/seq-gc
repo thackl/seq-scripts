@@ -11,6 +11,8 @@ Calculate per sequence / window GC content.
   -s  Shift between window starts. Default -w.
   -m  Calculate median of windows. Default -w=1000.
   -b  Output bed instead of tsv format for -w mode.
+  -N  ignore Ns (and other non ATGC) in per sequence mode
+      gives AT+GC = 100% even on scaffolds, 0 for N only.
 EOF
 exit 0;
 }
@@ -24,7 +26,7 @@ check_bin(){
 
 # Execute getopt
 ARGS=`getopt --name "seq-gc" \
-    --options "w:s:bmhV" \
+    --options "w:s:bNmhV" \
     -- "$@"`
 
 #Bad arguments
@@ -49,6 +51,9 @@ while true; do
             shift;;
         -b)
             BED=1;
+            shift;;
+        -N)
+            NIGNORE=1;
             shift;;
         -h)
 	    usage && exit 0;;
@@ -91,21 +96,45 @@ else
         > $PRE.bed
 fi;
 
-if [[ -z $MEDIAN ]]; then
-    if [[ -z $BED ]]; then
-        bedtools nuc \
-            -fi $FA \
-            -bed $PRE.bed |
-        cut -f1,5 |
-        tail -n +2
-    else
-        bedtools nuc \
-            -fi $FA \
-            -bed $PRE.bed |
+if [[ -z $MEDIAN ]]; then  # no median
+    if [[ -z $NIGNORE ]]; then  # dont ignore Ns
+        if [[ -z $BED ]]; then  # output bed
+            bedtools nuc \
+                     -fi $FA \
+                     -bed $PRE.bed |
+                cut -f1,5 |
+                tail -n +2
+        else
+            bedtools nuc \
+                     -fi $FA \
+                     -bed $PRE.bed |
         gawk -v w=${WIN} 'BEGIN{FS="\t"; OFS="\t"}
 {
 if (FNR>1) {print $1,$2,$3,"GC.w"w,$5}
 }'
+        fi;
+    else  # ignore Ns
+        if [[ -z $BED ]]; then  # output bed
+        bedtools nuc \
+            -fi $FA \
+            -bed $PRE.bed |
+            tail -n +2 |
+            perl -ane '
+              my $gcc = $F[6] + $F[7];
+              my $tot = $gcc + $F[5] + $F[8];
+              printf "$F[1]\t%0.6f\n", $tot ? $gcc/$tot : 0;
+            '
+        else
+            bedtools nuc \
+                     -fi $FA \
+                     -bed $PRE.bed |
+                tail -n +2 |
+                perl -ane '
+                  my $gcc = $F[6] + $F[7];
+                  my $tot = $gcc + $F[5] + $F[8];
+                  printf "%s\t%s\t%s\tGC.w'$WIN'\t%0.6f\n", @F[0..2], $tot ? $gcc/$tot : 0;
+                '
+        fi;
     fi;
 else
     bedtools nuc \
