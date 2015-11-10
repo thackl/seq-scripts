@@ -88,7 +88,7 @@ Thomas Hackl S<thackl@lim4.de> L<https://github.com/thackl>
 ##---------------------------------------------------------------------------##
 # Globals
 
-our $VERSION = "1.0.0";
+our $VERSION = "1.0.1";
 
 our $ID = basename($RealScript);
 
@@ -121,7 +121,7 @@ GetOptions(                     # use %opt (Cfg) as defaults
                  frg=s
                  tmp=s
                  out=s
-                 full_out!
+                 full_out|full-out!
                  keep|keep-temporary-files!
                  version|V!
                  help|?!
@@ -214,6 +214,10 @@ if($?){
     $L->logdie("ERROR running CAP3:\n", $log);
 }
 
+system("cat $cap_log $cap_inf 1>&2");
+system("echo '
+Singletons:'; grep '^>' $cap_sgl 1>&2");
+
 if ($opt{out}) {
     system("mv $cap_ctg $udir/$opt{out}");
     if ($opt{full_out}) {
@@ -230,7 +234,7 @@ $L->info("Done");
 
 
 END{
-    chdir $udir;
+    chdir $udir if defined($udir);
 }
 
 ##----------------------------------------------------------------------------##
