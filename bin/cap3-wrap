@@ -60,7 +60,7 @@ Show this help screen.
   -h  N  specify max overhang percent length N > 2 (20)
   -i  N  specify segment pair score cutoff N > 20 (40)
   -j  N  specify chain score cutoff N > 30 (80)
-  -k  N  specify end clipping flag N >= 0 (1)
+  -k  N  specify end clipping flag N >= 0 (0) # orig is 1!
   -m  N  specify match score factor N > 0 (2)
   -n  N  specify mismatch score factor N < 0 (-5)
   -o  N  specify overlap length cutoff > 15 (40)
@@ -88,7 +88,7 @@ Thomas Hackl S<thackl@lim4.de> L<https://github.com/thackl>
 ##---------------------------------------------------------------------------##
 # Globals
 
-our $VERSION = "1.0.1";
+our $VERSION = "1.0.2";
 
 our $ID = basename($RealScript);
 
@@ -111,6 +111,7 @@ my %opt = (
     cap3_path => '',
     out => '',
     tmp => (-d '/dev/shm' ? '/dev/shm' : '/tmp'),
+    k => 0,
 );
 
 # ignore x: file prefix option
@@ -215,8 +216,7 @@ if($?){
 }
 
 system("cat $cap_log $cap_inf 1>&2");
-system("echo '
-Singletons:'; grep '^>' $cap_sgl 1>&2");
+system("(echo; echo 'Singletons:'; grep '^>' $cap_sgl; echo;)1>&2");
 
 if ($opt{out}) {
     system("mv $cap_ctg $udir/$opt{out}");
