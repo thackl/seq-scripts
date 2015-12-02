@@ -122,7 +122,7 @@ if (FNR>1) {print $1,$2,$3,"GC.w"w,$5}
             perl -ane '
               my $gcc = $F[6] + $F[7];
               my $tot = $gcc + $F[5] + $F[8];
-              printf "$F[1]\t%0.6f\n", $tot ? $gcc/$tot : 0;
+              printf "$F[0]\t%0.6f\n", $tot ? $gcc/$tot : 0;
             '
         else
             bedtools nuc \
