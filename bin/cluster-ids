@@ -146,7 +146,7 @@ print join("\t", @$_)."\n" for @cc;
 
 
 
-=pod DEPRECATED
+=head1 DEPRECATED
 
 my $C = Clusters->new();
 
