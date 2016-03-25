@@ -3,75 +3,60 @@ use warnings;
 no warnings 'qw';
 use strict;
 
-use Carp;
-use Getopt::Long;
 use Pod::Usage;
-use FindBin;
+use Getopt::Long qw(:config no_ignore_case);
 use Log::Log4perl qw(:easy :no_extra_logdie_message);
-use Data::Dumper;
-$Data::Dumper::Sortkeys=1;
-use Cwd;
-use File::Spec;
-use File::Basename;
-use File::Path qw(make_path remove_tree);
-use File::Temp;
 
 use Graph;
 
-our $VERSION = '0.01';
+use Data::Dumper;
+#$Data::Dumper::Sortkeys=1;
 
+our $VERSION = '0.1.0';
 
-##------------------------------------------------------------------------##
-=head1 NAME 
+=head1 NAME
 
 cluster-ids
 
-=cut
+=head1 AUTHOR
+
+Thomas Hackl - S<thackl@lim4.de>
 
 =head1 DESCRIPTION
 
 Cluster a list of id 1-to-1 relations.
 
-=cut
-
-
-##------------------------------------------------------------------------##
-=head1 CHANGELOG
-
-=cut
-
-=head2 0.01
-
-=over
-
-=item [Initial]
-
-=back
-
-=cut
-
-
-=head1 TODO
-
-=cut
-
-##------------------------------------------------------------------------##
 =head1 SYNOPSIS
 
   cluster-ids [<OPTIONS>] IDSFILE [IDSFILE2 ...]
   cat IDSFILE | cluster-ids [<OPTIONS>]
 
-=cut
-
 =head1 OPTIONS
 
 =over
 
-=item [--debug]
+=item -p|--print-size
+
+Print cluster size in first column.
+
+=item -x|--exclude-singletons [OFF]
+
+Exclude singletons from output
+
+=item -s|--sort [Clusters [Members]] [sr l]
+
+Sort output - cluster members and between clusters. Possible values are "l",
+"n", "s" (lexical, numerical, by size) and reverse versions "lr", "nr",
+"sr". Member sorting is performed first. Size sorting obviously only works
+between clusters, not members. For convenience "-s" only expands to "-s sr l"
+(largest cluster first with members in lexical order), "-s n" and "-s l" to "-s
+n n" and "-s l l". --no-sort deactivates sorting completely.
+
+=item [-D|--debug]
 
 Turn on debug messages.
 
-=item [--quiet]
+=item [-q|--quiet]
 
 Supress verbose information messages.
 
@@ -81,142 +66,202 @@ Show this help screen
 
 =back
 
+=head1 CODE
+
 =cut
 
+my %opt = init();
+my $L = $opt{logger};
 
-
-Log::Log4perl->init(\<<'CFG');
-	log4perl.logger.main				= DEBUG, Screen
-	log4perl.appender.Screen			= Log::Log4perl::Appender::Screen
-	log4perl.appender.Screen.stderr		= 0
-	log4perl.appender.Screen.layout		= PatternLayout
-	log4perl.appender.Screen.layout.ConversionPattern = [%d{MM-dd HH:mm:ss}] [blat.pl] %m%n
-
-CFG
-
-my $L = Log::Log4perl::get_logger();
-$L->level($INFO);
-
-
-my %opt = (
-);
-
-Getopt::Long::Configure("no_ignore_case");
-GetOptions(\%opt, qw(
-	quiet
-	debug
-	help|h
-)) or pod2usage(1);
-
-$opt{help} && pod2usage(1);
-
-$opt{quiet} && $L->level($WARN);
-$opt{debug} && $L->level($DEBUG);
-
-$L->debug("GetOptions:\n", Dumper(\%opt));
-
-# required	
-for(qw()){
-	pod2usage("required: --$_") unless defined ($opt{$_}) 
-};
-
-##------------------------------------------------------------------------##	
-
+##------------------------------------------------------------------------##
 
 my $G = Graph->new(
 	directed => 1,
 #	unionfind => 1,
 );
 
+$L->info("Constructing graph");
 
-while(<>){
+while(readline($opt{ifh})){
 	chomp();
 	my ($k, $v) = split(/\t/, $_);
-	$G->add_edge($k, $v) unless $k eq $v;
+        if (! defined $k) { # empty line
+            next;
+        }elsif ($k eq $v || ! defined $v) { # singleton
+            $G->add_vertex($k);
+        } else { # edge
+            $G->add_edge($k, $v) unless $k eq $v;
+        }
 }
 
-print STDERR "$G\n";
-#print STDERR Dumper($G);
+$L->debug("$G");
 
-my @cc = sort{$a->[0] cmp $b->[0]}map{[sort @$_]}$G->weakly_connected_components();
-print join("\t", @$_)."\n" for @cc;
+$L->info("Extracting clusters");
 
+my @cc = $G->weakly_connected_components();
 
+if (@{$opt{sort}}) {
 
+    # sort members first
+    if ($opt{sort}[1] eq 'l') {
+        $L->debug("members sort:  l");
+        @cc = map{[sort @$_]}@cc
+    }elsif ($opt{sort}[1] eq 'lr') {
+        $L->debug("members sort:  lr");
+        @cc = map{[sort {$b cmp $a} @$_]}@cc
+    }elsif ($opt{sort}[1] eq 'n') {
+        $L->debug("members sort:  n");
+        @cc = map{[sort{$a <=> $b}@$_]}@cc
+    }elsif ($opt{sort}[1] eq 'nr') {
+        $L->debug("members sort:  nr");
+        @cc = map{[sort{$b <=> $a}@$_]}@cc
+    }
 
-
-
-=head1 DEPRECATED
-
-my $C = Clusters->new();
-
-while(<>){
-	chomp();
-	my ($k, $v) = sort split(/\t/, $_);
-	$C->add_relation($k, $v);
+    # sort clusters
+    if ($opt{sort}[0] eq 's') {
+        $L->debug("clusters sort: s");
+        @cc = sort{@$a <=> @$b}@cc;
+    }elsif ($opt{sort}[0] eq 'sr') {
+        $L->debug("clusters sort: sr");
+        @cc = sort{@$b <=> @$a}@cc;
+    }elsif ($opt{sort}[0] eq 'l') {
+        $L->debug("clusters sort: l");
+        @cc = sort {$a->[0] cmp $b->[0]}@cc;
+    }elsif ($opt{sort}[0] eq 'lr') {
+        $L->debug("clusters sort: lr");
+        @cc = sort {$b->[0] cmp $a->[0]}@cc;
+    }elsif ($opt{sort}[0] eq 'n') {
+        $L->debug("clusters sort: n");
+        @cc = sort{$a->[0] <=> $b->[0]}@cc
+    }elsif ($opt{sort}[0] eq 'nr') {
+        $L->debug("clusters sort: nr");
+        @cc = sort{$b->[0] <=> $a->[0]}@cc
+    }
 }
 
-print Dumper($C);
-
-$C->cluster();
-
-print Dumper($C);
-
-
-#while (my ($k, $vr) = each %H){
-#	foreach my $v(@$vr){
-#		if(exists $H{$v}){
-#			print Dumper({v=>$v, Hv=>$H{$v}, Hk=>$H{$k} });
-#			push @{$H{$v}}, @{$H{$k}};
-#			delete $H{$k};
-#			print Dumper(Hv=>$H{$v});
-#			last;
-#		}
-#	}
-#}
-#
-#print Dumper(\%H);
-
-
-package Clusters;
-
-sub new{
-	return bless {}, shift;
+if ($opt{exclude_singletons}) {
+    if ($opt{print_size}) {
+        foreach (@cc){
+            next if @$_ < 2;
+            print @$_."\t", join("\t", @$_)."\n";
+        }
+    }else {
+        foreach (@cc){
+            next if @$_ < 2;
+            print join("\t", @$_)."\n";
+        }
+    }
+}else {
+    if ($opt{print_size}) {
+        print @$_."\t", join("\t", @$_)."\n" for @cc;
+    }else {
+        print join("\t", @$_)."\n" for @cc;
+    }
 }
 
-sub add_relation{
-	my $self = shift;
-	my $k = shift;
-	exists $self->{$k} ? $self->{$k}{$k}++ : ($self->{$k} = {$k=>1});
-	foreach my $v(@_){
-		if(ref $v){ # add counts
-			while(my ($kk, $vv) = each %$v){
-				$self->{$k}{$kk}+=$vv;
-			}
-		}elsif($self->{$v}){ # merge and remove
-			while(my ($kk, $vv) = each %{$self->{$v}}){
-				$self->{$k}{$kk}+=$vv;
-			}
-			delete $self->{$v};
-		}else{ # simple incr
-			$self->{$k}{$v}++ 
-		} 
-	}
-}
 
-sub cluster{
-	my $self = shift;
-	foreach my $c (keys %$self){
-		print "c: $c\n";
-		while(my $k = each %{$self->{$c}}){
-			print "\tk: $k\n";
-			next if $k eq $c; #self
-			if(exists $self->{$k}){
-				$C->add_relation($c, $k);
-			}
-		}
-	}
-}
+
+
+=head2 init
 
 =cut
 
+sub init{
+    no warnings 'qw';
+
+    my (%p) = @_;
+
+    # GetOptions
+    my $argv = join(" ", @ARGV);
+
+    # logger
+    Log::Log4perl->init( \(q(
+        log4perl.rootLogger                     = INFO, Screen
+        log4perl.appender.Screen                = Log::Log4perl::Appender::Screen
+        log4perl.appender.Screen.stderr         = 1
+        log4perl.appender.Screen.layout         = PatternLayout
+        log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [kmer-coverage] %m%n)));
+
+    my %def = ();
+    my %opt = (
+        sort => [],
+    );
+    my $L = $opt{logger} = Log::Log4perl->get_logger();
+
+    GetOptions(
+        \%opt, qw(
+                     print_size|print-size|p!
+                     exclude_singletons|exclude-singletons|x!
+                     sort|s:s{,2}
+                     no_sort|no-sort!
+                     version|V!
+                     quiet|q!
+                     debug|D!
+                     help|h!
+             )
+    ) or $L->logdie('Failed to "GetOptions"');
+
+    $opt{argv} = $argv; # store it just in case
+
+    # help
+    $opt{help} && pod2usage(1);
+
+    # version
+    if ($opt{version}) {
+        print"$VERSION\n";
+        exit 0;
+    }
+
+    $opt{in} = @ARGV ? shift @ARGV : '-';
+
+    $L->logdie("unused argument: @ARGV") if @ARGV;
+
+    %opt = (%def, %opt);
+
+    # required stuff
+    for (qw(in)) {
+        if (ref $opt{$_} eq 'ARRAY') {
+            pod2usage("required: --$_") unless @{$opt{$_}}
+        } else {
+            pod2usage("required: --$_") unless defined ($opt{$_})
+        }
+    }
+
+    # debug level
+    if ($opt{debug}){
+        $L->level($DEBUG);
+        $L->debug('Verbose level set to DEBUG');
+    }
+    $L->level($WARN) if $opt{quiet};
+
+    if ($opt{in} ne '-') {
+        open($opt{ifh}, '<', $opt{in}) or $L->logdie("$opt{in}: $!");
+    } else {
+        $L->info("reading STDIN");
+        $opt{in} = \*STDIN;
+    }
+
+    if ($opt{no_sort}) {
+        $opt{sort} = [];
+    } elsif ( @{$opt{sort}} == 0 ) {
+        $opt{sort} = ['sr', 'l']
+    } elsif ( @{$opt{sort}} == 1 ) {
+        if ($opt{sort}[0] eq '') {
+            $opt{sort} = ['sr', 'l']
+        } elsif ($opt{sort}[0] =~ /^s/) {
+            $opt{sort} = [$opt{sort}[0], 'l']
+        } else {
+            $opt{sort} = [$opt{sort}[0], $opt{sort}[0]];
+        }
+    }
+
+    if (@{$opt{sort}}) {
+        my ($s1) = grep{$_ eq $opt{sort}[0]}qw(s sr l lr n nr);
+        my ($s2) = grep{$_ eq $opt{sort}[1]}qw(l lr n nr);
+        $L->logdie("Invalid sort specification: @{$opt{sort}}") unless $s1 && $s2;
+    }
+
+    $L->debug(Dumper(\%opt));
+
+    return %opt;
+}
