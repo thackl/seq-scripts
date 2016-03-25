@@ -238,7 +238,7 @@ sub init{
         open($opt{ifh}, '<', $opt{in}) or $L->logdie("$opt{in}: $!");
     } else {
         $L->info("reading STDIN");
-        $opt{in} = \*STDIN;
+        $opt{ifh} = \*STDIN;
     }
 
     if ($opt{no_sort}) {
