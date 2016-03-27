@@ -180,7 +180,7 @@ sub init{
         log4perl.appender.Screen                = Log::Log4perl::Appender::Screen
         log4perl.appender.Screen.stderr         = 1
         log4perl.appender.Screen.layout         = PatternLayout
-        log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [kmer-coverage] %m%n)));
+        log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [cluster-ids] %m%n)));
 
     my %def = ();
     my %opt = (
