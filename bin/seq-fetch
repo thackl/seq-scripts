@@ -1,0 +1,151 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+use Getopt::Long qw(:config no_ignore_case);
+use Pod::Usage;
+use Log::Log4perl qw(:no_extra_logdie_message);
+use Log::Log4perl::Level;
+use FindBin qw($Script);
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+
+use Handy;
+use Fasta::Parser;
+use Fasta::Seq;
+use Fasta::Store;
+
+our $VERSION = '0.1.0';
+
+=head1 AUTHORS
+
+Thomas Hackl - S<thackl@lim4.de>
+
+=head1 SYNOPSIS
+
+  seq-fetch FASTA <IDS
+
+=head1 OPTIONS
+
+=over 15
+
+=item -Q|--quiet
+
+Omit non-error messages.
+
+=item -D|--debug
+
+Print debug messages.
+
+=item -V|--version
+
+Display script version.
+
+=item -h|--help
+
+Show this help.
+
+=back
+
+=head1 CODE
+
+=cut
+
+my %opt = init();
+my $L = $opt{logger};
+
+my $fs = Fasta::Store->new(file=>$opt{in});
+while (my $id = readline($opt{idh})) {
+    print $fs->fetch($id);
+}
+
+
+
+
+=head2 init
+
+=cut
+
+sub init{
+
+    # logger
+    Log::Log4perl->init( \(q(
+        log4perl.rootLogger                     = INFO, Screen
+        log4perl.appender.Screen                = Log::Log4perl::Appender::Screen
+        log4perl.appender.Screen.stderr         = 1
+        log4perl.appender.Screen.layout         = PatternLayout
+        log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$Script.q(] %m%n)));
+    my $L = Log::Log4perl->get_logger();
+
+    # multiparam args:
+    # %def:       more => [qw(A B)],
+    # GetOpt qw:  more=s@{1,}
+    # cannot be used with GetOpt bundling
+    # make sure implicit --in is not read by multiparam: --more x y in.fa
+
+    my %def = ( # not provided to Getopt to prevent push to array defaults
+        _argv => join(" ", @ARGV),
+        _logger => $L,
+        ids => '-',
+    );
+    
+    my %opt;
+
+    no warnings 'qw'; # for "," in rep. spec
+    GetOptions(\%opt, qw(
+                            ids=s
+                            help|h!
+                            debug|D!
+                            version|V!
+                            quiet|Q!
+                            in|i=s
+                    )
+           ) or $L->logdie('Failed to parse options');
+
+    # help
+    $opt{help} && pod2usage(1);
+
+    # version
+    if ($opt{version}) {
+        print"$VERSION\n";
+        exit 0;
+    }
+
+    # default in is stdin
+    $opt{in} = @ARGV ? shift @ARGV : undef;
+    #$opt{in} = [@ARGV ? @ARGV : '-']; # for multiple input files
+
+    $L->logdie("unused argument: @ARGV") if @ARGV;
+
+    %opt = (%def, %opt);
+
+    # required stuff
+    for (qw(in)) {
+        if (ref $opt{$_} eq 'ARRAY') {
+            pod2usage("required: --$_") unless @{$opt{$_}}
+        } else {
+            pod2usage("required: --$_") unless defined ($opt{$_})
+        }
+    }
+
+    if ($opt{quiet}){
+        $L->level($WARN);
+    }elsif ($opt{debug}){
+        $L->level($DEBUG);
+        $L->debug('Verbose level set to DEBUG');
+    }
+    
+    open($opt{ifh}, '<', $opt{in}) or $L->logdie("$opt{in}: $!");
+    
+    if ($opt{ids} ne '-') {
+        open($opt{idh}, '<', $opt{ids}) or $L->logdie("$opt{ids}: $!");
+    } else {
+        $L->info("reading STDIN");
+        $opt{idh} = \*STDIN;
+        $opt{_stdin} = "ids";
+    }
+    
+    $L->debug(Dumper(\%opt));
+    
+    return %opt;
+}
