@@ -1,8 +1,8 @@
-** documented tools                                                     :TOC:
-   - [[#seq-frag---ref-based-simulation-of-readscontigs][seq-frag - ref-based simulation of reads/contigs]]
-   - [[#bio2svg---plot-bamgffbed-tracks-to-svg][bio2svg - plot bam/gff/bed tracks to svg]]
+** Overview                                                             :TOC:
+   - [[#seq-frag----ref-based-simulation-of-readscontigs][seq-frag -- ref-based simulation of reads/contigs]]
+   - [[#bio2svg----plot-bamgffbed-tracks-to-svg][bio2svg -- plot bam/gff/bed tracks to svg]]
 
-** seq-frag - ref-based simulation of reads/contigs
+** seq-frag -- ref-based simulation of reads/contigs
 Simulate fragment libraries (Illumina SE/PE/MP, Pacbio, contigs) from reference
 sequences. Errors models are not currently supported.
 ***** Dependencies
@@ -45,7 +45,7 @@ Mapped with [[https://github.com/lh3/bwa][bwa mem]] and visualized with [[https:
 
 [[etc/seq-frag-mp.png]]
 
-** bio2svg - plot bam/gff/bed tracks to svg
+** bio2svg -- plot bam/gff/bed tracks to svg
 Plot mappings (bam), features and annotations (gff, bed) along sequences to high
 quality SVGs.
 ***** Dependencies
