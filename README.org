@@ -1,5 +1,11 @@
-***** seq-frag
-****** Dependencies
+** Overview                                                             :TOC:
+   - [[#seq-frag----ref-based-simulation-of-readscontigs][seq-frag -- ref-based simulation of reads/contigs]]
+   - [[#bio2svg----plot-bamgffbed-tracks-to-svg][bio2svg -- plot bam/gff/bed tracks to svg]]
+
+** seq-frag -- ref-based simulation of reads/contigs
+Simulate fragment libraries (Illumina SE/PE/MP, Pacbio, contigs) from reference
+sequences. Errors models are not currently supported.
+***** Dependencies
 - [[https://github.com/BioInf-Wuerzburg/perl5lib-Fastq][perl5lib-Fastq]], [[https://github.com/BioInf-Wuerzburg/perl5lib-Fasta][perl5lib-Fasta]]
 - [[http://search.cpan.org/~grommel/Math-Random-0.70/Random.pm][Math::Random]] 
 
@@ -13,7 +19,7 @@ git clone https://github.com/BioInf-Wuerzburg/perl5lib-Fasta.git
 export PERL5LIB=/path/to/perl5lib-Fasta/Fastq:$PERL5LIB
 #+END_SRC
 
-****** Usage
+***** Usage
 #+BEGIN_SRC sh
 seq-frag MODE -l LENGTH -c COVERAGE [options ..] < FASTA
 # 50X 100bp single end reads
@@ -29,7 +35,7 @@ seq-frag pacbio -l 2000 -c 20 < genome.fa > pb-reads.fq
 seq-frag --help
 #+END_SRC
 
-****** Sample
+***** Sample
 #+BEGIN_SRC sh
 seq-frag mp -l 100 -c 1 -i 2000 ref.fa | interleaved-split 1> r_1.fq 2> r_2.fq
 seq-frag mp -l 100 -c 1 -i 2000 -s ref.fa | interleaved-split 1> s_1.fq 2> s_2.fq
@@ -39,11 +45,13 @@ Mapped with [[https://github.com/lh3/bwa][bwa mem]] and visualized with [[https:
 
 [[etc/seq-frag-mp.png]]
 
-***** bio2svg
-****** Dependencies
+** bio2svg -- plot bam/gff/bed tracks to svg
+Plot mappings (bam), features and annotations (gff, bed) along sequences to high
+quality SVGs.
+***** Dependencies
 - [[http://search.cpan.org/~ronan/SVG-2.33/][SVG-2.33]]
 
-****** Usage
+***** Usage
 #+BEGIN_SRC sh
 git clone https://github.com/thackl/perl5lib-Gff.git
 git clone https://github.com/thackl/perl5lib-SVG-Bio.git
@@ -55,7 +63,7 @@ bio2svg --fasta FA --region REGION --gff GFF --bam BAM > SVG
 
 Region can be either a sequence ID (Chr4) or an ID with range (Chr4:521-15521).
 
-****** Sample
+***** Sample
 #+BEGIN_SRC 
 
 bio2svg --width 10000 --fa MaV-is-CrEc-001.ctg.fa --region MaV-is-CrEc-001 \
