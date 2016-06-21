@@ -37,7 +37,7 @@ seq-frag mp -l 100 -c 1 -i 2000 -s ref.fa | interleaved-split 1> s_1.fq 2> s_2.f
 
 Mapped with [[https://github.com/lh3/bwa][bwa mem]] and visualized with [[https://www.broadinstitute.org/igv/][IGV]]:
 
-[[etc/bio2svg-sample.png]]
+[[etc/seq-frag-mp.png]]
 
 ***** bio2svg
 ****** Dependencies
