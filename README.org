@@ -1,20 +1,61 @@
-**** bio2svg
-***** Dependencies
+***** seq-frag
+****** Dependencies
+- [[https://github.com/BioInf-Wuerzburg/perl5lib-Fastq][perl5lib-Fastq]], [[https://github.com/BioInf-Wuerzburg/perl5lib-Fasta][perl5lib-Fasta]]
+- [[http://search.cpan.org/~grommel/Math-Random-0.70/Random.pm][Math::Random]] 
+
+#+BEGIN_SRC sh
+cpanm Math::Random
+
+# wherever you prefer
+git clone https://github.com/BioInf-Wuerzburg/perl5lib-Fasta.git
+git clone https://github.com/BioInf-Wuerzburg/perl5lib-Fasta.git
+
+export PERL5LIB=/path/to/perl5lib-Fasta/Fastq:$PERL5LIB
+#+END_SRC
+
+****** Usage
+#+BEGIN_SRC sh
+seq-frag MODE -l LENGTH -c COVERAGE [options ..] < FASTA
+# 50X 100bp single end reads
+seq-frag se -l 100 -c 50 < genome.fa > read.fq
+# 50X 100bp paired end, 180bp insert
+seq-frag pe -l 100 -c 50 -i 180 < genome.fa | interleaved-split 1>reads_1.fq 2>reads_2.fq
+# 50X mate pair, 2000bp insert
+seq-frag mp -l 100 -c 50 -i 2000 < genome.fa | interleaved-split 1>reads_1.fq 2>reads_2.fq
+# 20X pacbio style fragments, mean length 2000bp
+seq-frag pacbio -l 2000 -c 20 < genome.fa > pb-reads.fq
+
+# for more details
+seq-frag --help
+#+END_SRC
+
+****** Sample
+#+BEGIN_SRC sh
+seq-frag mp -l 100 -c 1 -i 2000 ref.fa | interleaved-split 1> r_1.fq 2> r_2.fq
+seq-frag mp -l 100 -c 1 -i 2000 -s ref.fa | interleaved-split 1> s_1.fq 2> s_2.fq
+#+END_SRC
+
+Mapped with [[https://github.com/lh3/bwa][bwa mem]] and visualized with [[https://www.broadinstitute.org/igv/][IGV]]:
+
+etc/bio2svg-sample.png
+
+***** bio2svg
+****** Dependencies
 - [[http://search.cpan.org/~ronan/SVG-2.33/][SVG-2.33]]
 
-***** Usage
+****** Usage
 #+BEGIN_SRC sh
 git clone https://github.com/thackl/perl5lib-Gff.git
 git clone https://github.com/thackl/perl5lib-SVG-Bio.git
 
-export PERL5LIB:/path/to/perl5lib-Gff/lib:/path/to/perl5lib-SVG-Bio/lib:$PERL5LIB;
+export PERL5LIB=/path/to/perl5lib-Gff/lib:/path/to/perl5lib-SVG-Bio/lib:$PERL5LIB;
 
 bio2svg --fasta FA --region REGION --gff GFF --bam BAM > SVG
 #+END_SRC
 
 Region can be either a sequence ID (Chr4) or an ID with range (Chr4:521-15521).
 
-***** Sample
+****** Sample
 #+BEGIN_SRC 
 
 bio2svg --width 10000 --fa MaV-is-CrEc-001.ctg.fa --region MaV-is-CrEc-001 \
