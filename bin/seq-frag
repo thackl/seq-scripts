@@ -193,7 +193,16 @@ sub frag_se{
 
     # sort is bottle neck, either ignore and return reads in random order
     # or limit manageable regions for long seq
-    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$frag_len));
+    my @frag_offs;
+    if ($opt{systematic}) {
+        @frag_offs[0,1] = (0, int(($seq_len - $read_len) / $frag_num)); # frag step
+        for (my $i=2; $i< $frag_num; $i++) {
+            $frag_offs[$i] = $frag_offs[$i-1] + $frag_offs[1];
+        }
+    }else {
+        @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$frag_len));
+    }
+
     foreach my $frag_off ( @frag_offs) {
 
         my $frag = Fastq::Seq->new(
@@ -231,8 +240,20 @@ sub frag_pacbio{
     my $read_len = $opt{length};
     my $frag_num = $seq_len * ( $opt{coverage} / $read_len );
 
-    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$read_len));
-    my @frag_lens = Math::Random::random_negative_binomial($frag_num,5,5/$read_len);
+    my @frag_offs;
+    my @frag_lens;
+
+    if ($opt{systematic}) {
+        @frag_lens = map{$read_len}1..$frag_num;
+        @frag_offs[0,1] = (0, int(($seq_len - $read_len) / $frag_num)); # frag step
+        for (my $i=2; $i< $frag_num; $i++) {
+            $frag_offs[$i] = $frag_offs[$i-1] + $frag_offs[1];
+        }
+    }else {
+        @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$read_len));
+        @frag_lens = Math::Random::random_negative_binomial($frag_num,5,5/$read_len);
+    }
+
     for ( my $i=0; $i<@frag_offs; $i++) {
         my $frag_off = $frag_offs[$i];
         my $frag_len = int($frag_lens[$i]);
