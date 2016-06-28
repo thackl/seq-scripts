@@ -250,7 +250,7 @@ sub frag_pacbio{
     if ($opt{systematic}) {
         @frag_lens = map{$read_len}1..$frag_num;
         @frag_offs[0,1] = (0, int(($seq_len - $read_len) / $frag_num)); # frag step
-        for (my $i=2; $i< $frag_num; $i++) {
+        for (my $i=2; $i< $frag_num-1; $i++) {
             $frag_offs[$i] = $frag_offs[$i-1] + $frag_offs[1];
         }
     }else {
@@ -297,7 +297,7 @@ sub frag_pe{
     if ($opt{systematic}) {
         @frag_lens = map{$opt{insert_size}}1..$frag_num;
         @frag_offs[0,1] = (0, int(($seq_len - $opt{insert_size}) / $frag_num)); # frag step
-        for (my $i=2; $i< $frag_num; $i++) {
+        for (my $i=2; $i< $frag_num-1; $i++) {
             $frag_offs[$i] = $frag_offs[$i-1] + $frag_offs[1];
         }
     }else {
