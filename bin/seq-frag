@@ -306,7 +306,7 @@ sub frag_pe{
         @frag_lens = Math::Random::random_normal($frag_num, $opt{insert_size}, $opt{insert_size}*0.12);
     }
 
-    for ( my $i=0; $i<@frag_offs; $i++) {
+    for ( my $i=0; $i<@frag_lens; $i++) {
         my $frag_off = $frag_offs[$i];
         my $frag_len = int($frag_lens[$i]);
         next if $frag_off + $frag_len > $seq_len;
