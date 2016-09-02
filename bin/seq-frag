@@ -328,13 +328,13 @@ sub frag_pe{
             '@'.$opt{prefix}.$c."/1",
             substr($frag->seq, 0, $read_len),
             "+",
-            $frag_qual
+            substr($frag_qual, 0, $read_len)
         );
         my $m = Fastq::Seq->new(
             '@'.$opt{prefix}.$c."/2",
             substr($frag->seq, -$read_len),
             "+",
-            $frag_qual
+            substr($frag_qual, -$read_len)
         );
 
         $opt{mode} eq 'pe' ? $m->reverse_complement : $r->reverse_complement;
