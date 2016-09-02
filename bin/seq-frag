@@ -290,6 +290,7 @@ sub frag_pe{
     return if $seq_len < $opt{insert_size};
     my $read_len = $opt{length};
     my $frag_num = $seq_len * ( $opt{coverage} / $read_len/2 ); # pe
+    my $frag_qual =  "I" x $read_len;
 
     my @frag_offs;
     my @frag_lens;
@@ -314,19 +315,26 @@ sub frag_pe{
         my $frag = Fasta::Seq->new(id=>"dummy", seq => substr($fa->seq, $frag_off, $frag_len));
 
         # both strands
-        int(rand(2)) && $frag->reverse_complement;
+        my $rand_rev = int(rand(2));
+        $rand_rev && $frag->reverse_complement;
+
+        # for fasta input, qual is static: "I" x $read_len
+        if (ref($fp) eq 'Fastq::Parser') {
+            $frag_qual = substr($fa->qual, $frag_off, $frag_len);
+            if ($rand_rev){ $frag_qual = reverse($frag_qual) };
+        }
 
         my $r = Fastq::Seq->new(
             '@'.$opt{prefix}.$c."/1",
             substr($frag->seq, 0, $read_len),
             "+",
-            ref($fp) eq 'Fastq::Parser' ? substr($fa->qual, $frag_off, $read_len) : "I" x $read_len
+            $frag_qual
         );
         my $m = Fastq::Seq->new(
             '@'.$opt{prefix}.$c."/2",
             substr($frag->seq, -$read_len),
             "+",
-            ref($fp) eq 'Fastq::Parser' ? substr($fa->qual, $frag_off, $read_len) : "I" x $read_len
+            $frag_qual
         );
 
         $opt{mode} eq 'pe' ? $m->reverse_complement : $r->reverse_complement;
