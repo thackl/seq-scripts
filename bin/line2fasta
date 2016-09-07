@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Author: Thomas Hackl - thackl@lim4.de
+
+usage(){
+cat <<EOF
+Usage:
+  line2fasta [ID-PREFIX] < SEQLINES > seq.fa
+
+Convert single line sequences to fasta
+EOF
+exit 0;
+}
+
+PRE="s-"
+
+if [[ $# -eq 0 ]]; then
+    echo "Reading STDIN" >&2
+elif [[ "$1" =~ ^-h ]]; then
+    usage
+else
+    PRE=$1    
+fi;
+
+perl -ane 'print ">'$PRE'",++$i,"\n",$_'
