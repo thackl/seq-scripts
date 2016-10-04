@@ -87,8 +87,9 @@ my %def = (
            length => undef,
            insert_size => 180,
            coverage => undef,
-           region_length => 200_000,
            prefix => "r",
+           region_length => 800_000,
+           region_length_factor => 100,
        );
 
 my %opt = ();
@@ -151,6 +152,10 @@ die "Input file neither Fasta nor Fastq\n" unless $fp;
 
 my $FQ = ref($fp) eq 'Fastq::Parser';
 
+# make sure regions is always a lot bigger than insert size
+if ($opt{region_length} <= $opt{insert_size} * $opt{region_length_factor}){
+    $opt{region_length} = $opt{insert_size} * $opt{region_length_factor}
+}
 
 my $bp=0;
 while (my $fa = $fp->next_seq) {
@@ -162,7 +167,7 @@ while (my $fa = $fp->next_seq) {
         printf STDERR ("\r%0.1f Mbp", $bp / 1_000_000);
     }
 }
-print "\n" if $opt{progress};
+print STDERR "\n" if $opt{progress};
 
 
 
