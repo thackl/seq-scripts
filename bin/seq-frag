@@ -55,9 +55,13 @@ Use systematic sampling with fixed insert-size and fixed distance between
 fragments rather than sampling from distributions (only for pe, ignored for
 other modes)
 
-=item [-p]
+=item [-r/--prefix]
 
 Read name prefix.
+
+=item [-p/--progress]
+
+Show progress in processed Mbp.
 
 =back
 
@@ -95,7 +99,8 @@ GetOptions(                     # use %opt (Cfg) as defaults
                         coverage|c=i
                         insert_size|insert-size|i=i
                         systematic|s!
-                        prefix=s
+                        prefix|r=s
+                        progress|p!
                         version|V!
                         debug|D!
                         help|h!
@@ -145,12 +150,19 @@ my $fp = Fasta::Parser->new(file=>$ARGV[0])->check_format ||
 die "Input file neither Fasta nor Fastq\n" unless $fp;
 
 my $FQ = ref($fp) eq 'Fastq::Parser';
+
+
+my $bp=0;
 while (my $fa = $fp->next_seq) {
     # seq length is bottle neck (not sort or rand)
-    # => split long seqs (>900k) into manageable regions
+    # => split long seqs into manageable regions
+    $bp+=length($fa->seq);
     $frag{$opt{mode}}($_) for fa_regions($fa);
+    if ( $opt{progress} ) {
+        printf STDERR ("\r%0.1f Mbp", $bp / 1_000_000);
+    }
 }
-
+print "\n" if $opt{progress};
 
 
 
