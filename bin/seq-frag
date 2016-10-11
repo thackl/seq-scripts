@@ -325,8 +325,8 @@ sub frag_pe{
             my $frag_off_int = int($frag_off);
             my $fs1 = substr($seq, $frag_off_int, $read_len);
             my $fq1 = substr($qual, $frag_off_int, $read_len) if $FQ;
-            my $fs2 = substr($seq, $frag_off_int + $frag_len, $read_len);
-            my $fq2 = substr($qual, $frag_off_int + $frag_len, $read_len) if $FQ;
+            my $fs2 = substr($seq, $frag_off_int + $frag_len - $read_len, $read_len);
+            my $fq2 = substr($qual, $frag_off_int + $frag_len -$read_len, $read_len) if $FQ;
             $frag_off+=$frag_shift;
 
             if ($PE){
