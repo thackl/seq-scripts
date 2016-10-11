@@ -37,17 +37,31 @@ use Fastq::Seq;
   pacbio   length from neg. binomial dist., mean at -l, fastq
   contig   non-overlapping, length from neg. binomial dist., mean at -l, fasta
 
-=item -l/--length 
+=item -l/--length
 
 Length of reads/sub-sequences to generate.
+
+=item -c/--coverage
+
+Coverage of sampled set.
 
 =item [-i/--insert-size] [180]
 
 Insert size for pe/mp mode.
 
-=item [-p]
+=item [-s/--systematic] [OFF]
 
-Prefix.
+Use systematic sampling with fixed insert-size and fixed distance between
+fragments rather than sampling from distributions (only for pe, ignored for
+other modes)
+
+=item [-r/--prefix]
+
+Read name prefix.
+
+=item [-p/--progress]
+
+Show progress in processed Mbp.
 
 =back
 
@@ -57,7 +71,7 @@ Prefix.
 
 SE
   fixed length, fastq
-PE
+PE/MP
   fixed length, varying insert
 PB
   varying length
@@ -66,15 +80,16 @@ contigs
 
 =cut
 
-my $VERSION = 0.1.0;
+my $VERSION = 0.2.0;
 
 my %def = (
            mode => undef,
            length => undef,
            insert_size => 180,
            coverage => undef,
-           region_length => 200_000,
            prefix => "r",
+           region_length => 800_000,
+           region_length_factor => 100,
        );
 
 my %opt = ();
@@ -84,7 +99,9 @@ GetOptions(                     # use %opt (Cfg) as defaults
                         length|l=i
                         coverage|c=i
                         insert_size|insert-size|i=i
-                        prefix=s
+                        systematic|s!
+                        prefix|r=s
+                        progress|p!
                         version|V!
                         debug|D!
                         help|h!
@@ -96,7 +113,7 @@ $opt{help} && pod2usage(1);
 
 # version
 if ($opt{version}) {
-    print "$VERSION\n"; 
+    print "$VERSION\n";
     exit 0;
 }
 
@@ -107,7 +124,8 @@ if(!$opt{mode} && @ARGV && !($ARGV[0] =~ /^-/)){
 
 %opt = (%def, %opt);
 
-(my $mode = grep{$opt{mode} eq $_}qw(pe se mp pacbio contig)) || pod2usage("unknown mode $opt{mode}");
+$opt{mode} || pod2usage("MODE required. Supported: se, pe, mp, pacbio and contig.\nSee --help for details");
+(my $mode = grep{$opt{mode} eq $_}qw(pe se mp pacbio contig)) || pod2usage("unknown MODE $opt{mode}");
 $opt{length} || pod2usage("required: --length");
 if ( $opt{mode} ne "contig" ){
     $opt{coverage} || pod2usage("required: --coverage");
@@ -127,13 +145,29 @@ my %frag = (
 # fragment counter
 my $c = 1;
 
-my $fp = Fasta::Parser->new(file=>$ARGV[0]);
-while (my $fa = $fp->next_seq) {
-    # seq length is bottle neck (not sort or rand)
-    # => split long seqs (>900k) into manageable regions
-    $frag{$opt{mode}}($_) for fa_regions($fa);
+my $fp = Fasta::Parser->new(file=>$ARGV[0])->check_format ||
+    Fastq::Parser->new(file=>$ARGV[0])->check_format;
+
+die "Input file neither Fasta nor Fastq\n" unless $fp;
+
+my $FQ = ref($fp) eq 'Fastq::Parser';
+
+# make sure regions is always a lot bigger than insert size
+if ($opt{region_length} <= $opt{insert_size} * $opt{region_length_factor}){
+    $opt{region_length} = $opt{insert_size} * $opt{region_length_factor}
 }
 
+my $bp=0;
+while (my $fa = $fp->next_seq) {
+    # seq length is bottle neck (not sort or rand)
+    # => split long seqs into manageable regions
+    $bp+=length($fa->seq);
+    $frag{$opt{mode}}($_) for fa_regions($fa);
+    if ( $opt{progress} ) {
+        printf STDERR ("\r%0.1f Mbp", $bp / 1_000_000);
+    }
+}
+print STDERR "\n" if $opt{progress};
 
 
 
@@ -150,7 +184,7 @@ sub fa_regions{
     my $fa = shift;
     my $seq_len = length($fa->seq);
     return ($fa) if ( $seq_len <= $opt{region_length});
-    
+
     my @fa_regions;
     my @coords;
 
@@ -181,21 +215,30 @@ sub frag_se{
 
     # sort is bottle neck, either ignore and return reads in random order
     # or limit manageable regions for long seq
-    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$frag_len));
+    my @frag_offs;
+    if ($opt{systematic}) {
+        @frag_offs[0,1] = (0, int(($seq_len - $read_len) / $frag_num)); # frag step
+        for (my $i=2; $i< $frag_num; $i++) {
+            $frag_offs[$i] = $frag_offs[$i-1] + $frag_offs[1];
+        }
+    }else {
+        @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$frag_len));
+    }
+
     foreach my $frag_off ( @frag_offs) {
 
         my $frag = Fastq::Seq->new(
             '@'.$opt{prefix}.$c,
             substr($fa->seq, $frag_off, $read_len),
             "+",
-            "I" x $read_len
+            ref($fp) eq 'Fastq::Parser' ? substr($fa->qual, $frag_off, $read_len) : "I" x $read_len
         );
 
         # both strands
         int(rand(2)) && $frag->reverse_complement;
 
         print $frag;
-                    
+
         $c++;
     }
 }
@@ -219,25 +262,37 @@ sub frag_pacbio{
     my $read_len = $opt{length};
     my $frag_num = $seq_len * ( $opt{coverage} / $read_len );
 
-    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$read_len));
-    my @frag_lens = Math::Random::random_negative_binomial($frag_num,5,5/$read_len);
+    my @frag_offs;
+    my @frag_lens;
+
+    if ($opt{systematic}) {
+        @frag_lens = map{$read_len}1..$frag_num;
+        @frag_offs[0,1] = (0, int(($seq_len - $read_len) / $frag_num)); # frag step
+        for (my $i=2; $i< $frag_num-1; $i++) {
+            $frag_offs[$i] = $frag_offs[$i-1] + $frag_offs[1];
+        }
+    }else {
+        @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$read_len));
+        @frag_lens = Math::Random::random_negative_binomial($frag_num,5,5/$read_len);
+    }
+
     for ( my $i=0; $i<@frag_offs; $i++) {
         my $frag_off = $frag_offs[$i];
         my $frag_len = int($frag_lens[$i]);
         next if $frag_off + $frag_len > $seq_len;
-        #print STDERR join("\t", $frag_off, $frag_len, $frag_off+$frag_len, $seq_len),"\n";                    
+        #print STDERR join("\t", $frag_off, $frag_len, $frag_off+$frag_len, $seq_len),"\n";
         my $frag = Fastq::Seq->new(
             '@'.$opt{prefix}.$c,
             substr($fa->seq, $frag_off, $frag_len),
             "+",
-            "I" x $frag_len
+            ref($fp) eq 'Fastq::Parser' ? substr($fa->qual, $frag_off, $read_len) : "I" x $read_len
         );
 
         # both strands
         int(rand(2)) && $frag->reverse_complement;
 
         print $frag;
-                
+
         $c++;
     }
 }
@@ -249,40 +304,86 @@ sub frag_pacbio{
 
 sub frag_pe{
     my $fa = shift;
-    my $seq_len = length($fa->seq);
+    my $seq = $fa->seq;
+    my $qual = $fa->qual;
+    my $seq_len = length($seq);
+
     return if $seq_len < $opt{insert_size};
     my $read_len = $opt{length};
-    my $frag_num = $seq_len * ( $opt{coverage} / $read_len/2 ); # pe
+    my $frag_num = int($seq_len * ( $opt{coverage} / $read_len/2 )); # pe
+    my $frag_qual =  "I" x $read_len;
+    my $frag_shift = ($seq_len - $opt{insert_size}) / $frag_num;
 
-    my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$opt{insert_size}));
-    #            my @frag_offs = Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$opt{insert_size});
-    my @frag_lens = Math::Random::random_normal($frag_num, $opt{insert_size}, $opt{insert_size}*0.12);
-    for ( my $i=0; $i<@frag_offs; $i++) {
-        my $frag_off = $frag_offs[$i];
-        my $frag_len = int($frag_lens[$i]);
-        next if $frag_off + $frag_len > $seq_len;
-        $frag_len < $read_len && ($frag_len=$read_len);
-        my $frag = Fasta::Seq->new(id=>"dummy", seq => substr($fa->seq, $frag_off, $frag_len));
+    if ($opt{systematic}) {
 
-        # both strands
-        int(rand(2)) && $frag->reverse_complement;
+        my $frag_off = 0;
+        my $frag_len = $opt{insert_size};
+        my $frag_pre = $opt{prefix};
+        my $PE = $opt{mode} eq 'pe';
 
-        my $r = Fastq::Seq->new(
-            '@'.$opt{prefix}.$c."/1",
-            substr($frag->seq, 0, $read_len),
-            "+",
-            "I" x $read_len
-        );
-        my $m = Fastq::Seq->new(
-            '@'.$opt{prefix}.$c."/2",
-            substr($frag->seq, -$read_len),
-            "+",
-            "I" x $read_len
-        );
+        for (my $i=0; $i<=$frag_num; $i++ ) {
+            my $frag_off_int = int($frag_off);
+            my $fs1 = substr($seq, $frag_off_int, $read_len);
+            my $fq1 = substr($qual, $frag_off_int, $read_len) if $FQ;
+            my $fs2 = substr($seq, $frag_off_int + $frag_len - $read_len, $read_len);
+            my $fq2 = substr($qual, $frag_off_int + $frag_len -$read_len, $read_len) if $FQ;
+            $frag_off+=$frag_shift;
 
-        $opt{mode} eq 'pe' ? $m->reverse_complement : $r->reverse_complement;
-        print $r, $m;
-        $c++;
+            if ($PE){
+                $fs2 = seqrc($fs2);
+                $fq2 = reverse($fq2);
+            }else {
+                $fs1 = seqrc($fs1);
+                $fq1 = reverse($fq1);
+            }
+
+            # both strands
+            int(rand(2)) && (($fs1,$fs2)=($fs2,$fs1));
+            print '@'.$frag_pre.$c."/1\n",$fs1,"\n+\n",$fq1,"\n";
+            print '@'.$frag_pre.$c."/2\n",$fs2,"\n+\n",$fq2,"\n";
+            $c++;
+        }
+
+    }else {
+        my @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$opt{insert_size}));
+        my @frag_lens = Math::Random::random_normal($frag_num, $opt{insert_size}, $opt{insert_size}*0.12);
+
+        for ( my $i=0; $i<@frag_lens; $i++) {
+            my $frag_off = $frag_offs[$i];
+            my $frag_len = int($frag_lens[$i]);
+            next if $frag_off + $frag_len > $seq_len;
+            $frag_len < $read_len && ($frag_len=$read_len);
+            my $frag = Fasta::Seq->new(id=>"dummy", seq => substr($fa->seq, $frag_off, $frag_len));
+
+            # both strands
+            my $rand_rev = int(rand(2));
+            $rand_rev && $frag->reverse_complement;
+
+            # for fasta input, qual is static: "I" x $read_len
+            if (ref($fp) eq 'Fastq::Parser') {
+                $frag_qual = substr($fa->qual, $frag_off, $frag_len);
+                if ($rand_rev) {
+                    $frag_qual = reverse($frag_qual);
+                }
+            }
+
+            my $r = Fastq::Seq->new(
+                '@'.$opt{prefix}.$c."/1",
+                substr($frag->seq, 0, $read_len),
+                "+",
+                substr($frag_qual, 0, $read_len)
+            );
+            my $m = Fastq::Seq->new(
+                '@'.$opt{prefix}.$c."/2",
+                substr($frag->seq, -$read_len),
+                "+",
+                substr($frag_qual, -$read_len)
+            );
+
+            $opt{mode} eq 'pe' ? $m->reverse_complement : $r->reverse_complement;
+            print $r, $m;
+            $c++;
+        }
     }
 }
 
@@ -311,7 +412,7 @@ sub frag_contig{
         $fuzz = 0 if $frag_offs[$i] + $fuzz > $seq_len; # respect max seq len
         $frag_lens[$i] = $len - $fuzz;
     }
-    
+
     $fuzz = Math::Random::random_negative_binomial(1,5,0.01)-400;
     $fuzz = 0 if $fuzz < 0 || $fuzz > $seq_len; # respect max seq len
     push @frag_lens, $seq_len - $frag_offs[$#frag_offs] - $fuzz;
@@ -320,12 +421,12 @@ sub frag_contig{
         pop @frag_lens;
     }
 
-    
+
     for ( my $i=0; $i<@frag_offs; $i++) {
         my $frag_off = $frag_offs[$i];
         my $frag_len = int($frag_lens[$i]);
         if ($frag_off + $frag_len > $seq_len){next;};
-        print STDERR join("\t", $frag_off, $frag_len, $frag_off+$frag_len, $seq_len),"\n";                    
+        #print STDERR join("\t", $frag_off, $frag_len, $frag_off+$frag_len, $seq_len),"\n";
         my $frag = Fasta::Seq->new(
             id => '>'.$opt{prefix}.$c,
             seq => substr($fa->seq, $frag_off, $frag_len),
@@ -335,7 +436,13 @@ sub frag_contig{
         int(rand(2)) && $frag->reverse_complement;
 
         print $frag;
-                
+
         $c++;
     }
+}
+
+
+sub seqrc{
+    $_[0] =~ tr/ATGCatgc/TACGtacg/;
+    return scalar reverse $_[0];
 }
