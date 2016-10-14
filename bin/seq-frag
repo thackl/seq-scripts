@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case);;
 use Pod::Usage;
 use Data::Dumper;
 use Math::Random qw(random_negative_binomial);
@@ -55,6 +55,10 @@ Use systematic sampling with fixed insert-size and fixed distance between
 fragments rather than sampling from distributions (only for pe, ignored for
 other modes)
 
+=item [-N/--N-max] [OFF]
+
+Maximum number of N's per read.
+
 =item [-r/--prefix]
 
 Read name prefix.
@@ -90,6 +94,7 @@ my %def = (
            prefix => "r",
            region_length => 800_000,
            region_length_factor => 100,
+           nmax => undef,
        );
 
 my %opt = ();
@@ -100,6 +105,7 @@ GetOptions(                     # use %opt (Cfg) as defaults
                         coverage|c=i
                         insert_size|insert-size|i=i
                         systematic|s!
+                        nmax|N=i
                         prefix|r=s
                         progress|p!
                         version|V!
@@ -313,6 +319,7 @@ sub frag_pe{
     my $frag_num = int($seq_len * ( $opt{coverage} / $read_len/2 )); # pe
     my $frag_qual =  "I" x $read_len;
     my $frag_shift = ($seq_len - $opt{insert_size}) / $frag_num;
+    my $Nmax = $opt{nmax};
 
     if ($opt{systematic}) {
 
@@ -323,11 +330,15 @@ sub frag_pe{
 
         for (my $i=0; $i<=$frag_num; $i++ ) {
             my $frag_off_int = int($frag_off);
+            $frag_off+=$frag_shift; # increment regardless of ignoring reads
+
             my $fs1 = uc(substr($seq, $frag_off_int, $read_len));
+            defined($Nmax) && $fs1 =~ tr/N// > $Nmax && next;
             my $fq1 = $FQ ? substr($qual, $frag_off_int, $read_len) : $frag_qual;
+
             my $fs2 = uc(substr($seq, $frag_off_int + $frag_len - $read_len, $read_len));
+            defined($Nmax) && $fs2 =~ tr/N// > $Nmax && next;
             my $fq2 = $FQ ? substr($qual, $frag_off_int + $frag_len -$read_len, $read_len) : $frag_qual;
-            $frag_off+=$frag_shift;
 
             if ($PE){
                 $fs2 = seqrc($fs2);
