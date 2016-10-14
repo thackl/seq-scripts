@@ -323,9 +323,9 @@ sub frag_pe{
 
         for (my $i=0; $i<=$frag_num; $i++ ) {
             my $frag_off_int = int($frag_off);
-            my $fs1 = substr($seq, $frag_off_int, $read_len);
+            my $fs1 = uc(substr($seq, $frag_off_int, $read_len));
             my $fq1 = $FQ ? substr($qual, $frag_off_int, $read_len) : $frag_qual;
-            my $fs2 = substr($seq, $frag_off_int + $frag_len - $read_len, $read_len);
+            my $fs2 = uc(substr($seq, $frag_off_int + $frag_len - $read_len, $read_len));
             my $fq2 = $FQ ? substr($qual, $frag_off_int + $frag_len -$read_len, $read_len) : $frag_qual;
             $frag_off+=$frag_shift;
 
