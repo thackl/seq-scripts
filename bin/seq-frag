@@ -59,6 +59,14 @@ other modes)
 
 Maximum number of N's per read.
 
+=item [-Q/--quality] [20:0]
+
+Phred score of minimum quality : maximum number of bases below minimum quality.
+
+=item [-P/--phred64] [33]
+
+Toggle phred offset from 33 to 64.
+
 =item [-r/--prefix]
 
 Read name prefix.
@@ -95,6 +103,9 @@ my %def = (
            region_length => 800_000,
            region_length_factor => 100,
            nmax => undef,
+           quality => "20:0",
+           phred_offset => 33,
+
        );
 
 my %opt = ();
@@ -105,7 +116,9 @@ GetOptions(                     # use %opt (Cfg) as defaults
                         coverage|c=i
                         insert_size|insert-size|i=i
                         systematic|s!
-                        nmax|N=i
+                        nmax|N:i
+                        quality|Q=s
+                        phred64|P!
                         prefix|r=s
                         progress|p!
                         version|V!
@@ -147,6 +160,20 @@ my %frag = (
     pacbio => \&frag_pacbio,
     contig => \&frag_contig,
 );
+
+
+# precompile low quality transiteration
+$opt{phred_offet} = 64 if $opt{phred64};
+my ($Q, $Qmax, $Qtr);
+
+if (defined($opt{quality})) {
+    ($Q, $Qmax) = split(":", $opt{quality}, 2);
+    $Qmax//=0;
+    die "-Q needs to be of format INT:INT\n" unless ($Q =~ /^\d+$/ && $Qmax =~ /^\d+$/);
+    my $Qlow = join("", map{chr($_+ $opt{phred_offset})}(0..$Q-1));
+    print STDERR $Qlow,"\n";
+    $Qtr = eval 'sub { $_[0]'." =~ tr/\Q$Qlow\E// }" or die $@;
+}
 
 # fragment counter
 my $c = 1;
@@ -335,10 +362,12 @@ sub frag_pe{
             my $fs1 = uc(substr($seq, $frag_off_int, $read_len));
             defined($Nmax) && $fs1 =~ tr/N// > $Nmax && next;
             my $fq1 = $FQ ? substr($qual, $frag_off_int, $read_len) : $frag_qual;
+            defined($Q) && $Qtr->($fq1) > $Qmax && next;
 
             my $fs2 = uc(substr($seq, $frag_off_int + $frag_len - $read_len, $read_len));
             defined($Nmax) && $fs2 =~ tr/N// > $Nmax && next;
             my $fq2 = $FQ ? substr($qual, $frag_off_int + $frag_len -$read_len, $read_len) : $frag_qual;
+            defined($Q) && $Qtr->($fq2) > $Qmax && next;
 
             if ($PE){
                 $fs2 = seqrc($fs2);
