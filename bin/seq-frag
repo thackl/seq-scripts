@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case);;
 use Pod::Usage;
 use Data::Dumper;
 use Math::Random qw(random_negative_binomial);
@@ -55,6 +55,18 @@ Use systematic sampling with fixed insert-size and fixed distance between
 fragments rather than sampling from distributions (only for pe, ignored for
 other modes)
 
+=item [-N/--N-max] [OFF]
+
+Maximum number of N's per read.
+
+=item [-Q/--quality] [20:0]
+
+Phred score of minimum quality : maximum number of bases below minimum quality.
+
+=item [-P/--phred64] [33]
+
+Toggle phred offset from 33 to 64.
+
 =item [-r/--prefix]
 
 Read name prefix.
@@ -90,6 +102,10 @@ my %def = (
            prefix => "r",
            region_length => 800_000,
            region_length_factor => 100,
+           nmax => undef,
+           quality => "20:0",
+           phred_offset => 33,
+
        );
 
 my %opt = ();
@@ -100,6 +116,9 @@ GetOptions(                     # use %opt (Cfg) as defaults
                         coverage|c=i
                         insert_size|insert-size|i=i
                         systematic|s!
+                        nmax|N:i
+                        quality|Q=s
+                        phred64|P!
                         prefix|r=s
                         progress|p!
                         version|V!
@@ -141,6 +160,20 @@ my %frag = (
     pacbio => \&frag_pacbio,
     contig => \&frag_contig,
 );
+
+
+# precompile low quality transiteration
+$opt{phred_offet} = 64 if $opt{phred64};
+my ($Q, $Qmax, $Qtr);
+
+if (defined($opt{quality})) {
+    ($Q, $Qmax) = split(":", $opt{quality}, 2);
+    $Qmax//=0;
+    die "-Q needs to be of format INT:INT\n" unless ($Q =~ /^\d+$/ && $Qmax =~ /^\d+$/);
+    my $Qlow = join("", map{chr($_+ $opt{phred_offset})}(0..$Q-1));
+    print STDERR $Qlow,"\n";
+    $Qtr = eval 'sub { $_[0]'." =~ tr/\Q$Qlow\E// }" or die $@;
+}
 
 # fragment counter
 my $c = 1;
@@ -305,7 +338,7 @@ sub frag_pacbio{
 sub frag_pe{
     my $fa = shift;
     my $seq = $fa->seq;
-    my $qual = $fa->qual;
+    my $qual = $fa->qual if $FQ;
     my $seq_len = length($seq);
 
     return if $seq_len < $opt{insert_size};
@@ -313,6 +346,7 @@ sub frag_pe{
     my $frag_num = int($seq_len * ( $opt{coverage} / $read_len/2 )); # pe
     my $frag_qual =  "I" x $read_len;
     my $frag_shift = ($seq_len - $opt{insert_size}) / $frag_num;
+    my $Nmax = $opt{nmax};
 
     if ($opt{systematic}) {
 
@@ -323,11 +357,17 @@ sub frag_pe{
 
         for (my $i=0; $i<=$frag_num; $i++ ) {
             my $frag_off_int = int($frag_off);
-            my $fs1 = substr($seq, $frag_off_int, $read_len);
-            my $fq1 = substr($qual, $frag_off_int, $read_len) if $FQ;
-            my $fs2 = substr($seq, $frag_off_int + $frag_len - $read_len, $read_len);
-            my $fq2 = substr($qual, $frag_off_int + $frag_len -$read_len, $read_len) if $FQ;
-            $frag_off+=$frag_shift;
+            $frag_off+=$frag_shift; # increment regardless of ignoring reads
+
+            my $fs1 = uc(substr($seq, $frag_off_int, $read_len));
+            defined($Nmax) && $fs1 =~ tr/N// > $Nmax && next;
+            my $fq1 = $FQ ? substr($qual, $frag_off_int, $read_len) : $frag_qual;
+            defined($Q) && $Qtr->($fq1) > $Qmax && next;
+
+            my $fs2 = uc(substr($seq, $frag_off_int + $frag_len - $read_len, $read_len));
+            defined($Nmax) && $fs2 =~ tr/N// > $Nmax && next;
+            my $fq2 = $FQ ? substr($qual, $frag_off_int + $frag_len -$read_len, $read_len) : $frag_qual;
+            defined($Q) && $Qtr->($fq2) > $Qmax && next;
 
             if ($PE){
                 $fs2 = seqrc($fs2);
