@@ -4,8 +4,7 @@ use strict;
 
 use Getopt::Long qw(:config no_ignore_case);;
 use Pod::Usage;
-use Data::Dumper;
-use Math::Random qw(random_negative_binomial);
+
 use Fasta::Parser;
 use Fasta::Seq;
 
@@ -161,6 +160,10 @@ my %frag = (
     contig => \&frag_contig,
 );
 
+if (($opt{mode} eq "pe" || $opt{mode} eq "mp") && !$opt{systematic}) {
+    print STDERR "non-systematic paired-end sampling, loading Math::Random\n";
+    require Math::Random;
+}
 
 # precompile low quality transiteration
 $opt{phred_offet} = 64 if $opt{phred64};
