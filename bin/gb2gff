@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+PRE=`basename $1`
+GFF=${PRE%.gb*}.gff
+seqret -feature -osformat2 gff3 -outseq $GFF $1
