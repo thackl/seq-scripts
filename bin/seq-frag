@@ -177,7 +177,6 @@ if (defined($opt{quality})) {
     $Qmax//=0;
     die "-Q needs to be of format INT:INT\n" unless ($Q =~ /^\d+$/ && $Qmax =~ /^\d+$/);
     my $Qlow = join("", map{chr($_+ $opt{phred_offset})}(0..$Q-1));
-    print STDERR $Qlow,"\n";
     $Qtr = eval 'sub { $_[0]'." =~ tr/\Q$Qlow\E// }" or die $@;
 }
 
@@ -375,7 +374,7 @@ sub frag_pe{
             my $fq2 = $FQ ? substr($qual, $frag_off_int + $frag_len -$read_len, $read_len) : $frag_qual;
             defined($Q) && $Qtr->($fq2) > $Qmax && next;
 
-            if ($PE){
+            if ($PE){ ## pair-end or mate-pair
                 $fs2 = seqrc($fs2);
                 $fq2 = reverse($fq2);
             }else {
