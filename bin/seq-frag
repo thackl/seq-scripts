@@ -150,7 +150,10 @@ if ( $opt{mode} ne "contig" ){
 }else {
     $opt{coverage} //= 1; # default cov of 1 for contig mode
 }
-my $insert_lib_mode = grep{$opt{mode} eq $_}qw(pe se mp);
+my $insert_lib_mode = grep{$opt{mode} eq $_}qw(pe mp);
+if ($insert_lib_mode && $opt{insert_size} < $opt{length}) {
+    die "Insert size smaller than read length does not make sense\n";
+}
 
 my %frag = (
     se => \&frag_se,
