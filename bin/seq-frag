@@ -382,8 +382,12 @@ sub frag_pe{
                 $fq1 = reverse($fq1);
             }
 
-            # both strands
-            int(rand(2)) && (($fs1,$fs2)=($fs2,$fs1));
+            # both strands randomly
+            if (int(rand(2))){
+                ($fs1,$fs2)=($fs2,$fs1);
+                ($fq1,$fq2)=($fq2,$fq1);
+            }
+
             print '@'.$frag_pre.$c."/1\n",$fs1,"\n+\n",$fq1,"\n";
             print '@'.$frag_pre.$c."/2\n",$fs2,"\n+\n",$fq2,"\n";
             $c++;
