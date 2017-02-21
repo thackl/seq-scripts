@@ -1,0 +1,233 @@
+#!/usr/bin/env perl
+# Created: 20 Feb 2017
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long qw(:config no_ignore_case);;
+use Pod::Usage;
+use Log::Log4perl qw(:no_extra_logdie_message);
+use Log::Log4perl::Level;
+use Data::Dumper;
+use FindBin qw($Script $RealBin);
+
+use Fasta::Parser;
+use Fasta::Seq;
+use Fastq::Parser;
+use Fastq::Seq;
+
+=head1 NAME
+
+seq-error
+
+=head1 DESCRIPTION
+
+Add errors to sequences
+
+=head1 AUTHOR
+
+Thomas Hackl - S<thackl@lim4.de>
+
+=head1 SYNOPSIS
+
+  seq-error FA/FQ
+
+=head1 OPTIONS
+
+=over
+
+=item -e/--error [0:0:0]
+
+Comma or colon separated string giving percentages of
+mutation:insertion:deletion.
+
+=item -h/--help
+
+Show this help screen.
+
+=item -D/--debug
+
+Show debug messages.
+
+=back
+
+=head1 MAIN
+
+=cut
+
+my $VERSION = 0.1.0;
+
+
+my %opt = init();
+my $L = $opt{logger};
+
+my $fp = Fasta::Parser->new(file=>$ARGV[0])->check_format ||
+    Fastq::Parser->new(file=>$ARGV[0])->check_format;
+$L->logdie("Input file neither Fasta nor Fastq\n") unless $fp;
+
+my $is_fq = ref($fp) eq 'Fastq::Parser';
+
+my $M = {
+    A => [qw(T G C)],
+    T => [qw(A G C)],
+    G => [qw(A T C)],
+    C => [qw(A T G)],
+};
+
+
+my $bp=0;
+while (my $fa = $fp->next_seq) {
+    # seq length is bottle neck (not sort or rand)
+    # => split long seqs into manageable regions
+    $bp+=length($fa->seq);
+    my @fa = map{add_error_random($_)}fa_regions($fa);
+    if (@fa > 1) {
+        print Fasta::Seq->cat(@fa)
+    }else {
+        print $fa[0];
+        print length($fa->seq);
+    }
+
+    if ( $opt{progress} ) {
+        printf STDERR ("\r%0.1f Mbp", $bp / 1_000_000);
+    }
+}
+print STDERR "\n" if $opt{progress};
+
+
+
+##----------------------------------------------------------------------------##
+# subs
+##----------------------------------------------------------------------------##
+
+sub init{
+    no warnings 'qw';
+    my $argv = join(" ", @ARGV);
+
+    # logger
+    Log::Log4perl->init( \(q(
+        log4perl.rootLogger                     = INFO, Screen
+        log4perl.appender.Screen                = Log::Log4perl::Appender::Screen
+        log4perl.appender.Screen.stderr         = 1
+        log4perl.appender.Screen.layout         = PatternLayout
+        log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$Script.q(] %m%n)));
+
+    my %def = (
+        mut => 0, ins => 0, del => 0,
+        region_length => 800_000
+    );
+        
+    my %opt = ();
+    my $L = $opt{logger} = Log::Log4perl->get_logger();
+
+    GetOptions(\%opt, qw(
+                            error=s
+                            debug|D!
+                            help|h!
+                    )) or $L->logdie('Failed to "GetOptions"');
+
+    $opt{argv} = $argv; # store it just in case
+    $opt{help} && pod2usage(1);
+
+    $opt{in} = @ARGV ? shift @ARGV : '-';
+    $L->logdie("unused argument: @ARGV") if @ARGV;
+
+    %opt = (%def, %opt);
+
+    if ($opt{in} ne '-') {
+        open($opt{ifh}, '<', $opt{in}) or $L->logdie("$opt{in}: $!");
+    } else {
+        $L->info("reading STDIN");
+        $opt{ifh} = \*STDIN;
+    }
+
+    if (defined($opt{error})) {
+        ($opt{mut}, $opt{ins}, $opt{del}) = split(/[:,]/, $opt{error}, 3);
+        for (qw(mut ins del)){
+            $opt{$_} //= 0;
+        }
+        $opt{indel}=$opt{ins}+$opt{del};
+        $opt{err} = $opt{indel}+$opt{mut};
+        $L->logdie("Sum of errors can't be greater than 100%") if $opt{err} > 100;
+    }
+    
+    $L->level($DEBUG) if $opt{debug};
+    $L->debug('Verbose level set to DEBUG');
+    $L->debug(Dumper(\%opt));
+
+    return %opt;
+}
+
+
+=head2 fa_regions
+
+Split long fastas in regions to speed up substring
+
+=cut
+
+sub fa_regions{
+    $L->info("fa_region");
+    my $fa = shift;
+    my $seq_len = length($fa->seq);
+    return ($fa) if ( $seq_len <= $opt{region_length});
+
+    my @fa_regions;
+    my @coords;
+
+    my $l = $opt{region_length};
+    my $o = 0;
+    while ($o+$l < $seq_len) {
+        push @coords, [$o, $l];
+        $o+=$opt{region_length};
+    }
+    push @coords, [$o];
+    @fa_regions = $fa->substr_seq(@coords);
+
+    return @fa_regions;
+}
+
+
+=head2 add_error_random
+
+=cut
+
+sub add_error_random{
+    $L->info("add_error_random");
+    my $fa = shift;
+    my $seq_len = length($fa->seq);
+
+    my @mx;
+    my @ix;
+    my @dx;
+
+    my $off = 0;
+    for (my $i=$seq_len;$i;$i--) {
+        my $r = rand(100);
+        if ( $r < $opt{err}){ #<err >ins+del
+            if ($r < $opt{indel}) {
+                if ( $r < $opt{del}) { # del
+                    substr($fa->{seq}, $i, 1, "-")
+                }else {
+                    # ins
+                    push @ix, $i;
+                }
+            }else {
+                # mut
+                my $x = substr($fa->{seq}, $i, 1);
+                substr($fa->{seq}, $i, 1, $M->{uc($x)}[rand(3)])
+            }
+        }
+    }
+
+    print join(" ", reverse(@ix)),"\n";
+    for my $i (reverse(@ix)) {
+        substr($fa->{seq}, $i, 0, qw(a t g c)[rand(4)]);
+    }
+
+    $fa->{seq} =~ tr/-//d;
+    print $fa->{seq},"\n";
+
+    return $fa;
+}
+
+
+
