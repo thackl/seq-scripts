@@ -221,9 +221,7 @@ sub add_error_random{
     my $fa = shift;
     my $seq_len = length($fa->seq);
 
-    my @mx;
-    my @ix;
-    my @dx;
+    my $ic = 0;
 
     my $off = 0;
     for (my $i=$seq_len;$i;$i--) {
@@ -232,19 +230,18 @@ sub add_error_random{
             if ($r < $opt{indel}) {
                 if ( $r < $opt{del}) { # del
                     substr($fa->{seq}, $i, 1, "-")
-                }else {
-                    # ins
-                    push @ix, $i;
+                }else { # ins
+                    $ic++;
                 }
-            }else {
-                # mut
+            }else { # mut
                 my $x = substr($fa->{seq}, $i, 1);
                 substr($fa->{seq}, $i, 1, exists $M->{$x} ? $M->{$x}[rand(@N-1)] : @N[rand(@N)]);
             }
         }
     }
 
-    for my $i (reverse(@ix)) {
+    my @ix = sort{$a<=>$b}map{int(rand(length($fa->{seq}) + $ic-1))}0..$ic;
+    for my $i (@ix) {
         substr($fa->{seq}, $i, 0, @N[rand(@N)]);
     }
 
