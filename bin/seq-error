@@ -29,7 +29,7 @@ Thomas Hackl - S<thackl@lim4.de>
 
 =head1 SYNOPSIS
 
-  seq-error FA/FQ
+  seq-error -e 0.5,0.1,0.1 FA/FQ
 
 =head1 OPTIONS
 
@@ -60,8 +60,8 @@ my $VERSION = 0.1.0;
 my %opt = init();
 my $L = $opt{logger};
 
-my $fp = Fasta::Parser->new(file=>$ARGV[0])->check_format ||
-    Fastq::Parser->new(file=>$ARGV[0])->check_format;
+my $fp = Fasta::Parser->new(fh=>$opt{ifh})->check_format ||
+    Fastq::Parser->new(fh=>$opt{ifh})->check_format;
 $L->logdie("Input file neither Fasta nor Fastq\n") unless $fp;
 
 my $is_fq = ref($fp) eq 'Fastq::Parser';
@@ -79,13 +79,15 @@ while (my $fa = $fp->next_seq) {
     # seq length is bottle neck (not sort or rand)
     # => split long seqs into manageable regions
     $bp+=length($fa->seq);
+    my $fa_id = $fa->id; # store
+    my $fa_desc = $fa->desc; # store
     my @fa = map{add_error_random($_)}fa_regions($fa);
     if (@fa > 1) {
-        print Fasta::Seq->cat(@fa)
-    }else {
-        print $fa[0];
-        print length($fa->seq);
+        @fa = (Fasta::Seq->cat(@fa));
+        $fa[0]->id($fa_id); # restore
+        $fa[0]->desc($fa_desc); # restore
     }
+    print $fa[0];
 
     if ( $opt{progress} ) {
         printf STDERR ("\r%0.1f Mbp", $bp / 1_000_000);
@@ -112,7 +114,6 @@ sub init{
         log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$Script.q(] %m%n)));
 
     my %def = (
-        mut => 0, ins => 0, del => 0,
         region_length => 800_000
     );
         
@@ -148,6 +149,8 @@ sub init{
         $opt{indel}=$opt{ins}+$opt{del};
         $opt{err} = $opt{indel}+$opt{mut};
         $L->logdie("Sum of errors can't be greater than 100%") if $opt{err} > 100;
+    }else {
+        pod2usage(exitval=>1, msg => "--error required");
     }
     
     $L->level($DEBUG) if $opt{debug};
@@ -165,7 +168,7 @@ Split long fastas in regions to speed up substring
 =cut
 
 sub fa_regions{
-    $L->info("fa_region");
+    $L->debug("fa_region");
     my $fa = shift;
     my $seq_len = length($fa->seq);
     return ($fa) if ( $seq_len <= $opt{region_length});
@@ -191,7 +194,7 @@ sub fa_regions{
 =cut
 
 sub add_error_random{
-    $L->info("add_error_random");
+    $L->debug("add_error_random");
     my $fa = shift;
     my $seq_len = length($fa->seq);
 
@@ -218,13 +221,11 @@ sub add_error_random{
         }
     }
 
-    print join(" ", reverse(@ix)),"\n";
     for my $i (reverse(@ix)) {
-        substr($fa->{seq}, $i, 0, qw(a t g c)[rand(4)]);
+        substr($fa->{seq}, $i, 0, qw(A T G C)[rand(4)]);
     }
 
     $fa->{seq} =~ tr/-//d;
-    print $fa->{seq},"\n";
 
     return $fa;
 }
