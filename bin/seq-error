@@ -29,7 +29,7 @@ Thomas Hackl - S<thackl@lim4.de>
 
 =head1 SYNOPSIS
 
-  seq-error FA/FQ
+  seq-error -e 0.5,0.1,0.1 FA/FQ
 
 =head1 OPTIONS
 
@@ -39,6 +39,11 @@ Thomas Hackl - S<thackl@lim4.de>
 
 Comma or colon separated string giving percentages of
 mutation:insertion:deletion.
+
+=item -n/--nucleotides [ATGC]
+
+String of nucleotides to draw from for mutations/insertions. To change
+probabilities, multiplier are accepted, e.g. A2T2G3C3 for 60% GC.
 
 =item -h/--help
 
@@ -60,17 +65,21 @@ my $VERSION = 0.1.0;
 my %opt = init();
 my $L = $opt{logger};
 
-my $fp = Fasta::Parser->new(file=>$ARGV[0])->check_format ||
-    Fastq::Parser->new(file=>$ARGV[0])->check_format;
+my $fp = Fasta::Parser->new(fh=>$opt{ifh})->check_format ||
+    Fastq::Parser->new(fh=>$opt{ifh})->check_format;
 $L->logdie("Input file neither Fasta nor Fastq\n") unless $fp;
 
 my $is_fq = ref($fp) eq 'Fastq::Parser';
 
-my $M = {
-    A => [qw(T G C)],
-    T => [qw(A G C)],
-    G => [qw(A T C)],
-    C => [qw(A T G)],
+my @N = @{$opt{N}};
+
+my $M = {};
+$M->{$_} = [] for @N;
+foreach my $k (keys %$M){
+    $M->{$k} = [grep{$_ ne $k}@N];
+    my $kc = $k;
+    $kc =~ tr/A-Za-z/a-zA-Z/; # uc/lc complement
+    $M->{$kc} = $M->{$k};
 };
 
 
@@ -79,13 +88,15 @@ while (my $fa = $fp->next_seq) {
     # seq length is bottle neck (not sort or rand)
     # => split long seqs into manageable regions
     $bp+=length($fa->seq);
+    my $fa_id = $fa->id; # store
+    my $fa_desc = $fa->desc; # store
     my @fa = map{add_error_random($_)}fa_regions($fa);
     if (@fa > 1) {
-        print Fasta::Seq->cat(@fa)
-    }else {
-        print $fa[0];
-        print length($fa->seq);
+        @fa = (Fasta::Seq->cat(@fa));
+        $fa[0]->id($fa_id); # restore
+        $fa[0]->desc($fa_desc); # restore
     }
+    print $fa[0];
 
     if ( $opt{progress} ) {
         printf STDERR ("\r%0.1f Mbp", $bp / 1_000_000);
@@ -112,15 +123,16 @@ sub init{
         log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$Script.q(] %m%n)));
 
     my %def = (
-        mut => 0, ins => 0, del => 0,
-        region_length => 800_000
+        region_length => 800_000,
+        nucleotides => "ATGC",
     );
         
     my %opt = ();
     my $L = $opt{logger} = Log::Log4perl->get_logger();
 
     GetOptions(\%opt, qw(
-                            error=s
+                            nucleotides|n=s
+                            error|e=s
                             debug|D!
                             help|h!
                     )) or $L->logdie('Failed to "GetOptions"');
@@ -148,6 +160,20 @@ sub init{
         $opt{indel}=$opt{ins}+$opt{del};
         $opt{err} = $opt{indel}+$opt{mut};
         $L->logdie("Sum of errors can't be greater than 100%") if $opt{err} > 100;
+    }else {
+        pod2usage(exitval=>1, msg => "--error required");
+    }
+
+    if (length($opt{nucleotides})) {
+        $L->logdie("--nucleotides only supports: [A-Za-z]") if $opt{nucleotides} =~ tr/a-zA-Z0-9//c;
+        my @n = split(/\B(\d*)/, $opt{nucleotides});
+        my %n = @n%2 ? (@n, '') : @n;
+        while (my ($k,$v) = each %n) {
+            $v = 1 if $v eq '' ;
+            push @{$opt{N}}, ($k) x $v;
+        }
+    }else {
+       $L->logdie("--nucleotides for mutations/insertions required");
     }
     
     $L->level($DEBUG) if $opt{debug};
@@ -165,7 +191,7 @@ Split long fastas in regions to speed up substring
 =cut
 
 sub fa_regions{
-    $L->info("fa_region");
+    $L->debug("fa_region");
     my $fa = shift;
     my $seq_len = length($fa->seq);
     return ($fa) if ( $seq_len <= $opt{region_length});
@@ -191,13 +217,11 @@ sub fa_regions{
 =cut
 
 sub add_error_random{
-    $L->info("add_error_random");
+    $L->debug("add_error_random");
     my $fa = shift;
     my $seq_len = length($fa->seq);
 
-    my @mx;
-    my @ix;
-    my @dx;
+    my $ic = 0;
 
     my $off = 0;
     for (my $i=$seq_len;$i;$i--) {
@@ -206,25 +230,22 @@ sub add_error_random{
             if ($r < $opt{indel}) {
                 if ( $r < $opt{del}) { # del
                     substr($fa->{seq}, $i, 1, "-")
-                }else {
-                    # ins
-                    push @ix, $i;
+                }else { # ins
+                    $ic++;
                 }
-            }else {
-                # mut
+            }else { # mut
                 my $x = substr($fa->{seq}, $i, 1);
-                substr($fa->{seq}, $i, 1, $M->{uc($x)}[rand(3)])
+                substr($fa->{seq}, $i, 1, exists $M->{$x} ? $M->{$x}[rand(@N-1)] : @N[rand(@N)]);
             }
         }
     }
 
-    print join(" ", reverse(@ix)),"\n";
-    for my $i (reverse(@ix)) {
-        substr($fa->{seq}, $i, 0, qw(a t g c)[rand(4)]);
+    my @ix = sort{$a<=>$b}map{int(rand(length($fa->{seq}) + $ic-1))}0..$ic;
+    for my $i (@ix) {
+        substr($fa->{seq}, $i, 0, @N[rand(@N)]);
     }
 
     $fa->{seq} =~ tr/-//d;
-    print $fa->{seq},"\n";
 
     return $fa;
 }
