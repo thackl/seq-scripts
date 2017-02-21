@@ -40,6 +40,11 @@ Thomas Hackl - S<thackl@lim4.de>
 Comma or colon separated string giving percentages of
 mutation:insertion:deletion.
 
+=item -n/--nucleotides [ATGC]
+
+String of nucleotides to draw from for mutations/insertions. To change
+probabilities, multiplier are accepted, e.g. A2T2G3C3 for 60% GC.
+
 =item -h/--help
 
 Show this help screen.
@@ -66,11 +71,15 @@ $L->logdie("Input file neither Fasta nor Fastq\n") unless $fp;
 
 my $is_fq = ref($fp) eq 'Fastq::Parser';
 
-my $M = {
-    A => [qw(T G C)],
-    T => [qw(A G C)],
-    G => [qw(A T C)],
-    C => [qw(A T G)],
+my @N = @{$opt{N}};
+
+my $M = {};
+$M->{$_} = [] for @N;
+foreach my $k (keys %$M){
+    $M->{$k} = [grep{$_ ne $k}@N];
+    my $kc = $k;
+    $kc =~ tr/A-Za-z/a-zA-Z/; # uc/lc complement
+    $M->{$kc} = $M->{$k};
 };
 
 
@@ -114,14 +123,16 @@ sub init{
         log4perl.appender.Screen.layout.ConversionPattern = [%d{yy-MM-dd HH:mm:ss}] [).$Script.q(] %m%n)));
 
     my %def = (
-        region_length => 800_000
+        region_length => 800_000,
+        nucleotides => "ATGC",
     );
         
     my %opt = ();
     my $L = $opt{logger} = Log::Log4perl->get_logger();
 
     GetOptions(\%opt, qw(
-                            error=s
+                            nucleotides|n=s
+                            error|e=s
                             debug|D!
                             help|h!
                     )) or $L->logdie('Failed to "GetOptions"');
@@ -151,6 +162,18 @@ sub init{
         $L->logdie("Sum of errors can't be greater than 100%") if $opt{err} > 100;
     }else {
         pod2usage(exitval=>1, msg => "--error required");
+    }
+
+    if (length($opt{nucleotides})) {
+        $L->logdie("--nucleotides only supports: [A-Za-z]") if $opt{nucleotides} =~ tr/a-zA-Z0-9//c;
+        my @n = split(/\B(\d*)/, $opt{nucleotides});
+        my %n = @n%2 ? (@n, '') : @n;
+        while (my ($k,$v) = each %n) {
+            $v = 1 if $v eq '' ;
+            push @{$opt{N}}, ($k) x $v;
+        }
+    }else {
+       $L->logdie("--nucleotides for mutations/insertions required");
     }
     
     $L->level($DEBUG) if $opt{debug};
@@ -216,13 +239,13 @@ sub add_error_random{
             }else {
                 # mut
                 my $x = substr($fa->{seq}, $i, 1);
-                substr($fa->{seq}, $i, 1, $M->{uc($x)}[rand(3)])
+                substr($fa->{seq}, $i, 1, exists $M->{$x} ? $M->{$x}[rand(@N-1)] : @N[rand(@N)]);
             }
         }
     }
 
     for my $i (reverse(@ix)) {
-        substr($fa->{seq}, $i, 0, qw(A T G C)[rand(4)]);
+        substr($fa->{seq}, $i, 0, @N[rand(@N)]);
     }
 
     $fa->{seq} =~ tr/-//d;
