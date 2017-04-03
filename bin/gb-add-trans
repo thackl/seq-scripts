@@ -4,7 +4,7 @@ use Bio::SeqIO;
 use Bio::Tools::CodonTable;
 use Data::Dumper;
 
-my(@Options, $verbose, $format, $hypo, $idtag, $sep, $desctags, $blank, $pseudo, $minlen, $gcode);
+my(@Options, $verbose, $format, $hypo, $idtag, $sep, $desctags, $blank, $pseudo, $minlen, $gcode, $productlen);
 setOptions();
 
 my $in = Bio::SeqIO->new(-fh=>\*ARGV, -format=>$format);
@@ -15,6 +15,9 @@ while (my $seq = $in->next_seq) {
   my $counter = 0;
   for my $f ($seq->get_SeqFeatures)   {
     
+    if ($f->primary_tag eq 'gene') {
+          $f->remove_tag('product');
+    }
     next unless $f->primary_tag eq 'CDS';
         
     next unless $f->length >= $minlen;
@@ -46,7 +49,12 @@ while (my $seq = $in->next_seq) {
     # http://www.bioperl.org/wiki/HOWTO:Beginners#Translating
     $cds = $cds->translate(-codontable_id => $tt, -complete => 1) if $tt >= 0;
 
-    $f->add_tag_value('translation', $cds->seq)
+    $f->add_tag_value('translation', $cds->seq);
+
+    if($productlen && $prod && length($prod) > $productlen){
+        $f->remove_tag('product');
+        $f->add_tag_value('product', substr($prod, 0, $productlen));
+    }
   }
   $out->write_seq($seq);
 }
@@ -73,9 +81,10 @@ sub setOptions {
     {OPT=>"help",      VAR=>\&usage,                       DESC=>"This help"},
     {OPT=>"verbose!",  VAR=>\$verbose, DEFAULT=>0,         DESC=>"Verbose progress"},
     {OPT=>"format=s",  VAR=>\$format,  DEFAULT=>'genbank', DESC=>"Input format"},
-    {OPT=>"pseudo!",   VAR=>\$pseudo,  DEFAULT=>0,     DESC=>"Include /pseudo genes"},
-    {OPT=>"hypo!",     VAR=>\$hypo,    DEFAULT=>0,     DESC=>"Include 'hypothetical protein' genes"},
+    {OPT=>"pseudo!",   VAR=>\$pseudo,  DEFAULT=>1,     DESC=>"Include /pseudo gene, --no-pseudo to disable"},
+    {OPT=>"hypo!",     VAR=>\$hypo,    DEFAULT=>1,     DESC=>"Include 'hypothetical protein' genes, --no-hypo to disable"},
     {OPT=>"gcode=i",   VAR=>\$gcode,   DEFAULT=>0,     DESC=>"Force this genetic code for translation (otherwise /transl_table), -1 to disable translation"},
+    {OPT=>"productlen=i",  VAR=>\$productlen,  DEFAULT=>'0', DESC=>"Maximum length of product description field, 0 to disable"},
   );
 
   (!@ARGV) && (usage());
