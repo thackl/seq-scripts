@@ -163,7 +163,7 @@ my %frag = (
     contig => \&frag_contig,
 );
 
-if (($opt{mode} eq "pe" || $opt{mode} eq "mp") && !$opt{systematic}) {
+if ((grep{$_ eq $opt{mode}}qw(se pe mp pacbio)) && !$opt{systematic}) {
     print STDERR "non-systematic paired-end sampling, loading Math::Random\n";
     require Math::Random;
 }
