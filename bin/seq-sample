@@ -100,6 +100,7 @@ sub parse_opt_gc{
             ? linear_interpolate($gc, \@x, \@y)
             : robust_interpolate($gc, \@x, \@y);
         $prob = 0 if $prob < 0;
+        $prob = 1 if $prob > 1;
         $gc{$gc} = $prob;
     }
     return \%gc;
