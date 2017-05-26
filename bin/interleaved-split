@@ -6,18 +6,39 @@ use Pod::Usage;
 
 =head1 SYNOPSIS
 
-  cat interleaved.fq | interleaved_split 1>lib_1.fq 2>lib_2.fq;
+  cat interleaved.fq | interleaved-split lib_%d.fq
+
+  # legacy, discouraged
+  cat interleaved.fq | interleaved-split 1>lib_1.fq 2>lib_2.fq;
 
 =cut
 
-pod2usage if @ARGV;
+pod2usage if (@ARGV > 1 || @ARGV && $ARGV[0] =~ /^-+h/);
 
 my ($i, $h, $s, $d, $q) = (0);
 
-while($h=<>,$s=<>,$d=<>,$q=<>){
-    $i++; 
-    print {$i%2 ? *STDOUT : *STDERR} $h,$s,$d,$q
+if (@ARGV) {
+    my $of1 = sprintf($ARGV[0], 1);
+    my $of2 = sprintf($ARGV[0], 2);
+    open(OF1, '>', $of1) or die $of1, $!;
+    open(OF2, '>', $of2) or die $of2, $!;
+    shift(@ARGV);
+
+    while($h=<>,$s=<>,$d=<>,$q=<>){
+        $i++;
+        print {$i%2 ? *OF1 : *OF2} $h,$s,$d,$q
+    }
+
+    close OF1;
+    close OF2;
+
+}else { # legacy, print to STDERR
+    while($h=<>,$s=<>,$d=<>,$q=<>){
+        $i++;
+        print {$i%2 ? *STDOUT : *STDERR} $h,$s,$d,$q
+    }
 }
+
 
 =head1 AUTHOR
 
