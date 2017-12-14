@@ -15,7 +15,7 @@ use File::Temp qw/ tempfile tempdir /;
 GetOptions (
     "p=f" => \(my $opt_p),
     "gc|g=s" => \(my $opt_gc),
-    "linaer|l!" => \(my $opt_linear),
+    "linear|l!" => \(my $opt_linear),
     "seed|s=i" => \(my $opt_seed),
     "interleaved|i!" => \(my $opt_pe),
     "plot!" => \(my $opt_plot=1),
