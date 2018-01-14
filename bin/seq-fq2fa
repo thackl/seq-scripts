@@ -1,0 +1,16 @@
+#!/usr/bin/env perl
+# Created: 14 Jan 2017
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+
+if (@ARGV){
+    print "seq-fq2fa <.fq >.fa\n";
+}
+
+my ($h, $s, $d, $q);
+
+while($h=<>,$s=<>,$d=<>,$q=<>){
+    substr($h, 0, 1, '>');
+    print $h,$s;
+}
