@@ -6,11 +6,16 @@ use strict;
 
 if (@ARGV){
     print "seq-fq2fa <.fq >.fa\n";
+    exit 0;
 }
 
-my ($h, $s, $d, $q);
+my $lw = 80;
+my ($h, $s, $d, $q, $sw);
 
 while($h=<>,$s=<>,$d=<>,$q=<>){
     substr($h, 0, 1, '>');
-    print $h,$s;
+    $sw="";
+    $sw.= $_."\n" for unpack "(A$lw)*", $s;
+    chomp($sw);
+    print $h,$sw,"\n";
 }
