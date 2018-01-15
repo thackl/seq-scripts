@@ -4,18 +4,27 @@
 use warnings;
 use strict;
 
-if (@ARGV){
-    print "seq-fq2fa <.fq >.fa\n";
+my $ofh;
+
+if (@ARGV && $ARGV[0] =~ /^-+h/){
+    print "seq-fq2fa <in.fq >out.fa\n";
+    print "seq-fq2fa in.fq # writes to in.fa\n";
     exit 0;
+}elsif (@ARGV) {
+    my $fa = $ARGV[0];
+    $fa =~ s/q$/a/i or die "Couldn't automatically create output filename";
+    open($ofh, '>', $fa) or die $!;
+}else {
+    $ofh = \*STDOUT;
 }
 
 my $lw = 80;
 my ($h, $s, $d, $q, $sw);
 
-while($h=<>,$s=<>,$d=<>,$q=<>){
+while(defined($h=<>) && defined ($s=<>) && defined ($d=<>) && defined ($q=<>)){
     substr($h, 0, 1, '>');
     $sw="";
     $sw.= $_."\n" for unpack "(A$lw)*", $s;
     chomp($sw);
-    print $h,$sw,"\n";
+    print $ofh $h,$sw,"\n";
 }
