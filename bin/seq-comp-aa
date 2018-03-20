@@ -1,0 +1,60 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+use Data::Dumper;
+use Fasta::Parser;
+
+my @AA = ([], [], []);
+while (<DATA>) {
+    chomp();
+    my @r = split(/\s+/, $_);
+    push @{$AA[$_]}, $r[$_] for 0..$#r;
+}
+my @aa = @{$AA[2]};
+
+my @files = @ARGV;
+
+my %C;
+for (my $f = 0; $f<@files; $f++){
+    my $fp = Fasta::Parser->new(file => $files[$f]);
+    
+    # $C{$_}[$f] = (0) for @aa;
+
+    while(my $fs = $fp->next_seq()){
+        $C{$_}[$f]++ for split("", $fs->seq);
+    }
+}
+
+
+my %aa;
+@aa{@aa} = (0) x scalar @aa;
+my @extra = sort grep{!exists $aa{$_}}(keys %C);
+
+for (my $i = 0; $i<@aa; $i++) {
+    print join("\t", $i+1, $aa[$i], $AA[1][$i], map{$_ // 0}@{$C{$aa[$i]}}[0..$#files]), "\n";
+}
+for (my $i = 0; $i<@extra; $i++) {
+    print join("\t", $i +21, $extra[$i], "?", map{$_ // 0}@{$C{$extra[$i]}}[0..$#files]), "\n";
+}
+
+__DATA__
+Alanine        Ala  A 
+Arginine       Arg  R 
+Asparagine     Asn  N 
+AsparticAcid   Asp  D 
+Cysteine       Cys  C 
+Glutamine      Gln  Q 
+GlutamicAcid   Glu  E 
+Glycine        Gly  G 
+Histidine      His  H 
+Isoleucine     Ile  I 
+Leucine        Leu  L 
+Lysine         Lys  K 
+Methionine     Met  M 
+Phenylalanine  Phe  F 
+Proline        Pro  P 
+Serine         Ser  S 
+Threonine      Thr  T 
+Tryptophan     Trp  W 
+Tyrosine       Tyr  Y 
+Valine         Val  V 
