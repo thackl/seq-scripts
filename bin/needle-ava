@@ -1,0 +1,104 @@
+#!/usr/bin/env perl
+# Created: 13 Dec 2017
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use File::Which;
+use File::Temp;
+use File::Basename;
+use Fasta::Parser;
+
+
+GetOptions (
+    "with-alignments|a" => \(my $opt_alignment),
+    "with-self|s" => \(my $opt_self),
+    "with-reciprocal|r" => \(my $opt_reciprocal),
+    "help|h!" => \(my $opt_help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($opt_help || @ARGV==0){
+    print "Run all-vs-all needle on a single file. Ignore self alignments.\n";
+    print "Output in machine readable format\n";
+
+    print "Usage: ".(basename($0))." [options] .fa > needleall.txt\n";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+##----------------------------------------------------------------------------##
+# prep input files
+my $fa_file = $ARGV[0];
+my $fa_file2 = @ARGV == 2 ? $ARGV[1] : $fa_file;
+
+my $needleall = require_exe("needleall");
+
+open(NEEDLE, '-|', "$needleall -auto -as $fa_file -bs $fa_file2 -aformat pair -awidth 100000 -stdout") or die $!;
+
+# print header
+print join("\t", qw(SeqID_A SeqID_B Length Identities PercIdentity Similarities PercSimilarity Gaps PercGaps Score));
+print "\t", join("\t", qw(Seq_A Seq_B)) if $opt_alignment;
+print "\n";
+
+my %R;
+
+while (<NEEDLE>) {
+    $debug && print;
+    if (/^#=/) {
+        my %S;
+        my $aln = '';
+        while (<NEEDLE>) { # read stats
+            # Aligned_sequences, 1, 2, Matrix, Gap_penalty, Extend_penalty
+            # Length Identity Similarity Gaps Score
+            last if(/^#=/);
+            chomp();
+            my ($z, $k, $v) = split(/:?\s+/, $_, 3);
+            $S{$k} = $v if defined $k;
+        }
+
+        scalar <NEEDLE>;
+        my $s1 = <NEEDLE>;
+        ($s1) = (split(/\s+/, $s1))[2] ;
+        # TODO, markup has leading spaces if no match, so this doesn't work
+        my $as = <NEEDLE>;
+        #($as) = (split(/\s+/, $as))[1] ;
+        my $s2 = <NEEDLE>;
+        ($s2) = (split(/\s+/, $s2))[2] ;
+
+        # ignore self alignments (by ID)
+        next if !$opt_self && ($S{1} eq $S{2});
+        # ignore reciprocal alignment (by ID)
+        if (!$opt_reciprocal) {
+            next if exists $R{$S{2}.$S{1}};
+            $R{$S{1}.$S{2}}++;
+        }
+
+        
+        ($S{Identity_perc}) = $S{Identity} =~ m/([\d.]+)%/;
+        ($S{Identity_count}) = $S{Identity} =~ m/^(\d+)/;
+        ($S{Similarity_perc}) = $S{Similarity} =~ m/([\d.]+)%/;
+        ($S{Similarity_count}) = $S{Similarity} =~ m/^(\d+)/;
+        ($S{Gaps_perc}) = $S{Gaps} =~ m/([\d.]+)%/;
+        ($S{Gaps_count}) = $S{Gaps} =~ m/^(\d+)/;
+
+        print join("\t", @S{qw(2 1 Length Identity_count Identity_perc Similarity_count Similarity_perc Gaps_count Gaps_perc Score)});
+        print "\t", join("\t", $s2, $s1) if $opt_alignment;
+        print "\n";
+    }
+}
+
+close NEEDLE;
+
+
+##----------------------------------------------------------------------------##
+sub require_exe{
+    my $exe = my $fexe = shift;
+    unless ((-e $fexe && -x _) || (($fexe = which($exe)) && -e $fexe && -x _ )){
+        warn("$exe .. failed");
+        die "$exe not found/executable\n";
+    }
+    return $fexe;
+}
