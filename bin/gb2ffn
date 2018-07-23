@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+if [[ $# -eq 0 ]]; then
+    echo "Wrapper for gb2faa --gcode -1" >&2;
+    gb2faa >&2;
+    exit 0;
+fi;
+
+(set -x;
+ gb2faa --gcode -1 $@)
