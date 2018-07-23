@@ -7,12 +7,14 @@ use Getopt::Long  qw(:config no_ignore_case bundling);
 use Data::Dumper;
 
 GetOptions (
+    "no-upper|U" => \(my $opt_noupper),
     "help|h!" => \(my $opt_help),
     "debug|D!" => \(my $debug),
 ) or die("Error in command line arguments\n");
 
 if ($opt_help || @ARGV==0){
     print "Usage: gb-origin2fasta [options] .gb > .fa\n";
+    printf " %-19s  %s\n", "-U/--no-upper", "Don't convert sequence to upper case, keep original case";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
     exit 0;
@@ -27,7 +29,7 @@ my $seq = "";
 while (<GB>) {
     $id = $1 if /^LOCUS\s+(\S+)/; # overwrite by LOCUS ID
     if(/^SOURCE\s+(.+)/){
-        $desc.= " source={$1}"; 
+        $desc.= " source={$1}";
     }
 
     if (/^ORIGIN/) {
@@ -39,6 +41,8 @@ while (<GB>) {
             $seq .= $_;
         }
         $seq =~ tr/ //d;
+        $seq = uc($seq) unless $opt_noupper;
+
 
         my $seq_wrap = "";
         my $lw=80;
