@@ -1,5 +1,22 @@
 #!/usr/bin/env bash
 
-PRE=`basename $1`
-GFF=${PRE%.gb*}.gff
-seqret -feature -osformat2 gff3 -outseq $GFF $1
+usage(){
+cat <<EOF
+Usage:
+  gb2gff .gbk > .gff
+
+  Convert .gbk to .gff3 file using EMBOSS seqret
+EOF
+exit 0;
+}
+
+check_bin(){
+    hash $1 || { echo "$1 required in PATH" >&2; exit 1;}
+}
+
+## prep
+[[ $# -eq 0 ]] && usage;
+
+check_bin seqret
+
+seqret -feature -osformat2 gff3 -auto -stdout $1
