@@ -42,4 +42,4 @@ perl -ane 'next if /^#/;
   }else{
      print join("\t",$F[1],$F[9]-1,$F[8],$F[0],$F[11],"-"),"\n";
   }' <&3 |
-    sort -k2,3g >&4;
+    sort -k1,1 -k2,2n >&4;
