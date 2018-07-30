@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Author: Thomas Hackl - thackl@lim4.de
+# based on https://github.com/nterhoeven/blast2bed/blob/master/blast2bed
+SCR=`basename $0`;
+DIR=`dirname $(readlink $0 || echo $0)`;
+
+usage(){
+cat <<EOF
+Usage:
+  # pipe mode
+  bed2gff [-s SOURCE] < .bed > .gff
+  # file mode
+  bed2gff [-s SOURCE] .bed [.gff]
+
+Convert .bed file into .gff file
+  -s   gff source tag [.]
+EOF
+exit 0;
+}
+
+# Execute getopt
+ARGS=`getopt -n "$SCR" -o "s:h" -- "$@"`
+[ $? -ne 0 ] && exit 1; # Bad arguments
+eval set -- "$ARGS"
+
+
+# Parse args. defaults:
+SOURCE=.
+
+while true; do
+    case "$1" in
+        -s) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); SOURCE="$2"; shift 2;;
+        -h) usage && exit 0;;
+        --) shift; break;;
+    esac
+done
+
+if [[ $# -eq 0 ]]; then
+    echo "Reading STDIN" >&2
+    exec 3<&0; # &3 to STDIN
+    exec 4>&1; # &4 to STDOUT
+else
+    if [[ $# -eq 1 ]]; then
+        OUT=${1%.*}.gff;
+    else
+        OUT=$2;
+    fi;
+    exec 3<$1 # 3 to IN
+    exec 4>$OUT; # &4 to OUT
+    echo "Writing $OUT" >&2
+fi;
+          
+# converting bed to gff
+echo "##gff-version 3" >&4;
+perl -ane 'next if /^track \S+=/;
+  print join("\t",$F[0],"'$SOURCE'",$F[3],$F[1]+1,$F[2],$F[4],$F[6],".","."),"\n";' <&3 >&4;

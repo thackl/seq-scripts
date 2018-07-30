@@ -1,0 +1,43 @@
+#!/bin/bash
+
+## subs
+usage(){
+    echo -e "Usage:\n  bed-gc FASTA";
+    exit 0;
+}
+
+check_bin(){
+    hash $1 || { echo "$1 required in PATH" >&2; exit 1;}
+}
+
+## prep
+[[ $# -eq 0 ]] && usage;
+
+check_bin samtools;
+check_bin bedtools;
+
+FA=$1;
+WIDTH=${2:-1000};
+SHIFT=${3:-200};
+PRE=${FA%.*};
+
+
+## main
+samtools faidx $FA;
+cut -f 1,2 $FA.fai > $FA.len
+
+bedtools makewindows \
+    -g $FA.len \
+    -w $WIDTH \
+    -s $SHIFT \
+    > $PRE.bed
+
+bedtools nuc \
+	-fi $FA \
+	-bed $PRE.bed  \
+	> $PRE.nuc
+
+gawk -v w=${width} 'BEGIN{FS="\t"; OFS="\t"}
+{
+if (FNR>1) {print $1,$2,$3,"GCpc_"w"bps",$5}
+}' $PRE.nuc > $PRE.igv
