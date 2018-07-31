@@ -1,0 +1,59 @@
+#!/usr/bin/env perl
+# Created: 31 Jul 2018
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+
+GetOptions (
+    "feature|f=s" => \(my $feature = ""),
+    "out|o=s" => \(my $out),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV > 2){
+    print "Simple gff to bed conversion. Cannot handle exons. Sorts using unix sort.\n\n";
+    print "Usage: gff2bed.pl < in > out\n";
+    printf " %-19s  %s\n", "-f/--feature", "only convert this feature type (CDS, exon, gene, mRNA, tRNA, CRISPR, ...)";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+my @feature = split(",", $feature);
+
+# pipe output through sort
+my $sort = "sort -k1,1 -k2,2n";
+$sort.=" > $out" if defined($out);
+open(my $ofh, "|-", $sort) or die $!;
+
+#      0        1           2         3      4      5       6       7      8
+# bed: chrom    chromStart  chromEnd  name   score  strand
+# gff: seqname  source      feature   start  end    score   strand  frame  group
+my $gff = "";
+while (<>) {
+    if ($gff ne $ARGV){ $gff = $ARGV; print STDERR "Processing $gff\n"; }
+    if (/^##FASTA/){ close ARGV; next };
+    next if /^#/;
+    chomp($_);
+    my @r = split("\t", $_);
+    next if @feature && !grep{$_ eq $r[2]}@feature;
+    $r[3] -= 1; # 0-offset
+    $r[6] ||= ".";
+
+    my $id;
+    if (defined($r[8]) && (
+        $r[8] =~ /\b(?:ID|Name|Parent)=(.*?);/ ||  # try some gff IDs
+        $r[8] =~ /transcript_id "([^"]+)"/)){      # or gtf IDs
+        ($id = $1);
+        $id =~ s/^["']|["']$//g; # loose quotes
+    }else {
+        $id = "$r[2]_$r[3]-$r[4]";
+    }
+    my @rest = ();
+    if ($#r > 6) { @rest = 7..$#r }
+    print $ofh join("\t", @r[0,3,4],$id,@r[5,6,1,2], @r[@rest]),"\n";
+}
