@@ -1,45 +1,55 @@
-#!/bin/bash
+#!/usr/bin/env perl
+# Created: 03 Aug 2018
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
 
-# Author: Thomas Hackl - thackl@lim4.de
-# based on https://github.com/nterhoeven/blast2bed/blob/master/blast2bed
+my $argv = join(" ", @ARGV);
+GetOptions (
+    "query|q!" => \(my $query_mode),
+    "all|a!" => => \(my $all),
+    "out|o=s" => \(my $out),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
 
-usage(){
-cat <<EOF
-Usage:
-  # pipe mode
-  blast2bed < blast.tsv > blast.bed
-  # file mode
-  blast2bed blast.tsv [blast.bed]
-
-Convert blast results (outfmt 6 or 7) into bed data.
-EOF
-exit 0;
+if ($help || @ARGV > 2){
+    print "Usage: blast2bed < in > out\n";
+    printf " %-19s  %s\n", "-q/--query", "relative to query, not subject [OFF]";
+    printf " %-19s  %s\n", "-a/--all", "add extra fields after 6 default bed columns [OFF]";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
 }
 
-if [[ $# -eq 0 ]]; then
-    echo "Reading STDIN" >&2
-    exec 3<&0; # &3 to STDIN
-    exec 4>&1; # &4 to STDOUT
-elif [[ "$1" =~ ^-h ]]; then
-    usage
-else
-    if [[ $# -eq 1 ]]; then
-        OUT=${1%.*}.bed;
-    else
-        OUT=$2;
-    fi;
-    exec 3<$1 # 3 to IN
-    exec 4>$OUT; # &4 to OUT
-    echo "Writing $OUT" >&2
-fi;
-          
-# converting blast to bed
+my $sort = "sort -k1,1 -k2,2n -k3,3";
+$sort.=" > $out" if defined($out);
+open(my $ofh, "|-", $sort) or die $!;
 
-echo "# $0 $@" >&4;
-perl -ane 'next if /^#/;
-  if($F[8]<=$F[9]){
-     print join("\t",$F[1],$F[8]-1,$F[9],$F[0],$F[11],"+"),"\n";
-  }else{
-     print join("\t",$F[1],$F[9]-1,$F[8],$F[0],$F[11],"-"),"\n";
-  }' <&3 |
-    sort -k1,1 -k2,2n >&4;
+# converting blast to bed: blast is weird, and reports hits relative to query
+# strand. Need to look at ref to determine strand.
+# outfmt 6/7: qaccver saccver pident length mismatch gapopen qstart qend sstart send evalue bitscore
+my @i = $query_mode ? (0,6,7,1,11) : (1,8,9,0,11);
+my @a = $all ? ($query_mode ? (2,3,4,5,8,9,10) : (2,3,4,5,6,7,10)) : ();
+
+print $ofh "# $0 $argv\n";
+my $s;
+my @r;
+while (<>) {
+    next if /^#/;
+    chomp($_);
+    @r = split("\t", $_);
+    if($r[8]>$r[9]){ # make coords relative to ref strand
+        $s = "-";
+        @r[8,9] = @r[9,8];
+    }else{
+        $s = "+"
+    }
+    $r[6]--; # 0-offset
+    $r[8]--;
+
+    print $ofh join("\t",@r[@i], $s, @r[@a]),"\n";
+}
