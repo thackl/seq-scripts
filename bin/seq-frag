@@ -98,7 +98,7 @@ my %def = (
            length => undef,
            insert_size => 180,
            coverage => undef,
-           prefix => "r",
+           prefix => undef,
            region_length => 800_000,
            region_length_factor => 100,
            nmax => undef,
@@ -196,10 +196,15 @@ if ($opt{region_length} <= $opt{insert_size} * $opt{region_length_factor}){
 }
 
 my $bp=0;
+my $frag_pre;
 while (my $fa = $fp->next_seq) {
     # seq length is bottle neck (not sort or rand)
     # => split long seqs into manageable regions
     $bp+=length($fa->seq);
+    if (!$opt{prefix}) {
+        $frag_pre = $fa->id.'_';
+        $c=1; # count per seq
+    }
     $frag{$opt{mode}}($_) for fa_regions($fa);
     if ( $opt{progress} ) {
         printf STDERR ("\r%0.1f Mbp", $bp / 1_000_000);
@@ -233,7 +238,7 @@ sub fa_regions{
         $o+=$opt{region_length};
     }
     push @coords, [$o];
-    @fa_regions = $fa->substr_seq(@coords);
+    @fa_regions = map{$_->id($fa->id()); $_}($fa->substr_seq(@coords));
 
     return @fa_regions;
 }
@@ -266,7 +271,7 @@ sub frag_se{
     foreach my $frag_off ( @frag_offs) {
 
         my $frag = Fastq::Seq->new(
-            '@'.$opt{prefix}.$c,
+            '@'.$frag_pre.$c,
             substr($fa->seq, $frag_off, $read_len),
             "+",
             ref($fp) eq 'Fastq::Parser' ? substr($fa->qual, $frag_off, $read_len) : "I" x $read_len
@@ -320,7 +325,7 @@ sub frag_pacbio{
         next if $frag_off + $frag_len > $seq_len;
         #print STDERR join("\t", $frag_off, $frag_len, $frag_off+$frag_len, $seq_len),"\n";
         my $frag = Fastq::Seq->new(
-            '@'.$opt{prefix}.$c,
+            '@'.$frag_pre.$c,
             substr($fa->seq, $frag_off, $frag_len),
             "+",
             ref($fp) eq 'Fastq::Parser' ? substr($fa->qual, $frag_off, $read_len) : "I" x $read_len
@@ -357,7 +362,6 @@ sub frag_pe{
 
         my $frag_off = 0;
         my $frag_len = $opt{insert_size};
-        my $frag_pre = $opt{prefix};
         my $PE = $opt{mode} eq 'pe';
 
         for (my $i=0; $i<=$frag_num; $i++ ) {
@@ -417,13 +421,13 @@ sub frag_pe{
             }
 
             my $r = Fastq::Seq->new(
-                '@'.$opt{prefix}.$c."/1",
+                '@'.$frag_pre.$c."/1",
                 substr($frag->seq, 0, $read_len),
                 "+",
                 substr($frag_qual, 0, $read_len)
             );
             my $m = Fastq::Seq->new(
-                '@'.$opt{prefix}.$c."/2",
+                '@'.$frag_pre.$c."/2",
                 substr($frag->seq, -$read_len),
                 "+",
                 substr($frag_qual, -$read_len)
@@ -477,7 +481,7 @@ sub frag_contig{
         if ($frag_off + $frag_len > $seq_len){next;};
         #print STDERR join("\t", $frag_off, $frag_len, $frag_off+$frag_len, $seq_len),"\n";
         my $frag = Fasta::Seq->new(
-            id => '>'.$opt{prefix}.$c,
+            id => '>'.$frag_pre.$c,
             seq => substr($fa->seq, $frag_off, $frag_len),
         );
 
