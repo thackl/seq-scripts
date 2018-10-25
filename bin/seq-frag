@@ -112,7 +112,7 @@ GetOptions(                     # use %opt (Cfg) as defaults
            \%opt, qw(
                         mode|m=s
                         length|l=i
-                        coverage|c=i
+                        coverage|c=f
                         insert_size|insert-size|i=i
                         systematic|s!
                         nmax|N:i
