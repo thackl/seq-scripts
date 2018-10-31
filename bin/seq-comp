@@ -1,0 +1,140 @@
+#!/usr/bin/env perl
+# Created: 25 Oct 2018
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use Kmer;
+use Fasta::Parser;
+
+my @k_sizes;
+my $ALPHABET = 'ACGT';
+
+GetOptions (
+    "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
+    "kmer-sizes|k=s" => sub{ @k_sizes = sort{$a <=> $b}split(",", $_[1]) },
+    "strand-specific|s!" => \(my $opt_strand_specific = 0),
+    "window-size|w=i" => \(my $opt_window_size = 10000),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @k_sizes < 1 || @ARGV > 1){
+    print "Usage: seq-comp < in > out\n";
+    printf " %-21s  %s\n", "-k/--kmer-sizes", "kmer sizes, comma-sep., required";
+    printf " %-21s  %s\n", "-s/--strand-specific", "don't collapse reverse complement kmers";
+    printf " %-21s  %s\n", "-w/--window-size", "window size for median counts [$opt_window_size]";
+    printf " %-21s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-21s  %s\n", "-h/--help", "show this help";
+    printf " %-21s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+my $fp = Fasta::Parser->new(file=>$ARGV[0]);
+
+my %kh; # kmer handler
+@kh{@k_sizes} = map{Kmer->new(kmer_size => $_)}@k_sizes;
+my $k_max = $k_sizes[-1];
+
+my %k_all; # kmer values
+@k_all{@k_sizes} = map{[list_kmers($_, !$opt_strand_specific, $ALPHABET)]}@k_sizes;
+my @k_flat = map{@{$k_all{$_}}}@k_sizes;
+
+print STDERR "reading STDIN\n" if (!defined($ARGV[0]) or $ARGV[0] eq '-');
+print join("\t", 'seq_id', 'window', 'size', @k_flat), "\n";
+
+while (my $fa = $fp->next_seq) {
+    my $windows = int(($fa->length -$k_max +1)/ $opt_window_size);
+    my $last_window_size = $windows ? $fa->length - ($windows-1)* $opt_window_size : $fa->length;
+    my %kc;
+    # count for all windows and all kmer sizes
+    my $i=0;
+    while (my $fw = $fa->next_window($opt_window_size + $k_max-1, $opt_window_size, "merge")){
+        my %k;
+        $i++;
+        my $is_last_window = $i >= $windows;
+
+        # limit all but last window to account for longer kmer overlaps
+        my $max = $is_last_window ? undef : $opt_window_size;
+        my $size = $is_last_window ? $last_window_size : $opt_window_size;
+        print $fw->id, "\t", $i, "\t", $size if ($opt_window_size);
+        for my $k_size (@k_sizes) {
+            my $kh = $kh{$k_size};
+            my $kc = count_kmers($kh, $fw, $max);
+            push @{$kc{$k_size}}, $kc;
+            print join("\t", "", map{$_ // 0}@{$kc}{@{$k_all{$k_size}}}) if ($opt_window_size);;
+        }
+        print "\n" if ($opt_window_size);;
+    }
+    
+    # aggregate over windows
+    my %kcs;
+    my @total;
+    my @median;
+    
+    for my $k_size (@k_sizes) {
+        for my $k (@{$k_all{$k_size}}) {
+            my @counts = map{$_->{$k} // 0}@{$kc{$k_size}};
+            push @total, sum(@counts);
+            # the last window is usually of size > window size
+            # scale count to make em comparable with other windows
+            $counts[$#counts] = round($counts[$#counts] * $opt_window_size / $last_window_size);
+            push @median, median(@counts);
+        }
+    }
+
+    print join("\t", $fa->id, "total", $fa->length, @total), "\n";
+    print join("\t", $fa->id, "median", $opt_window_size, @median), "\n" if ($opt_window_size);
+
+   # printf(("%0.2f\t" x 9)."%0.2f\n", map{($_ // 0) / $d_sum * 100} @d{@d_all});
+}
+
+
+
+sub sum{
+    my $x;
+    $x+= $_ for @_;
+    $x;
+}
+
+sub mean{
+    sum(@_)/@_;
+}
+
+sub round{
+    int($_[0] + .5);
+}
+
+sub median{
+    $#_%2
+        ? round(mean((sort{$a <=> $b}@_)[($#_-1)/2,($#_+1)/2]))
+        : (sort{$a <=> $b}@_)[$#_/2];
+}
+
+sub count_kmers {
+    my ($kh, $fa, $max) = @_;
+    my @k = $opt_strand_specific ? $kh->kmerize($fa->seq) : $kh->cmerize($fa->seq);
+    @k = @k[0..$max-1] if defined($max);
+    my %k;
+    $k{$_}++ for @k;
+    return(\%k);
+}
+
+sub list_kmers {
+    my ($kmer_size, $canonical, $alphabet) = @_;
+    $alphabet = join(',',(split('', $alphabet)));
+    # glob trick: https://www.perlmonks.org/?node_id=305294
+    my @kmers = glob "{$alphabet}" x $kmer_size;
+    return $canonical ? uniq(canonicalize(@kmers)) : uniq(@kmers);
+}
+
+sub canonicalize{
+    map{my $x = reverse $_; $x =~ tr/ATGC/TACG/; $_ gt $x ? $x : $_} @_;
+}
+
+sub uniq {
+    my %seen;
+    grep !$seen{$_}++, @_;
+}
+
