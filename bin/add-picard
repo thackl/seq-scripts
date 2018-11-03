@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Author: Thomas Hackl
+
+usage(){
+cat <<EOF
+Usage:
+  add-picard file_1.fq [file_2.fq ...]
+
+Add picard (/1,/2) to paired end read IDs. Auto-detects correct tag from file
+name.
+
+  -i     edit files inplace (ignore -o)
+  -o     output file name [file_1.fq.pic]
+  -x     input is interleaved
+  -1/-2  use /1 or /2, don't auto-detect
+
+EOF
+exit 0;
+}
+
+## prep
+[[ $# -eq 0 ]] && usage;
+
+# Execute getopt
+ARGS=`getopt --name "add-picard" \
+    --options "o:ix12h" \
+    -- "$@"`
+
+#Bad arguments
+[ $? -ne 0 ] && exit 1;
+
+# A little magic
+eval set -- "$ARGS"
+
+# Now go through all the options
+while true; do
+    case "$1" in
+        -o)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            OUT=$2;
+            shift 2;;
+        -x)
+            PC=12;
+            shift;;
+        -i)
+            INPLACE=1;
+            shift;;
+        -1)
+            PC=1;
+            shift;;
+        -2)
+            PC=2;
+            shift;;
+        -h)
+            usage && exit 0;;
+        --)
+            shift
+            break;;
+        *)
+            echo "$1: Unknown option" 1>&2 && exit 1;;
+    esac
+done
+
+
+## prep
+[[ $# -eq 0 ]] && usage;
+
+
+for FQ in $@; do
+    PRE=${FQ%.*}
+    SUF=${x##*.}
+    if [ ! -n "$PC" ]; then
+        PC=${PRE: -1:1}
+        [ $PC == "1" ] || [ $PC == "2" ] || { echo "couldn't parse picard from filename '?.fq', set manually" >&2; exit 1; }
+    fi;
+
+    REP='1~4{s/\( \|$\)/\/'$PC'\1/}';
+    PPC="/$PC"
+    if [[ $PC -gt 2 ]]; then # interleaved
+        REP='1~8{s/\( \|$\)/\/1\1/};5~8{s/\( \|$\)/\/2\1/}'
+        PPC="/1 and /2"
+    fi;
+
+    if [[ $INPLACE -gt 0 ]]; then
+        echo "Modifying $FQ, appending $PPC to headers" >&2;
+        sed -i "$REP" $FQ
+    else
+        [ ! -n "$OUT" ] && OUT=$FQ.pic
+        if [[ $OUT == '-' ]]; then
+            echo "Writing to STDOUT, appending $PPC to headers" >&2;
+            sed "$REP" $FQ
+        else
+            echo "Writing $FQ.pic, appending $PPC to headers" >&2;
+            sed "$REP" $FQ > $OUT
+        fi;
+    fi;
+done;
