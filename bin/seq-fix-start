@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+use Fasta::Parser;
+
+if(@ARGV < 2){
+    print "Usage: seq-fix-start assembly.fna start-prot.faa\n";
+    print "Expects exonerate in PATH.\n";
+    exit 1;
+}
+
+my $fp = Fasta::Parser->new( file=> $ARGV[0]);
+
+## --genetic-code 4 for Mycoplasmen
+my $ex_cmd = "exonerate -n 1 -m protein2dna --percent 80 --showalignment FALSE $ARGV[1] $ARGV[0]";
+open(HIT, "-|", $ex_cmd);
+my $hit;
+while(<HIT>){
+    if(/^vulgar/){$hit=$_; last;}
+}
+close(HIT);
+
+if(!defined($hit)){die "no hits found\n";}
+
+chomp($hit);
+
+my ($vulgar, $query_id, $query_start, $query_end, $query_strand,
+    $target_id, $target_start, $target_end, $target_strand,
+    $score, $extra) = split(" ", $hit, 11);
+
+#print STDERR "$target_start\t$target_end\t$target_strand\n";
+
+while(my $fs = $fp->next_seq){
+    if($fs->id eq $target_id){
+	print STDERR "adjusting start of sequence ", $fs->id, "\n";
+	my ($f1, $f2);
+	if($target_strand eq '+'){
+	    $f1 = $fs->substr_seq($target_start);
+	    $f2 = $fs->substr_seq(0,$target_start);
+	}else{
+	    $f1 = $fs->substr_seq(0,$target_start)->reverse_complement;
+	    $f2 = $fs->substr_seq($target_start)->reverse_complement;
+	}
+	$fs = $f1.$f2;
+    }
+    print $fs;
+}
