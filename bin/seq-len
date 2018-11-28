@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Author: Thomas Hackl, thackl@lim4.de
+# 2019-11-29
+
+hash samtools || { echo samtools required in path >&2; exit 1; }
+
+if [[ $1 == "-h"* ]]; then
+    echo "Get tsv of per sequence lengths. Uses samtools faidx."
+    echo "";
+    echo "Usage: seq-len A.fa > A.tsv";
+    exit 0;
+fi;
+
+cat $1 | (
+  cd $TMP;
+  cat - | samtools faidx -;
+  cut -f1,2 -- '-.fai';
+  rm -- -.fai)
