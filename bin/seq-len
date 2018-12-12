@@ -11,7 +11,10 @@ if [[ $1 == "-h"* ]]; then
     exit 0;
 fi;
 
-cat $1 | (
+cat=cat
+[[ $1 == "-p" ]] && cat='pv'
+
+$cat $1 | (
   cd $TMP;
   cat - | samtools faidx -;
   cut -f1,2 -- '-.fai';
