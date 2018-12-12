@@ -12,7 +12,7 @@ if [[ $1 == "-h"* ]]; then
 fi;
 
 cat=cat
-[[ $1 == "-p" ]] && cat='pv'
+[[ $1 == "-p" ]] && { shift; cat='pv' }
 
 $cat $1 | (
   cd $TMP;
