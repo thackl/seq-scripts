@@ -8,6 +8,7 @@ use Data::Dumper;
 
 GetOptions (
     "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
+    "no-header|H!" => \(my $no_header),
     "help|h!" => \(my $help),
     "debug|D!" => \(my $debug),
 ) or die("Error in command line arguments\n");
@@ -23,6 +24,16 @@ if ($help){
 my $argv = "";
 my $n_col;
 
+my @tbl_col_names = qw(target_name target_accession query_name query_accession
+                       evalue score bias
+                       dom_evalue dom_score dom_bias
+                       exp reg clu ov env dom rep inc description_of_target);
+my @domtbl_col_names = qw(target_name target_accession tlen query_name query_accession qlen
+                          evalue score bias
+                          dom_i dom_n c_evalue i_evalue dom_score dom_bias
+                          hmm_from hmm_to ali_from ali_to env_from env_to acc description_of_target);
+my @col_names;
+
 while (<>) {
     if ($ARGV ne $argv) { # new file
         $argv = $ARGV;
@@ -33,9 +44,18 @@ while (<>) {
         $head =~ s/ of target/_of_target/g;
         my @head = split(/ +/, $head);
         $n_col = @head; # tbl and domtbl have different number of cols
-        
-        print STDERR "processing $argv as ", $n_col == 19 ? "tbl" : "domtbl",   " w/ $n_col columns\n";
-        print join("\t", @head),"\n";
+
+        if ($n_col == 19){
+            print STDERR "processing $argv as tbl w/ $n_col columns\n";
+            @col_names = @tbl_col_names;
+        }elsif ($n_col == 23){
+            print STDERR "processing $argv as domtbl w/ $n_col columns\n";
+            @col_names = @domtbl_col_names;
+        }else {
+            die "expecting file with either 19 (tbl) or 23 (domtbl) columns."
+        }
+
+        print join("\t", @col_names),"\n" unless $no_header;
         next;
     }
     next if /^#/; # comments at end of file
