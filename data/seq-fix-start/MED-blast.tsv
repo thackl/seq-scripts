@@ -1,0 +1,11 @@
+# BLASTX 2.8.1+
+# Query: NC_005072.1 Prochlorococcus marinus MED4 complete genome
+# Database: dnaA-PF00308_rp75.faa
+# Fields: query acc.ver, subject acc.ver, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score
+# 5 hits found
+NC_005072.1	P0A3A2/124-340	100.000	217	0	0	532085	532735	1	217	2.13e-143	450
+NC_005072.1	A0A1J0P6Y9/135-351	84.332	217	34	0	532085	532735	1	217	5.27e-126	400
+NC_005072.1	A0A081GJN2/141-357	83.410	217	36	0	532085	532735	1	217	8.63e-124	394
+NC_005072.1	K9P1I8/139-355	83.410	217	36	0	532085	532735	1	217	1.10e-123	393
+NC_005072.1	A3Z5C5/127-343	86.175	217	30	0	532085	532735	1	217	1.08e-120	385
+# BLAST processed 1 queries
