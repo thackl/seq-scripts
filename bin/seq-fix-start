@@ -15,13 +15,14 @@ Note: Expects blast+ and exonerate in PATH";
 
 my $desc = "
 
-Reset the start of circular sequences to a gene of choice, by default dnaN. For
---status 'closed' (or 'auto' with only one sequence in the assembly), the
-sequence with the best hit to the new start protein is assumed to be a complete
-circular chromosome, so it is split, if appropriate reverse-complemented, and
-the split parts are rejoined to retain the complete circular chromosome.
+Reset the start of (circular) sequences to a gene of choice, by default
+dnaN. For --status 'closed' (or 'auto' with only one sequence in the assembly),
+the sequence with the best hit to the new start protein is assumed to be a
+complete circular chromosome, so it is split, reverse-complemented if the hit is
+on the '-' strand, and the split parts are rejoined to retain the complete
+circular chromosome.
 
-If --status is 'draft' or 'auto' with multiple sequences in the assembly, the
+If --status is 'draft' (or 'auto' with multiple sequences in the assembly), the
 contig containing the best hit to the new start genes is only split and
 reverse-complemented if appropriate, but not rejoined.
 
