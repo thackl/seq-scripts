@@ -11,6 +11,8 @@ use Fasta::Seq;
 use Fastq::Parser;
 use Fastq::Seq;
 
+use FindBin qw($Bin);
+
 =head1 SYNOPSIS
 
   seq-frag MODE -l LENGTH -c COVERAGE [options ..] < FASTA
@@ -74,6 +76,10 @@ Read name prefix.
 
 Show progress in processed Mbp.
 
+=item [--gamma]
+
+Use gamma dist. with [shape,rate] instead of neg. binom. for pacbio.
+
 =back
 
 =cut
@@ -104,7 +110,7 @@ my %def = (
            nmax => undef,
            quality => "20:0",
            phred_offset => 33,
-
+           gamma => undef,
        );
 
 my %opt = ();
@@ -116,6 +122,7 @@ GetOptions(                     # use %opt (Cfg) as defaults
                         insert_size|insert-size|i=i
                         systematic|s!
                         nmax|N:i
+                        gamma=s
                         quality|Q=s
                         phred64|P!
                         prefix|r=s
@@ -154,6 +161,12 @@ my $insert_lib_mode = grep{$opt{mode} eq $_}qw(pe mp);
 if ($insert_lib_mode && $opt{insert_size} < $opt{length}) {
     die "Insert size smaller than read length does not make sense\n";
 }
+
+my @gamma;
+if ($opt{gamma}) {
+    @gamma = split(",", $opt{gamma});
+}
+
 
 my %frag = (
     se => \&frag_se,
@@ -316,7 +329,9 @@ sub frag_pacbio{
         }
     }else {
         @frag_offs = sort{$a<=>$b}(Math::Random::random_uniform_integer($frag_num, 0, $seq_len-$read_len));
-        @frag_lens = Math::Random::random_negative_binomial($frag_num,5,5/$read_len);
+        @frag_lens = @gamma
+            ? qx(Rscript --vanilla $Bin/r-gamma.R $frag_num)
+            : Math::Random::random_negative_binomial($frag_num,5,5/$read_len);
     }
 
     for ( my $i=0; $i<@frag_offs; $i++) {
@@ -328,7 +343,7 @@ sub frag_pacbio{
             '@'.$frag_pre.$c,
             substr($fa->seq, $frag_off, $frag_len),
             "+",
-            ref($fp) eq 'Fastq::Parser' ? substr($fa->qual, $frag_off, $read_len) : "I" x $read_len
+            ref($fp) eq 'Fastq::Parser' ? substr($fa->qual, $frag_off, $frag_len) : "I" x $frag_len
         );
 
         # both strands
