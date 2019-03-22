@@ -1,0 +1,90 @@
+#!/usr/bin/env Rscript
+library(tidyverse)
+library(thacklr)
+library(tidygraph)
+library(ggraph)
+
+usage <- "seq-id-match [setA=]A-genes.fa [setB=]B-genes.fa [[setC=]C-genes.fa] ... > AB-ids.tsv"
+args <- commandArgs(trailingOnly=TRUE)
+if(length(args) < 2){
+  write(usage, stderr())
+  quit()
+}
+
+main <-function(args){
+  files <- str_split(args, "=", simplify=T) %>% as_tibble %>% deframe
+  cm <- crossmatch_genes(files)
+  cat(format_tsv(cm))
+}
+
+crossmatch_genes <- function(set_files){
+
+  minimap2_args <- paste(
+  "-c --paf-no-hit -p 1 -M .2 --hard-mask-level",
+  "-k21 -w11 -A2 -B8 -O12,32 -E2,1 -r50 -f1000,5000 -n2 -m20 -s40 -g1000 -2K50m")
+
+  if(is.null(names(set_files))){
+    names(set_files) <- LETTERS[seq_along(set_files)]
+  }
+  set_ids <- names(set_files)
+
+  if(length(unique(set_ids[set_ids != ""])) != length(set_files)){
+    stop("Every gene set needs a unique name")
+  }
+  
+  set_file_pairs <- expand.grid(set_files, set_files, stringsAsFactors = F) %>%
+    filter(Var1 != Var2) %>% t %>% as_tibble
+  set_id_pairs <- expand.grid(set_ids, set_ids, stringsAsFactors = F) %>%
+    filter(Var1 != Var2) %>% t %>% as_tibble
+  
+  comps <- map2(set_id_pairs, set_file_pairs, function(id_pair, file_pair){
+    minimap2_cmd <- str_glue("minimap2 {minimap2_args} {file_pair[1]} {file_pair[2]}")
+    read_paf(pipe(minimap2_cmd)) %>%
+      # buggish -p behaviour in minimap2 - https://github.com/lh3/minimap2/issues/364
+      group_by(query_name) %>% filter(AS == AS[1]) %>% ungroup %>%
+      mutate(
+        query_name = ifelse(is.na(query_name), NA, paste0(id_pair[2], "_", query_name)),
+        target_name = ifelse(is.na(target_name), NA, paste0(id_pair[1], "_", target_name)))
+  })
+
+  ## ab <- read_paf(pipe(ab_cmd)) %>%
+  ##   # buggish -p behaviour in minimap2 - https://github.com/lh3/minimap2/issues/364
+  ##   group_by(query_name) %>% filter(AS == AS[1]) %>% ungroup %>%
+  ##   mutate(query_name = ifelse(is.na(query_name), NA, paste0("B_", query_name)),
+  ##          target_name = ifelse(is.na(target_name), NA, paste0("A_", target_name)))
+  
+  ## ba <- read_paf(pipe(ba_cmd)) %>%
+  ##   # buggish -p behaviour in minimap2 - https://github.com/lh3/minimap2/issues/364
+  ##   group_by(query_name) %>% filter(AS == AS[1]) %>% ungroup %>%
+  ##   mutate(query_name = ifelse(is.na(query_name), NA, paste0("A_", query_name)),
+  ##          target_name = ifelse(is.na(target_name), NA, paste0("B_", target_name)))
+
+
+  #nodes <- tibble(
+  #  name=unique(c(ab$query_name, ba$query_name)))
+
+  nodes <- tibble(name=unique(unlist(map(comps, "query_name"))))
+
+  edges <- bind_rows(comps) %>%
+    filter(!is.na(target_name)) %>%
+    select(query_name, target_name, map_match, map_length) %>%
+    mutate_all(match, nodes$name)
+
+  graph <- tbl_graph(nodes, edges)
+
+  id_table <- graph %>% mutate(group=group_components("strong")) %>%
+    as_tibble %>% group_by(group)
+
+  id_groups <- map(set_ids, function(id){
+    id_patt <- paste0("^", id, "_")
+    summarize(id_table, !!id := paste(str_subset(name, id_patt) %>% str_replace(id_patt, ""), collapse=" "))}) %>%
+      reduce(left_join)
+
+  left_join(summarize(id_table,  n_genes=n()), id_groups) %>%
+      mutate_at(vars(-group, -n_genes), str_replace, "^$", NA_character_) %>%
+      arrange_at(set_ids[1])
+}
+
+main(args)
+
+
