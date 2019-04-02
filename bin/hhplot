@@ -1,0 +1,67 @@
+#!/usr/bin/env perl
+# Created: 01 Apr 2019
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use File::Temp qw(tempfile);
+use FindBin qw($RealBin);
+
+GetOptions (
+    "out|o=s" => \(my $out),
+    "pfam|p!" => \(my $pfam),
+    "tmp|t=s" => \(my $tmp),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV > 2){
+    print "Plot the results of a hhsearch run using ggplot\n";
+    print "Usage: hhplot.pl in.hhr [in2.hhr] ...\n";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [in.pdf]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+my $argv = "";
+
+my ($head_fh, $head_file) = tempfile($tmp, suffix => "-head.tsv");
+my ($table_fh, $table_file) = tempfile($tmp, suffix => "-body.tsv");
+
+while (<>) {
+    if ($ARGV ne $argv) { # new file
+        $argv = $ARGV;
+        if ($argv ne "-") { $out = $argv; $out =~ s/\.[^.]+$/.pdf/; }
+        s/\s+/\t/;
+        my $head = $_; 
+        my $col_names;
+        while (<>) {
+            if ($_ eq "\n"){
+                $col_names = <>;
+                my @col_names = qw(description probability evalue pvalue score
+                    structure matched_cols query_start query_end target_start
+                    target_end target_cols);
+                print $table_fh join("\t", @col_names), "\n";
+                last;
+            }
+            s/\s+/\t/;
+            $head .= $_;
+        }
+        print $head_fh $head;
+        next; # skip empty line
+    }
+    last if $_ eq "\n";
+    chomp;
+    s/^\s+//;
+    my ($rn, $r) = split(/\s+/, $_, 2);
+    my @r = (substr($r, 0, 30, ""), (split(/\s+/, $r, 9))[1..8]);
+    #$r[0] =~ s/\s.*//;
+    splice(@r, 8, 1, split(/\D+/, $r[8]));
+    splice(@r, 7, 1, split(/\D+/, $r[7]));
+    print $table_fh join("\t",@r), "\n";
+}
+
+my $pfam_dir = $pfam ? "$RealBin/../data/" : "";
+print qx(Rscript --vanilla $RealBin/hhplot.R $head_file $table_file $out $pfam_dir);
