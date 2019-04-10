@@ -16,6 +16,7 @@ GetOptions (
 if ($help){
     print "Usage: hmmtbl2tsv.pl < in > out\n";
     printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-H/--no-header", "omit header line";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
     exit 0;
@@ -32,6 +33,9 @@ my @domtbl_col_names = qw(target_name target_accession tlen query_name query_acc
                           evalue score bias
                           dom_i dom_n c_evalue i_evalue dom_score dom_bias
                           hmm_from hmm_to ali_from ali_to env_from env_to acc description_of_target);
+my @nhmm_col_names = qw(target_name target_accession query_name query_accession
+                        hmm_from hmm_to ali_from ali_to env_from env_to mod_len strand
+                        evalue score bias description_of_target);
 my @col_names;
 
 while (<>) {
@@ -51,8 +55,11 @@ while (<>) {
         }elsif ($n_col == 23){
             print STDERR "processing $argv as domtbl w/ $n_col columns\n";
             @col_names = @domtbl_col_names;
+        }elsif ($n_col == 16) {
+            print STDERR "processing $argv as nhmmtbl w/ $n_col columns\n";
+            @col_names = @nhmm_col_names;
         }else {
-            die "expecting file with either 19 (tbl) or 23 (domtbl) columns."
+            die "expecting file with either 19 (tbl) or 23 (domtbl) columns, not $n_col."
         }
 
         print join("\t", @col_names),"\n" unless $no_header;
