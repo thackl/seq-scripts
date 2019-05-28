@@ -1,0 +1,139 @@
+#!/usr/bin/env perl
+# Created: 28 May 2019
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use List::Util qw(min max);
+
+GetOptions (
+    "out|o=s" => \(my $out),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV != 1){
+    print "Predict tRNAs with ARAGORN and extract them\n\n";
+    print "Usage: tRNA-extract in.fna\n";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [in.bed/ffn]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+my $in_fna = $ARGV[0];
+if (!defined($out)) { # strip suffix
+    $out = $in_fna;
+    $out =~ s/\.[^.]+$//;
+}
+
+print STDERR "Predicting tRNAs and tmRNAs\n";
+my ($trna_bed, $trna_ffn) = predict_trnas($in_fna, $out);
+
+print STDERR "Results written to $trna_ffn/.bed\n";
+
+
+
+#-----------------------------------------------------------------------------#
+sub run{
+    my($cmd, $print) = @_;
+    print "+ $cmd\n" if $print;
+    my $log = qx($cmd);
+    die $log, "\nDo'h, something went wrong" if $?;
+}
+
+sub get_seq_lengths{
+    my ($file) = @_;
+    open(FAI, "-|", "samtools faidx $file; cat $file.fai") or die $!;
+    my %S;
+    while (<FAI>) {
+        my ($id,$len, $foo) = split("\t", $_, 3);
+        $S{$id} = $len;
+    }
+    return \%S;
+}
+
+# use aragorn, parser from Torsten Seemanns PROKKA
+sub predict_trnas{
+    my ($fna, $pre) = @_;
+    my $trna_bed = "$pre.bed";
+    my $trna_ffn = "$pre.ffn";
+    my $seq_len = get_seq_lengths($fna);
+
+    my $ver = qx(aragorn -h | perl -ne 'print \$1 if m{ARAGORN v([0-9\.]+)}');
+    die $ver if $?;
+    chomp($ver);
+
+    open(TRNABED, ">", $trna_bed) or die $!;
+
+    # -l : Assume that each sequence has a linear topology. Search does not wrap
+    # -w : batch mode
+    my $cmd = "aragorn -l -gcstd -w $fna"; # -t/-m
+    print STDERR "+ $cmd\n";
+    my $num_trna=0;
+    open TRNA, '-|', $cmd;
+    my $sid;
+    while (<TRNA>) {
+        chomp;
+        if (m/^>(\S+)/) {
+            $sid = $1;
+            next;
+        }
+        my @x = split m/\s+/;
+        next unless @x == 5 and $x[0] =~ m/^\d+$/;
+        if ($x[1] =~ m/\?/) {
+            msg("tRNA $x[2] is a pseudo/wacky gene - skipping.\n");
+            next;
+        }
+        #msg("@x");
+        # in linear mode (-l) we can get -ve coordinates
+        $x[2] =~ m/(c)?\[-?(\d+),(\d+)\]/;
+        my($revcom, $start, $end) = ($1,$2,$3);
+
+        # bug fix for aragorn when revcom trna ends at start of contig!
+        #  if (defined $revcom and $start > $end) {
+        #    msg("Activating kludge for Aragorn bug for tRNA end at contig start");
+        #    $start = 1;
+        #  }
+        if ($start > $end) {
+            msg("tRNA $x[2] has start($start) > end ($end) - skipping.");
+            next;
+        }
+
+        # correct strange coordinates in -l mode
+        $start = max( $start, 1 );
+        $end = min( $end, $seq_len->{$sid} );
+
+        if (abs($end-$start) > 500) {
+            msg("tRNA/tmRNA $x[2] is too big (>500bp) - skipping.");
+            next;
+        }
+        # end kludge
+        $num_trna++;
+
+        my $ftype = 'tRNA';
+        my $product = $x[1].$x[4];
+        my @gene = ();
+        if ($x[1] =~ m/^(tmRNA)/) {
+            $ftype = $1;
+            $product = "transfer-messenger RNA, SsrA";
+            @gene = ('gene' => 'ssrA')
+        }
+
+        print TRNABED join("\t", $sid, $start-1, $end-1, $product, ".", $revcom ? "-" : "+", "Aragorn:$ver", $ftype), "\n";
+    }
+    print STDERR "Found $num_trna tRNAs\n";
+    close TRNA;
+    close TRNABED;
+
+    # extract tRNA seqs and fix IDs
+    run(qq(seqkit subseq --bed "$trna_bed" "$fna" -o "$trna_ffn"),1);
+
+    return($trna_bed, $trna_ffn);
+}
+
+sub msg{
+    my ($msg) = @_;
+    print STDERR $msg."\n";
+}
