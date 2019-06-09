@@ -125,7 +125,7 @@ sub sortify_field_spec{
 
 sub run{
     my($cmd, $print) = @_;
-    print "+ $cmd\n" if $print;
+    print STDERR "+ $cmd\n" if $print;
     my $log = qx($cmd);
     die $log, "\nDo'h, something went wrong" if $?;
     return $log;
@@ -133,10 +133,11 @@ sub run{
 
 sub sort_input{
     my ($in, $out, $group_i, $value_i) = @_;
+    my $tmp_opt = $tmp_dir ? "-T $tmpdir " : "";
     my $fields = sortify_field_spec($group_i, $value_i);
     if ($header){
-        run(qq(keep-header $in -- sort -t '	' $fields > $out), 1);
+        run(qq(keep-header $in -- sort $tmp_opt-t '	' $fields > $out), 1);
     }else {
-        run(qq(sort -t '	' $fields $in > $out), 1);
+        run(qq(sort $tmp_opt-t '	' $fields $in > $out), 1);
     }
 }
