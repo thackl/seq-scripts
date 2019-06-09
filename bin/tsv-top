@@ -1,0 +1,142 @@
+#!/usr/bin/env perl
+# Created: 09 Jun 2019
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use File::Spec;
+use File::Temp qw(tempfile);
+# TODO: keep ties
+
+GetOptions (
+    "group-fields|g=s" => \(my $group_spec = 1),
+    "value-fields|v=s" => \(my $value_spec = 2),
+    "top-n|n=s" => \(my $top_n = 1),
+    "reverse|r!" => \(my $reverse),
+    "tie-mode|m=i" => \(my $tie_mode = 0),
+    "sorted|s!" => \(my $sorted),
+    "header|H!" => \(my $header),
+    "tmp-dir|T=s" => \(my $tmp_dir),
+    "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV > 1){
+    print "Usage: tsv-top.pl < in > out\n";
+    printf " %-19s  %s\n", "-g/--group-field(s)", "group by these fields [$group_spec]";
+    printf " %-19s  %s\n", "-v/--value-field(s)", "rank by these fields [$value_spec]";
+    printf " %-19s  %s\n", "-n/--top-n", "keep this many top-ranked records [$top_n]";
+    printf " %-19s  %s\n", "-m/--tie-mode", "0:trim, 1:fill, 2:rank [$tie_mode]";
+    printf " %-19s  %s\n", "-s/--sorted", "assume input is sorted, skip sorting";
+    printf " %-19s  %s\n", "-H/--header", "input has header line [FALSE]";
+    printf " %-19s  %s\n", "-T/--tmp-dir", "use this directory for temporary files [".(File::Spec->tmpdir())."]";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    
+    print "\nColumn specs support lists and ranges (:). Use - sign for -v to rank fields by\n";
+    print "smallest value. A valid is: -g 1:3,7 -v -5,4 to group by fields 1,2,3 and 7 and\n";
+    print "rank by the smallest value in field 5 first and then by the largest in field 4.\n";
+    print "\nTie modes are:\n";
+    print "  trim: keep n records at most, randomly choosen if tied\n";
+    print "  fill: keep n + all records tied with the nth record\n";
+    print "  rank: keep n ranks, even if fewer ranks have more than n records\n";
+    exit 0;
+}
+
+
+my $in = @ARGV ? $ARGV[0] : "-";
+
+my @group_i = expand_field_spec($group_spec);
+my @value_i = expand_field_spec($value_spec);
+
+my $fh;
+if ($sorted) {
+    if ($in == "-") {
+        $fh = \*STDIN;
+    }else {
+        open($fh, $in) or die $!;
+    }
+}else {
+    my $tmp_file;
+    ($fh, $tmp_file) = tempfile( $tmp_dir ? (DIR => $tmp_dir) : () );
+    sort_input($in, $tmp_file, \@group_i, \@value_i) unless $sorted;
+}
+
+my @group_i0 = map{abs($_)-1}@group_i;
+my @value_i0 = map{abs($_)-1}@value_i;
+
+my @F;
+my $group_prev = "";
+my $group_count = 0;
+my $value_top = ""; # cache best value for ties
+
+if ($header) {
+    my $head = <$fh>; print $head;
+}
+
+while (<$fh>) {
+    @F = split("\t", $_);
+    my $group_curr = join("", @F[@group_i0]);
+    my $value_curr = join("", @F[@value_i0]);
+
+    #print "# ",join(", ",$group_curr, $group_prev, $group_count),"\n";
+    
+    if($group_curr ne $group_prev){ # new group
+        print;
+        $group_prev = $group_curr;
+        $group_count = 1;
+        $value_top = $value_curr;
+    }elsif($group_count < $top_n) {
+        $group_count++ unless ($value_top eq $value_curr && $tie_mode == 2);
+        $value_top = $value_curr;
+        print;
+    }elsif($tie_mode && $value_curr eq $value_top) {
+        print;
+        $group_count++ if $tie_mode == 1;
+    }else {
+        # print deleted lines
+        print "- ", $_ if $debug;
+    }
+}
+
+
+sub expand_field_spec{
+    my ($spec) = @_;
+    my @r = map{expand_range($_)}(split(",", $spec));
+    return @r;
+}
+
+sub expand_range{
+    my ($r) = @_;
+    return $r unless $r =~ /:/;
+    my ($f,$t) = split(":", $r);
+    return $f < $t ? ($f..$t) : reverse($t..$f); # perl .. only works increasing
+}
+
+sub sortify_field_spec{
+    my ($gfields, $vfields) = @_;
+    my $gf = join(" ", map{"-k$_,$_"}@$gfields);
+    my $vf = join(" ", map{"-k".(abs($_)).",".(abs($_)).($_>0 ? "gr" : "g")}@$vfields);
+    return("$gf $vf")
+}
+
+sub run{
+    my($cmd, $print) = @_;
+    print "+ $cmd\n" if $print;
+    my $log = qx($cmd);
+    die $log, "\nDo'h, something went wrong" if $?;
+    return $log;
+}
+
+sub sort_input{
+    my ($in, $out, $group_i, $value_i) = @_;
+    my $fields = sortify_field_spec($group_i, $value_i);
+    if ($header){
+        run(qq(keep-header $in -- sort -t '	' $fields > $out), 1);
+    }else {
+        run(qq(sort -t '	' $fields $in > $out), 1);
+    }
+}
