@@ -133,7 +133,7 @@ sub run{
 
 sub sort_input{
     my ($in, $out, $group_i, $value_i) = @_;
-    my $tmp_opt = $tmp_dir ? "-T $tmpdir " : "";
+    my $tmp_opt = $tmp_dir ? "-T $tmp_dir " : "";
     my $fields = sortify_field_spec($group_i, $value_i);
     if ($header){
         run(qq(keep-header $in -- sort $tmp_opt-t '	' $fields > $out), 1);
