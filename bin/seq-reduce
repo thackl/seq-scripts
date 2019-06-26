@@ -1,0 +1,104 @@
+#!/usr/bin/env perl
+# Created: 22 Mar 2019
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use Fasta::Parser;
+use File::Temp qw(tempfile);
+use List::Util qw(shuffle max);
+
+GetOptions (
+    "cdhit-params|p=s" => \(my $cdhit_params = "-c .8"),
+    "cdhit-bin=s" => \(my $cdhit_bin = "cdhit"),
+    "min-size|s=s" => \(my $min_size = 0),
+    "min-keep|m=s" => \(my $min_keep = 1),
+    "max-keep|M=s" => \(my $max_keep = "sqrt"),
+    "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV > 2){
+    print "Usage: seq-reduce in > out\n";
+    printf " %-19s  %s\n", "-s/--min-size", "ignore clusters smaller than this completely [$min_size]";
+    printf " %-19s  %s\n", "-m/--min-keep", "try to keep this many seqs, supercedes smaller dynamic max-keep values [$min_keep]";
+    printf " %-19s  %s\n", "-M/--max-keep", "keep at most this many seqs per cluster, default is dynamic: square root of total cluster size [$max_keep]";
+    printf " %-19s  %s\n", "-p/--cdhit-params", "pass parameters to cdhit [$cdhit_params]";
+    printf " %-19s  %s\n", "--cdhit-bin", "/path/to/cdhit binary [$cdhit_bin]";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+if ($max_keep ne "sqrt" && $min_keep >1) {
+    warn "NOTE: min-keep ignored, only used with dynamic max-keep\n";
+}
+
+
+
+my ($fa_fh, $fa_file);
+if (@ARGV == 0 || $ARGV[0] eq '-') {
+    ($fa_fh, $fa_file) = tempfile();
+    print $fa_fh $_ while <>;
+}else {
+    $fa_file = $ARGV[0];
+}
+
+my $fp = Fasta::Parser->new(file => $fa_file);
+my ($cdhit_fh, $cdhit_fa) = tempfile();
+
+my $cdhit_cmd = "$cdhit_bin -d 0 -o $cdhit_fa -i $fa_file $cdhit_params";
+print STDERR qx($cdhit_cmd);
+
+open(CDS, "$cdhit_fa.clstr") or die $!;
+my @mm;
+my %ids_keep;
+my $n_singletons = 0;
+my $cls_i = 0;
+print STDERR "cluster\tin\tout\ttried\n";
+
+while (<CDS>) {
+    chomp();
+    if (/^>Cluster/) {
+        $n_singletons++ unless $#mm;
+        write_cluster($cls_i, \@mm) if @mm;
+        $cls_i++;
+        @mm = ();
+    }else {
+        my ($id) = />(\S+)\.\.\./;
+        push @mm, $id;
+    }
+}
+$n_singletons++ unless $#mm;
+write_cluster($cls_i, \@mm) if @mm;
+
+while (my $fa = $fp->next_seq()){
+    if (exists($ids_keep{$fa->id})){
+        $fa->desc_append("cls".($ids_keep{$fa->id}));
+        print $fa;
+    };
+}
+
+sub write_cluster{
+    my ($cls, $mm) = @_;
+    my $n_has = @$mm+0;
+    if ($n_has < $min_size) {
+        print STDERR "$cls\t$n_has\t0\t0\n";
+        return;
+    }
+
+    my $n_want;
+    if( $max_keep eq "sqrt"){
+        $n_want = max(int(sqrt($n_has)), $min_keep);
+    }else {
+        $n_want = $max_keep;
+    }
+
+    my $n_get = $n_has < $n_want ? $n_has : $n_want;
+    my @mg = (shuffle(@$mm))[0..($n_get-1)];
+    print STDERR "$cls\t$n_has\t$n_get\t$n_want\n";
+    $ids_keep{$_} = $cls for @mg;
+}
