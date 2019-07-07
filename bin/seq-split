@@ -1,0 +1,93 @@
+#!/usr/bin/env perl
+# Created: 02 Apr 2019
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use Fasta::Parser;
+use File::Temp qw(tempfile);
+
+GetOptions (
+    "ungrouped|u" => \(my $ungrouped),
+    "max-open|m=i" => \(my $max_files),
+    "group|g=s" => \(my $group_file),
+    "out|o=s" => \(my $out_file),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV != 1){
+    print "Split one file into many based on a grouping file: seq_id group_id\n";
+    print "Usage: seq-split -g group.tsv in.fa\n";
+    printf " %-19s  %s\n", "-u/--ungrouped", "keep ungrouped seqs in extra file";
+    printf " %-19s  %s\n", "-m/--max-open", "open at most this many files [90% ulimit -n]";
+    printf " %-19s  %s\n", "-g/--group", "grouping table: seq_id group_id";
+    printf " %-19s  %s\n", "-o/--out", "write to these files [in_<group_id>.fa]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+if (!defined($out_file)) {
+    $out_file = $ARGV[0] eq '-' ? "stdin.fa" : $ARGV[0];
+    $out_file =~ s/\.(.*?)$//;
+    $out_file.= "_%s.$1";
+    print STDERR "writing to files $out_file\n";
+}
+
+print STDERR "reading groups file\n";
+open(GRP, $group_file) or die $!;
+my %S;
+my %G;
+while (<GRP>) {
+    chomp();
+    my($seq_id, $group_id) = split(/\s+/, $_);
+    $group_id//="_";
+    $S{$seq_id} = $group_id;
+    $G{$group_id}++;
+}
+close GRP;
+
+$max_files //= int(qx(sh -c "ulimit -n") * .9);
+
+my $ungrp_fh;
+if ($ungrouped) {
+    open($ungrp_fh, '>', sprintf("$out_file", "ungrouped")) or die $!;
+}
+
+my $fa_file = $ARGV[0];
+my $pass = 0;
+my $tmp_seq = 1;
+while ($tmp_seq) {
+    $tmp_seq = 0;
+    $pass++;
+    print STDERR "writing groups pass $pass (max files $max_files)\n";
+    my $fp = Fasta::Parser->new(file => $fa_file);
+    my ($tmp_fh, $tmp_file) = tempfile();
+    my $open_files = 0;
+    my %FH;
+
+    while (my $fa = $fp->next_seq) {
+        unless (exists($S{$fa->id})){
+            print $ungrp_fh $fa if $ungrouped;
+            next;
+        }
+        my $g = $S{$fa->id};
+        if (exists($FH{$g})){
+            print {$FH{$g}} $fa;
+        }elsif ($open_files < $max_files) {
+            open($FH{$g}, '>', sprintf("$out_file", $g)) or die $!;
+            ++$open_files;
+            print {$FH{$g}} $fa;
+        }else{
+            $tmp_seq++;
+            print $tmp_fh $fa;
+        }
+    }
+
+    while (my($k,$v) = each %FH) {close $v;}
+    $fa_file = $tmp_file;
+}
+
+close($ungrp_fh) if $ungrouped;
