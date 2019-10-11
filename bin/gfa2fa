@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# https://www.biostars.org/p/155236/#402499
+awk '/^S/{print ">"$2"\n"$3}' $@ | seqkit seq
