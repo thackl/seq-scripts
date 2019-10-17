@@ -14,8 +14,8 @@ GetOptions (
     "debug|D!" => \(my $debug),
 ) or die("Error in command line arguments\n");
 
-if ($help || @ARGV > 2){
-    print "Usage: gff-merge.pl < in > out\n";
+if ($help || @ARGV < 2){
+    print "Usage: gff-merge a.gff b.gff [c.gff ...] > abc.gff\n";
     printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
     printf " %-19s  %s\n", "-k/--keep-fasta", "keep FASTA sections of each gff and append at the end [OFF]";
     printf " %-19s  %s\n", "-h/--help", "show this help";
@@ -33,20 +33,18 @@ while (<>) {
         }else {
             my $i=1;
             while (<>) {
-                print STDERR "\r fasta ".$i++;
                 print $fh $_;
                 last if eof(ARGV);
             }
-            print STDERR "\n";
         }
         next;
     }
     print $_;
 }
 
-print STDERR "appending ##FASTA\n";
 # write all fasta seqs from temp file
 if ($keep_fasta && tell($fh) > 0) { # only if something is in temp file
+    print STDERR "appending ##FASTA\n";
     print "##FASTA\n";
     seek $fh, 0, 0 or die "Seek $fh failed: $!\n";
     print while <$fh>;
