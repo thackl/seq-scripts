@@ -46,7 +46,7 @@ while (<>) {
 
     my $id;
     if (defined($r[8]) && (
-        $r[8] =~ /\b(?:ID|Name|Parent)=(.*?);/ ||  # try some gff IDs
+        $r[8] =~ /\b(?:ID|Name|Parent)=([^;]+)/ ||  # try some gff IDs
         $r[8] =~ /transcript_id "([^"]+)"/)){      # or gtf IDs
         ($id = $1);
         $id =~ s/^["']|["']$//g; # loose quotes

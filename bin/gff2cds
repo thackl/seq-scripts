@@ -12,6 +12,7 @@ use Bio::Tools::GFF;
 use Bio::FeatureIO::gff;
 use Bio::Tools::CodonTable;
 use Bio::SeqIO;
+use Fasta::Parser;
 
 =head1 OPTIONS
 
@@ -33,9 +34,18 @@ Required. Feature type, e.g. CDS, match_part ...
 
 Required. Feature annotation source, e.g. maker, snap_masked ...
 
+=item --idtag
+
+Use first of these attributes as ID [Parent,locus_tag,ID]
+
+=item --fna
+
+Add sequence as extra file (if ##FASTA is missing in gff)
+
 =item --aa
 
 Output protein translation of sequence.
+
 
 =back
 
@@ -45,14 +55,16 @@ Thomas Hackl S<thomas.hackl@uni-wuerzburg.de>
 
 =cut
 
-my ($gff,$version,$type,$source,$aa,$help,$man) = ("",3,"","",0,0,0);
+my ($gff,$version,$type,$source,$aa,$idtags,$fna,$help,$man) = ("",3,"","",0,'Parent,locus_tag,ID',"",0,0);
 
 GetOptions(
            'gff=s'=>\$gff,
+           'fna=s'=>\$fna,
            'version=i'=>\$version,
            'type=s'=>\$type ,
            'source=s'=>\$source,
            'aa!'=>\$aa,
+           'idtags=s' => \$idtags,
            'help|?'=>\$help ,
            'man'=>\$man
           ) or pod2usage(2);
@@ -66,6 +78,7 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 $gff || pod2usage("required: --gff");
 $type || pod2usage("required: --type");
 $source || pod2usage("required: --source");
+my @id_tags = split(",", $idtags);
 
 # Initialise input stream
 my $gffio = Bio::Tools::GFF->new(-file => $gff, -gff_version => $version) or die $!;
@@ -78,7 +91,7 @@ my %sequences = ();
 
 # Initialise storage for features
 my %transcripts = ();
-
+my @transcript_ids = ();
 # Loop over the input stream
 while(my $feature = $gffio->next_feature())
 { 
@@ -91,24 +104,36 @@ while(my $feature = $gffio->next_feature())
     next unless ( $primary_tag eq $type && ( $source_tag eq $source || $source_tag eq "." ) );
 
     my $id;
-    if ($feature->has_tag('Parent')) {
-        ($id) = $feature->get_tag_values('Parent');  
-    }elsif ($feature->has_tag('locus_tag')) {
-        ($id) = $feature->get_tag_values('locus_tag');  
-    }else {
-        die "couldn't find Parent ID or locus tag as ID source\n";
+    for my $tag (@id_tags) {
+        if ($feature->has_tag($tag)) {
+            ($id) = $feature->get_tag_values($tag);
+            last;
+        }
     }
-    push(@{$transcripts{$id}}, $feature);   
+    defined($id) || die "couldn't find any id tags (@id_tags)\n";
+    push(@{$transcripts{$id}}, $feature);
+    push(@transcript_ids, $id); # store transcript order for later
 }
 
 # Close input stream
 $gffio->close() or die $!;
 
 # Fill sequence storage
-%sequences = map { ($_->display_id , $_->seq()) } $gffio->get_seqs();
+if ($fna) {
+    my $fp = Fasta::Parser->new(file=>$fna);
+    while (my $fa = $fp->next_seq) {
+        $sequences{$fa->id} = $fa->seq;
+    }
+}else {
+    %sequences = map { ($_->display_id , $_->seq()) } $gffio->get_seqs();
+}
+
+unless (keys %sequences) {
+    die "couldn't find ##FASTA in gff, consider --fna";
+}
 
 # Start looping to transcripts
-foreach my $id (keys %transcripts){
+foreach my $id (@transcript_ids){
 
     # Use first CDS element to get strand of transcript
     my $strand = $transcripts{$id}[0]->strand();
@@ -118,7 +143,6 @@ foreach my $id (keys %transcripts){
 
     # Report Progress
     print STDERR "Working on transcript $id (contig $contig, strand $strand)\n";
-
     # Sort CDS elements after their starting position
     my $cds_sorted = sort_cds(\@{$transcripts{$id}},$strand);
 
@@ -216,7 +240,7 @@ sub get_cds_seq {
 	
 	# Get parent sequence of CDS
 	my $seq_id = $cds->seq_id();
-	
+
 	# Check for reverse strand
 	if($strand == -1)
 	{

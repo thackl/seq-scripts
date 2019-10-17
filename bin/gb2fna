@@ -27,22 +27,20 @@ my $id;
 my $desc = " file={$ARGV[0]}";
 my $seq = "";
 while (<GB>) {
-    $id = $1 if /^LOCUS\s+(\S+)/; # overwrite by LOCUS ID
-    if(/^SOURCE\s+(.+)/){
+    if (/^LOCUS\s+(\S+)/){
+        $id = $1 # overwrite by LOCUS ID
+    }elsif (/^SOURCE\s+(.+)/){
         $desc.= " source={$1}";
-    }
-
-    if (/^ORIGIN/) {
+    }elsif (/^ORIGIN/) {
         print ">", $id, $desc, "\n";
         while (<GB>) {
             chomp();
-            last if m{^//};
+            last if m{^//}; # new record in multi-locus file
             s/^\s*\d+\s+//;
             $seq .= $_;
         }
         $seq =~ tr/ //d;
         $seq = uc($seq) unless $opt_noupper;
-
 
         my $seq_wrap = "";
         my $lw=80;
@@ -50,6 +48,11 @@ while (<GB>) {
         chomp($seq_wrap);
 
         print $seq_wrap,"\n";
+
+        $id = undef;
+        $desc = " file={$ARGV[0]}";
+        $seq = "";
+
         $origin++;
     }
 }

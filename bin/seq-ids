@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+perl -ne 'print $1,"\n" if /^>(\S+)/' $@

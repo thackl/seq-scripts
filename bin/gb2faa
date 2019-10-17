@@ -23,7 +23,7 @@ setOptions();
 my $in = Bio::SeqIO->new(-fh=>\*ARGV, -format=>$format);
 my $out = Bio::SeqIO->new(-fh=>\*STDOUT, -format=>'Fasta');
 
-my @TRYIDTAG = $idtag ? ($idtag) : @IDTAG;
+my @TRYIDTAG = $idtag ? (split (",", $idtag)) : @IDTAG;
 print STDERR "Will use first of (@TRYIDTAG) as FASTA ID\n";
 
 # support different /transl_table=XX tags in CDS
@@ -52,7 +52,7 @@ while (my $seq = $in->next_seq) {
       $id = TAG($f, $idtag);
       last if $id;
     }
-    $id or die "\nFeature #$counter does not have any of these tags: @TRYIDTAG";
+    $id or die "\nFeature #$counter does not have any of these tags: @TRYIDTAG\n";
     $counter++;
     print STDERR "[$counter] ", $seq->display_id, " | $id | $prod\n" if $verbose;
     
