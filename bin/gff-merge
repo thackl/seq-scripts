@@ -20,10 +20,17 @@ if ($help || @ARGV < 2){
     printf " %-19s  %s\n", "-k/--keep-fasta", "keep FASTA sections of each gff and append at the end [OFF]";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    print "\n";
+    print "Note, all directives (^##) will appear at the start, all sequences (^##FASTA)\n";
+    print "at the end of the new file, and all simple comments (^#) in place.\n";
     exit 0;
 }
 
-my ($fh, $fa) = tempfile() if $keep_fasta;
+# head, body, fasta
+my $gff_version;
+my ($hh, $hf) = tempfile();
+my ($bh, $bf) = tempfile();
+my ($fh, $ff) = tempfile() if $keep_fasta;
 
 # '##gff-version 3'
 while (<>) {
@@ -37,14 +44,33 @@ while (<>) {
                 last if eof(ARGV);
             }
         }
-        next;
+    }elsif(/^##gff-version/){
+        if ($gff_version) {
+            $gff_version eq $_ || die "Different gff versions detected, won't merge\n" ;
+        }else {
+            $gff_version = $_;
+        }
+    }elsif(/^##/) { # directives - collect all in head
+        print $hh $_;
+    }else {
+        print $bh $_;
     }
-    print $_;
+}continue {
+    print STDERR "processed $ARGV\n" if eof(ARGV);
 }
+
+# print head and body
+print STDERR "writing directives\n";
+print $gff_version;
+seek $hh, 0, 0 or die "Seek $hh failed: $!\n";
+print while <$hh>;
+print STDERR "writing features\n";
+seek $bh, 0, 0 or die "Seek $bh failed: $!\n";
+print while <$bh>;
 
 # write all fasta seqs from temp file
 if ($keep_fasta && tell($fh) > 0) { # only if something is in temp file
-    print STDERR "appending ##FASTA\n";
+    print STDERR "writing sequences\n";
     print "##FASTA\n";
     seek $fh, 0, 0 or die "Seek $fh failed: $!\n";
     print while <$fh>;
