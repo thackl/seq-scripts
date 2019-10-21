@@ -1,0 +1,95 @@
+#!/usr/bin/env perl
+# Created: 01 Apr 2019
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use File::Temp qw(tempfile);
+use FindBin qw($RealBin);
+
+GetOptions (
+    "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help){
+    print "Convert the output of hhsearch/hhblits runs into machine-readable tsv files\n";
+    print "Usage: hhr2tsv in.hhr [in2.hhr] ...\n";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+my $argv = "";
+
+my @col_names = qw(query_file query_id target_id probability evalue pvalue score
+                   structure matched_cols query_start query_end target_start
+                   target_end target_cols query_desc target_desc);
+print join("\t", @col_names), "\n";
+
+my %head;
+my @hits;
+while (<>) {
+    if ($ARGV ne $argv) { # new file
+        $argv = $ARGV;
+        @hits = ();
+        # header section
+        chomp();
+        my @r = split(/\s+/, $_, 3);
+        %head = (query_id => $r[1],  query_desc => $r[2]);
+        while (<>) {
+            last if $_ eq "\n";
+            chomp();
+            @r = split(/\s+/, $_, 2);
+            $head{lc($r[0])} = $r[1];
+        }
+
+        # summary section, start with " No Hit .."
+        my $col_names = <>; # ignore
+        while (<>) {
+            last if $_ eq "\n";
+            s/^\s+//;
+            my ($rn, $r) = split(/\s+/, $_, 2);
+            my $id_desc = substr($r, 0, 30, "");
+            my ($id, $desc) = split(/\s/, $id_desc);
+            my @r = ($id, (split(/\s+/, $r, 9))[1..8]);
+            #$r[0] =~ s/\s.*//;
+            splice(@r, 8, 1, split(/\D+/, $r[8]));
+            splice(@r, 7, 1, split(/\D+/, $r[7]));
+            $r[12] = $desc;
+            push @hits, \@r;
+        }
+    }
+    
+    # hit section, start with "No 1"
+    # overwrite potentially truncated values from summary
+    if (my ($i) = /^No (\d+)/) {
+        if ($i > @hits) { # hit below summary cutoff
+            close ARGV;
+            next;
+        }
+        my ($target_id, $target_desc) = <> =~ />(\S+)\s(.*)/;
+        my @val = split(/[=\s]+/, scalar(<>), 7);
+        $i--;
+        $hits[$i][0] = $target_id; 
+        $hits[$i][12] = $target_desc;
+        $hits[$i][2] = $val[1];
+        $hits[$i][3] = $val[3];
+        $hits[$i][5] = $val[5];
+    }
+}continue {
+    output() if eof(ARGV)
+}
+
+sub output{
+    print STDERR "processed $ARGV (".@hits." hits)\n";
+    for my $h (@hits) {
+        print join("\t", $argv, $head{query_id}, @{$h}[0..11], $head{query_desc}, $h->[12]), "\n";
+    }
+}
+
+
+
