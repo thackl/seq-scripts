@@ -12,7 +12,7 @@ use Graph;
 use Data::Dumper;
 #$Data::Dumper::Sortkeys=1;
 
-our $VERSION = '0.1.0';
+our $VERSION = '0.2.0';
 
 =head1 NAME
 
@@ -35,13 +35,19 @@ Cluster a list of id 1-to-1 relations.
 
 =over
 
-=item -p|--print-size
+=item -t|--template ["c%04d"]
 
-Print cluster size in first column.
+Cluster id template in sprintf format.
 
-=item -x|--exclude-singletons [OFF]
+=item -w|--wide [OFF]
 
-Exclude singletons from output
+Default output is a long table with one line per id: id  cluster  [size]. Use this
+to toggle a wide format with all ids in one line, separated by spaces: cluster
+[size]  id1 id2 id3 ...
+
+=item -m|--min-size [1]
+
+Exclude clusters smaller than this from output
 
 =item -s|--sort [Clusters [Members]] [sr l]
 
@@ -139,26 +145,17 @@ if (@{$opt{sort}}) {
     }
 }
 
-if ($opt{exclude_singletons}) {
-    if ($opt{print_size}) {
-        foreach (@cc){
-            next if @$_ < 2;
-            print @$_."\t", join("\t", @$_)."\n";
-        }
+my $i = 0;
+foreach (@cc){
+    next if @$_ < $opt{min_size};
+    $i++;
+    my $size = @$_;
+    if ($opt{wide}){
+        printf "$opt{template}\t%d\t%s\n", $i, $size, join(" ", @$_);
     }else {
-        foreach (@cc){
-            next if @$_ < 2;
-            print join("\t", @$_)."\n";
-        }
-    }
-}else {
-    if ($opt{print_size}) {
-        print @$_."\t", join("\t", @$_)."\n" for @cc;
-    }else {
-        print join("\t", @$_)."\n" for @cc;
+        printf "%s\t$opt{template}\t%d\n", $_, $i, $size  for @$_;
     }
 }
-
 
 
 
@@ -185,12 +182,15 @@ sub init{
     my %def = ();
     my %opt = (
         sort => [],
+        min_size => 1,
+        template => "c%04d",
     );
     my $L = $opt{logger} = Log::Log4perl->get_logger();
 
     GetOptions(
         \%opt, qw(
-                     print_size|print-size|p!
+                     wide|w!
+                     template|t=s
                      exclude_singletons|exclude-singletons|x!
                      sort|s:s{,2}
                      no_sort|no-sort!
