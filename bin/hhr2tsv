@@ -76,9 +76,9 @@ while (<>) {
         $i--;
         $hits[$i][0] = $target_id; 
         $hits[$i][12] = $target_desc;
-        $hits[$i][2] = $val[1];
-        $hits[$i][3] = $val[3];
-        $hits[$i][5] = $val[5];
+        $hits[$i][1] = $val[1]; # prob
+        $hits[$i][2] = $val[3]; # eval
+        $hits[$i][4] = $val[5]; # score
     }
 }continue {
     output() if eof(ARGV)
