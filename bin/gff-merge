@@ -45,8 +45,10 @@ while (<>) {
             }
         }
     }elsif(/^##gff-version/){
+        chomp();
         if ($gff_version) {
-            $gff_version eq $_ || die "Different gff versions detected, won't merge\n" ;
+            $gff_version eq $_ || die "Different gff versions detected, won't merge\n".
+                "  exp: '$gff_version'\n  got: '$_' at $ARGV";
         }else {
             $gff_version = $_;
         }
