@@ -63,7 +63,7 @@ while (<>) {
 
 # print head and body
 print STDERR "writing directives\n";
-print $gff_version;
+print $gff_version, "\n";
 seek $hh, 0, 0 or die "Seek $hh failed: $!\n";
 print while <$hh>;
 print STDERR "writing features\n";
