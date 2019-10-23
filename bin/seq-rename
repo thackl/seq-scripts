@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+[[ $# -lt 1 ]] && {
+    echo "Usage: seq-rename from-to.tsv .fa/q";
+    echo "No-fuzz short hand for full ID replacements"
+    echo "uses seqkit replace with patterns for full ids";
+    exit;
+}
+kv=$1; shift;
+seqkit replace -Kk $kv -p '^(\S+)' -r '{kv}' $@
