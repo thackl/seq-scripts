@@ -159,6 +159,10 @@ foreach my $id (@transcript_ids){
     if ($transcripts{$id}[0]->has_tag("note")) {
         $product = " note=".($transcripts{$id}[0]->get_tag_values("note"))[0];
     }
+    my $name = "";
+    if ($transcripts{$id}[0]->has_tag("Name")) {
+        $name = " name=".($transcripts{$id}[0]->get_tag_values("Name"))[0];
+    }
 
     # Report Progress
     print STDERR "Working on transcript $id (contig $contig, strand $strand)\n";
@@ -176,7 +180,8 @@ foreach my $id (@transcript_ids){
     # Return result as user specified
     unless($aa){
         $cds_seq = wrap_seq($cds_seq, $linewidth);
-	print ">$id contig=$contig coords=$cds_start-$cds_end length=$seq_length$product$note\n$cds_seq\n";
+	#print ">$id$name contig=$contig coords=$cds_start-$cds_end length=$seq_length$product$note\n$cds_seq\n";
+	print ">$id$name$product$note\n$cds_seq\n";
     }else{
 
         # Get Protein sequence
@@ -184,7 +189,8 @@ foreach my $id (@transcript_ids){
         $prot_seq =~ s/\*$// unless $keepstop;
         my $seq_length = length($prot_seq);
         $prot_seq = wrap_seq($prot_seq, $linewidth);
-        print ">$id contig=$contig coords=$cds_start-$cds_end length=$seq_length$product$note\n$prot_seq\n";
+        #print ">$id$name contig=$contig coords=$cds_start-$cds_end length=$seq_length$product$note\n$prot_seq\n";
+        print ">$id$name$product$note\n$prot_seq\n";
     }
 
 }
