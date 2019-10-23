@@ -1,12 +1,14 @@
 #!/usr/bin/env perl
 # use contig name in gene id
 my $i=1;
+my $digits = "%02d";
 while(<>){
     if (/^##FASTA/){print; while (<>){print}; last;}
     if (/^#/){print; next};
     my ($pre) = /^(\S+)/;
-    
-    if (/\S+\s\S+\sCDS/ && s/(\bID=)([^;]+)/$1${pre}_$i/){
+
+    my $ii = sprintf($digits, $i);
+    if (/\S+\s\S+\sCDS/ && s/(\bID=)([^;]+)/$1${pre}_$ii/){
         my $name = $2;
         $i++;
         if (/\bName/) { # update name if exists and empty
