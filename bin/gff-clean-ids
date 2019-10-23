@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+# use contig name in gene id
+my $i=1;
+while(<>){
+    if (/^##FASTA/){print; while (<>){print}; last;}
+    if (/^#/){print; next};
+    my ($pre) = /^(\S+)/;
+    
+    if (/\S+\s\S+\sCDS/ && s/(\bID=)([^;]+)/$1${pre}_$i/){
+        my $name = $2;
+        $i++;
+        if (/\bName/) { # update name if exists and empty
+            s/\bName=""/Name=$name/;
+        }else{ # add name
+            s/\b(ID=[^;];)/$1Name=$name/;
+        }
+    }
+    print;
+}

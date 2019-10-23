@@ -1,0 +1,3 @@
+#!/usr/bin/env perl
+# strip gff files from their fasta section
+/##FASTA/ && close ARGV || print while <>
