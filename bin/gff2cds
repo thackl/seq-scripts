@@ -46,6 +46,13 @@ Add sequence as extra file (if ##FASTA is missing in gff)
 
 Output protein translation of sequence.
 
+=item --keepstop
+
+Keep stop-codon as "*" in translated sequence.
+
+=item --linewidth [60]
+
+Wrap sequences this wide, 0 to disable.
 
 =back
 
@@ -55,7 +62,7 @@ Thomas Hackl S<thomas.hackl@uni-wuerzburg.de>
 
 =cut
 
-my ($gff,$version,$type,$source,$aa,$idtags,$fna,$help,$man) = ("",3,"","",0,'Parent,locus_tag,ID',"",0,0);
+my ($gff,$version,$type,$source,$aa,$keepstop,$idtags,$fna,$linewidth,$help,$man) = ("",3,"","",0,0,'Parent,locus_tag,ID',"",60,0,0);
 
 GetOptions(
            'gff=s'=>\$gff,
@@ -64,7 +71,9 @@ GetOptions(
            'type=s'=>\$type ,
            'source=s'=>\$source,
            'aa!'=>\$aa,
+           'keepstop|k' =>\$keepstop,
            'idtags=s' => \$idtags,
+           'linewidth' => \$linewidth,
            'help|?'=>\$help ,
            'man'=>\$man
           ) or pod2usage(2);
@@ -105,7 +114,7 @@ while(my $feature = $gffio->next_feature())
 
     my $id;
     for my $tag (@id_tags) {
-        if ($feature->has_tag($tag)) {
+        if ($feature->has_tag($tag) && ($feature->get_tag_values($tag))[0] ne '""') {
             ($id) = $feature->get_tag_values($tag);
             last;
         }
@@ -139,7 +148,17 @@ foreach my $id (@transcript_ids){
     my $strand = $transcripts{$id}[0]->strand();
 
     # Use first CDS element to get contig name
-     my $contig = $transcripts{$id}[0]->seq_id();
+    my $contig = $transcripts{$id}[0]->seq_id();
+
+    # Use first CDS element to get contig name
+    my $product = "";
+    if ($transcripts{$id}[0]->has_tag("product")) {
+        $product = " product=".($transcripts{$id}[0]->get_tag_values("product"))[0];
+    }
+    my $note = "";
+    if ($transcripts{$id}[0]->has_tag("note")) {
+        $product = " note=".($transcripts{$id}[0]->get_tag_values("note"))[0];
+    }
 
     # Report Progress
     print STDERR "Working on transcript $id (contig $contig, strand $strand)\n";
@@ -147,26 +166,25 @@ foreach my $id (@transcript_ids){
     my $cds_sorted = sort_cds(\@{$transcripts{$id}},$strand);
 
     # Get Coding sequence
-    my $cds_seq = get_cds_seq($cds_sorted, \%sequences, $strand);   
-
+    my $cds_seq = get_cds_seq($cds_sorted, \%sequences, $strand);
+    my $seq_length = length($cds_seq);
+    
     # Get Gene Locus
     my ($cds_start,$cds_end) = get_loci($cds_sorted);
 
-    # Get Coding sequence length
-    my $cds_length = length($cds_seq);
 
     # Return result as user specified
     unless($aa){
-	print ">$id CNT:$contig LOC:$cds_start-$cds_end LEN_CDS:$cds_length SRC:$source\n$cds_seq\n";
+        $cds_seq = wrap_seq($cds_seq, $linewidth);
+	print ">$id contig=$contig coords=$cds_start-$cds_end length=$seq_length$product$note\n$cds_seq\n";
     }else{
 
         # Get Protein sequence
         my $prot_seq = $codontable->translate($cds_seq);
-        
-        # Get Protein sequence length
-        my $prot_length = length($prot_seq);
-        
-        print ">$id CNT:$contig LOC:$cds_start-$cds_end LEN_CDS:$cds_length SRC:$source\n$prot_seq\n";
+        $prot_seq =~ s/\*$// unless $keepstop;
+        my $seq_length = length($prot_seq);
+        $prot_seq = wrap_seq($prot_seq, $linewidth);
+        print ">$id contig=$contig coords=$cds_start-$cds_end length=$seq_length$product$note\n$prot_seq\n";
     }
 
 }
@@ -176,6 +194,15 @@ foreach my $id (@transcript_ids){
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
+
+sub wrap_seq{
+    my ($seq, $line_width) = (@_, 60);
+    return $seq if $line_width < 1;
+    my $seq_wrap = "";
+    $seq_wrap.= $_."\n" for unpack "(A$line_width)*", $seq;
+    chomp($seq_wrap);
+    return $seq_wrap;
+}
 
 sub get_loci {
 
