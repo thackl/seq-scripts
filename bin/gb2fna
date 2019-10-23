@@ -8,32 +8,34 @@ use Data::Dumper;
 
 GetOptions (
     "no-upper|U" => \(my $opt_noupper),
+    "line-width|w=i" => \(my $line_width = 60),
     "help|h!" => \(my $opt_help),
     "debug|D!" => \(my $debug),
 ) or die("Error in command line arguments\n");
 
-if ($opt_help || @ARGV==0){
-    print "Usage: gb-origin2fasta [options] .gb > .fa\n";
+if ($opt_help){
+    print "Usage: gb2fna [options] .gbk > .fna\n";
     printf " %-19s  %s\n", "-U/--no-upper", "Don't convert sequence to upper case, keep original case";
+    printf " %-19s  %s\n", "-w/--line-width", "Output line width [$line_width]";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
     exit 0;
 }
 
-open(GB, $ARGV[0]) or die $!;
 my $origin = 0;
-
-my $id;
-my $desc = " file={$ARGV[0]}";
+my %head;
 my $seq = "";
-while (<GB>) {
-    if (/^LOCUS\s+(\S+)/){
-        $id = $1 # overwrite by LOCUS ID
-    }elsif (/^SOURCE\s+(.+)/){
-        $desc.= " source={$1}";
+my $section;
+
+SECTION: while (<>) {
+    chomp();
+    next if $_ eq ""; # ignore empty lines
+    if (m{^//}){ # this should not happen outside ORIGIN
+        print STDERR "missing ORIGIN in $head{locus}\n";
     }elsif (/^ORIGIN/) {
-        print ">", $id, $desc, "\n";
-        while (<GB>) {
+        $section = "ORIGIN";
+        $origin++;
+        while (<>) {
             chomp();
             last if m{^//}; # new record in multi-locus file
             s/^\s*\d+\s+//;
@@ -43,18 +45,36 @@ while (<GB>) {
         $seq = uc($seq) unless $opt_noupper;
 
         my $seq_wrap = "";
-        my $lw=80;
+        my $lw=60;
         $seq_wrap.= $_."\n" for unpack "(A$lw)*", $seq;
         chomp($seq_wrap);
 
+        my ($id) = exists($head{LOCUS}) ? $head{LOCUS} =~ /(\S+)/ : $head{ACCESSION};
+        !defined($id) && die "Unknown LOCUS/ACCESSION\n";
+        printf ">%s %s %s\n", $id, $head{VERSION}, (split("\n", $head{SOURCE}))[0];
         print $seq_wrap,"\n";
 
-        $id = undef;
-        $desc = " file={$ARGV[0]}";
+        # reset cache vars
+        %head = ();
         $seq = "";
 
-        $origin++;
+    }elsif (/^FEATURES/) {
+        $section = "FEATURES";
+        #print STDERR "skipping over FEATURES\n";
+        while (<>) {
+            redo SECTION if /^\S/; # start of new section
+        }
+    }elsif (/^(\S+)\s*(.*)/) {
+        $section = $1;
+        $head{$section} = $2 // "";
+        while (<>) {
+            redo SECTION if /^\S/; # start of new section
+            chomp();
+            $head{$section}.="\n$_";
+        }
+    }else {
+        die "Possibly corrupted file $ARGV $.\n$_";
     }
 }
 
-$origin || print STDERR "Couldn't find ORIGIN sequence in $ARGV[0]\n";
+$origin || print STDERR "Couldn't find ORIGIN sequence in $ARGV\n";
