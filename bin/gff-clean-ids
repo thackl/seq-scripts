@@ -20,7 +20,7 @@ while(<>){
         if (/\bName/) { # update name if exists and empty
             s/\bName=""/Name=$name/;
         }else{ # add name
-            s/\b(ID=[^;]+;)/$1Name=$name/;
+            s/\b(ID=[^;]+;)/$1Name=$name;/;
         }
     }
     print;
