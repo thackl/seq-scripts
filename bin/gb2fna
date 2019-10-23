@@ -45,8 +45,7 @@ SECTION: while (<>) {
         $seq = uc($seq) unless $opt_noupper;
 
         my $seq_wrap = "";
-        my $lw=60;
-        $seq_wrap.= $_."\n" for unpack "(A$lw)*", $seq;
+        $seq_wrap.= $_."\n" for unpack "(A$line_width)*", $seq;
         chomp($seq_wrap);
 
         my ($id) = exists($head{LOCUS}) ? $head{LOCUS} =~ /(\S+)/ : $head{ACCESSION};
