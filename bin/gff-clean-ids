@@ -2,10 +2,16 @@
 # use contig name in gene id
 my $i=1;
 my $digits = "%02d";
+my $prev = "";
 while(<>){
     if (/^##FASTA/){print; while (<>){print}; last;}
     if (/^#/){print; next};
     my ($pre) = /^(\S+)/;
+
+    if ($pre ne $prev) { # reset counter for every contig
+        $i=1;
+        $prev=$pre;
+    }
 
     my $ii = sprintf($digits, $i);
     if (/\S+\s\S+\sCDS/ && s/(\bID=)([^;]+)/$1${pre}_$ii/){
