@@ -1,0 +1,104 @@
+#!/usr/bin/env perl
+# Created: 17 Oct 2019
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use File::Temp qw(tempfile);
+
+GetOptions (
+    "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
+    "digits|d=s" => \(my $digits = "%04d"),
+    "strip-fasta|s" => \(my $strip_fasta),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV > 1){
+    print "Usage: gff-fix-prodigal prodigal.gff > fixed.gff\n";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-s/--strip-fasta", "loose FASTA sections at the end of the file [OFF]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    print "\n";
+    print "Turn prodigal seq info into gff-conform directives\n";
+    exit 0;
+}
+
+# head, body, fasta
+my $gff_version;
+my ($hh, $hf) = tempfile();
+my ($bh, $bf) = tempfile();
+my ($fh, $ff) = tempfile() if !$strip_fasta;
+my $prev = "";
+my $i = 1;
+
+# '##gff-version 3'
+while (<>) {
+    if (/^##FASTA/){
+        if ($strip_fasta){
+            close ARGV
+        }else {
+            my $i=1;
+            while (<>) {
+                print $fh $_;
+                last if eof(ARGV);
+            }
+        }
+    }elsif(/^##gff-version/){ # skip
+        # fix gff-version extra gap
+        print $hh "##gff-version 3\n";
+    }elsif(/^# Sequence Data:/) { # add as fixed directives to head
+        # Turn
+        # Sequence Data: seqnum=1;seqlen=19063;seqhdr="Mavirus HQ712116.1 Maverick-related virus strain Spezl"
+        # into gff-conform directive
+        ##sequence-region Mavirus 1 19063
+        my ($len, $id) = /seqlen=(\d+);seqhdr="([^ "]+)/;
+        print $bh $_;
+        print $hh "##sequence-region $id 1 $len\n" ;
+    }elsif(/^##/) { # directives - collect all in head
+        print $hh $_;
+    }elsif(/^#/) {
+        print $bh $_;
+    }else {
+        # gff-clean-ids
+        my ($pre) = /^(\S+)/;
+        $pre =~ s/[-._]\d+$//;
+
+        # reset counter for contig with a different prefix, assume different organism
+        if ($pre ne $prev) {
+            $i=1;
+            $prev=$pre;
+        }
+        
+        my $ii = sprintf($digits, $i);
+        if (/\S+\s\S+\sCDS/ && s/(\bID=)([^;]+)/$1${pre}_$ii/){
+            my $name = $2;
+            $i++;
+            if (/\bName/) { # update name if exists and empty
+                s/\bName=""/Name=$name/;
+            }else{ # add name
+                s/\b(ID=[^;]+;)/$1Name=$name;/;
+            }
+        }
+        
+        print $bh $_;
+    }
+}
+
+# print head and body
+print STDERR "writing directives\n";
+seek $hh, 0, 0 or die "Seek $hh failed: $!\n";
+print while <$hh>;
+print STDERR "writing features\n";
+seek $bh, 0, 0 or die "Seek $bh failed: $!\n";
+print while <$bh>;
+
+# write all fasta seqs from temp file
+if (!$strip_fasta && tell($fh) > 0) { # only if something is in temp file
+    print STDERR "writing sequences\n";
+    print "##FASTA\n";
+    seek $fh, 0, 0 or die "Seek $fh failed: $!\n";
+    print while <$fh>;
+}
