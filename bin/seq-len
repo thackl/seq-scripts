@@ -11,11 +11,20 @@ if [[ $1 == "-h"* ]]; then
     exit 0;
 fi;
 
-cat=cat
-[[ $1 == "-p" ]] && { shift; cat='pv'; }
+[[ -z $1 ]] && { set -- "-"; }
 
-$cat $1 | (
-  cd $TMP;
-  cat - | samtools faidx -;
-  cut -f1,2 -- '-.fai';
-  rm -- -.fai)
+# cat - | samtools faidx - is nice, but not stable if the command is used in
+# multiple files at once, because all of them will write to -.fai...
+for IN in $@; do
+    echo reading $IN >&2;
+    # create tmp file if stdin or missing write permissions or /proc/self/fd...
+    if [[ $IN == "-" || ! -w `dirname $IN` || ! -f $IN ]]; then
+        TMP=`tempfile`;
+        cat $IN > $TMP;
+        IN=$TMP;
+    fi;
+
+    samtools faidx $IN;
+    cut -f1,2 $IN.fai;
+    #rm $IN.fai
+done;
