@@ -45,6 +45,9 @@ while (<>) {
     if($r[8]>$r[9]){ # make coords relative to ref strand
         $s = "-";
         @r[8,9] = @r[9,8];
+    }elsif($r[6]>$r[7]){ # make coords relative to ref strand
+        $s = "-";
+        @r[6,7] = @r[7,6];
     }else{
         $s = "+"
     }
