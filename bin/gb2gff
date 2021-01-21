@@ -9,8 +9,8 @@ use File::Temp qw(tempfile);
 
 GetOptions (
     "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
-    "id-tag|i=s" => \(my $opt_id_tag = "protein_id,locus_tag"),
-    "ignore-tag|I=s" => \(my $opt_attr_ignore = "location,translation,seq,score,codon_start,type,gene,gene_synonym,db_xref"),
+    "id-tag|i=s" => \(my $opt_id_tag = "locus_tag,protein_id"),
+    "ignore-tag|I=s" => \(my $opt_attr_ignore = "ID,Parent,gbk_location,gbk_type,translation,seq,score,codon_start,gene,gene_synonym,db_xref"),
     "no-seq|S" => \(my $opt_noseq),
     "no-upper|U" => \(my $opt_noupper),
     "line-width|w=i" => \(my $line_width = 60),
@@ -26,10 +26,15 @@ if ($opt_help){
     printf " %-19s  %s\n", "-w/--line-width", "Output line width [$line_width]";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    print "Note: Parent-relationships tying CDS to mRNAs and RNAs to genes/operons",
+        " are required for GFF, but are not explicitly present in GBK.",
+        " They are, thus, inferred based on the order of entries and matching locations.",
+        " This means, assignment only works if for each CDS its parent mRNA is the ",
+        " immediately preceding mRNA, etc.";
     exit 0;
 }
 
-# General specification of Genbank files 
+# General specification of Genbank files
 # https://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html#LocusB
 #
 # Detailed specification of FEATURES section
@@ -40,10 +45,10 @@ if ($opt_help){
 # https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/007/925/GCF_000007925.1_ASM792v1/GCF_000007925.1_ASM792v1_genomic.gbff.gz
 # https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/007/925/GCF_000007925.1_ASM792v1/GCF_000007925.1_ASM792v1_genomic.gff.gz
 
-## TODO: buffer in tmpfiles head, body, fasta
-my ($hh, $hf) = tempfile();
-my ($bh, $bf) = tempfile();
-my ($sh, $sf) = tempfile() unless $opt_noseq;
+# buffer in tmpfiles head, body, fasta
+my ($hh, $hf) = tempfile(UNLINK=>1);
+my ($bh, $bf) = tempfile(UNLINK=>1);
+my ($sh, $sf) = tempfile(UNLINK=>1) unless $opt_noseq;
 print $hh "##gff-version 3\n";
 
 my %f = ();
@@ -62,6 +67,17 @@ my %id_tags;
 my @id_tags = split(",", $opt_id_tag);
 @id_tags{@id_tags} = (1) x @id_tags;
 
+my %last_gene;
+my %last_mrna;
+
+# harmonize types
+my %types = (
+    "source" => "region",
+    "5'UTR" => "five_prime_UTR",
+    "3'UTR" => "three_prime_UTR",
+    "mobile_element" => "mobile genetic element",
+    "rep_origin" => "origin_of_replication"
+);
 
 SECTION: while (<>) {
     chomp();
@@ -78,7 +94,7 @@ SECTION: while (<>) {
             s/^\s*\d+\s+//;
             $seq .= $_;
         }
-        unless  ($opt_noseq) {
+        if ($seq && !$opt_noseq) {
             printf $sh ">%s %s %s\n", seq_id(), $head{VERSION}, (split("\n", $head{SOURCE}))[0];
             print $sh seq_wrap($seq),"\n";
         }
@@ -114,7 +130,6 @@ SECTION: while (<>) {
 
 $origin || print STDERR "Couldn't find ORIGIN sequence in $ARGV\n";
 
-
 # print head and body
 print STDERR "writing directives\n";
 seek $hh, 0, 0 or die "Seek $hh failed: $!\n";
@@ -144,7 +159,7 @@ sub seq_wrap{
     my ($seq) = @_;
     $seq =~ tr/ //d;
     $seq = uc($seq) unless $opt_noupper;
-    
+
     my $seq_wrap = "";
     $seq_wrap.= $_."\n" for unpack "(A$line_width)*", $seq;
     chomp($seq_wrap);
@@ -163,7 +178,14 @@ sub init_feat{
             last if $v =~ /\)/;
         }
     }
-    %f = (type => $k, location => $v);
+    %f = (
+        gbk_type => harmonize_type($k),
+        gbk_location => [parse_location($v)]);
+}
+
+sub harmonize_type{
+    my ($type) = @_;
+    return exists $types{$type} ? $types{$type} : $type;
 }
 
 sub append_feat{
@@ -188,11 +210,11 @@ sub parse_location{
     my ($loc, $strand) = (@_, 1);
     if ($loc =~ s/^complement\(//) {
         die "unclosed complement" unless chop($loc) eq ")";
-        $strand*=-1; 
+        $strand*=-1;
     }
     if ($loc =~ s/^(join|order)\(//){
         die "unclosed join/order" unless chop($loc) eq ")";
-        warn "unwrapping multi-span feature $loc\n";
+        warn "unnesting multi-span $loc\n";
         return map{parse_location($_, $strand)}split(",", $loc);
     }
     if ($loc =~ /^[^<0-9]/) { # e.g. J00194.1:100..202 - link to different accession
@@ -215,25 +237,92 @@ sub parse_inference{
 }
 
 sub parse_translation{
+    # not implemented
+}
 
+sub gene_type{
+    grep{$_[0] eq $_}qw(gene operon);
+}
+
+sub rna_type{
+    $_[0] =~ /RNA/;
+}
+
+sub cds_type{
+    grep{$_[0] eq $_}qw(CDS exon intron five_prime_UTR three_prime_UTR)
+}
+
+sub loc_limits{
+    my @loc = @{$_[0]};
+    return($loc[0][0], $loc[$#loc][1]);
+}
+
+sub match_last_gene{
+    my ($fs,$fe) = loc_limits($f{gbk_location});
+    my ($ps,$pe) = loc_limits($last_gene{gbk_location});
+    if ($fs >= $ps && $fe <= $pe) {
+        $f{Parent} = $last_gene{ID};
+    }else { # moved outside
+        %last_gene = ();
+        %last_mrna = ();
+    }
+}
+
+sub match_last_mrna{
+    my ($fs,$fe) = loc_limits($f{gbk_location});
+    my ($ps,$pe) = loc_limits($last_mrna{gbk_location});
+    if ($fs >= $ps && $fe <= $pe) {
+        $f{Parent} = $last_mrna{ID};
+    }else { # moved outside
+        %last_mrna = ();
+    }
+}
+
+sub infer_parent{
+    my $type = $f{gbk_type};
+    my $parent;
+    if (gene_type($type)) {
+        %last_gene = %f;
+    }elsif (rna_type($type)) { # parent = last_gene{ID}
+        match_last_gene if %last_gene;
+        %last_mrna = %f if $type eq "mRNA";
+    }elsif (cds_type($type)) { # parent = last mrna
+        if (%last_mrna) {
+            match_last_mrna();
+        }elsif (%last_gene) { # directly attached to gene/operon
+            match_last_gene();
+        }
+    }
+    return $f{Parent};
+}
+
+sub infer_id{
+    # antismash features can have multiple locus tags for two-sided promoters for example
+    # /locus_tag /protein_id /db_xref seq_id&count ~ ID
+    my ($id_tag) = grep{exists $f{$_}}@id_tags;
+    my ($id) = $id_tag ? split(",", $f{$id_tag}) : seq_id()."_".$fcount++;
+    $f{ID} = lc($f{gbk_type})."-".$id;
+    return $f{ID};
 }
 
 sub parse_attributes{
     my @a;
     my @k = grep{!exists($attr_ignore{$_})}keys %f;
-    
-    # /locus_tag /protein_id /db_xref seq_id&count ~ ID
-    my ($id_tag) = grep{exists $f{$_}}@id_tags;
-    my $id = lc($f{type})."-".($id_tag ? $f{$id_tag} : seq_id()."_".$fcount++);
-    @a = ("ID=$id");
-    
+
+    # infer parents
+    infer_id();
+    infer_parent();
+
+    @a = ("ID=$f{ID}");
+    $f{Parent} && push @a, "Parent=$f{Parent}";
+
     # /gene > Name
     # /gene_synonym > Alias
     # /db_xref > Dbxref
     $f{gene} && push @a, "Name=$f{gene}";
     $f{gene_synonym} && push @a, "Alias=$f{gene_synonym}";
     $f{db_xref} && push @a, "Dbxref=$f{db_xref}";
-    
+
     foreach my $k (@k){
         my $v = $f{$k};
         push @a, $k .(defined($v) ? "=".uri_escape($v) : "=true");
@@ -247,21 +336,19 @@ sub parse_score{
 }
 
 sub print_feat{
-    # print join("\t", $f{type}, $f{location}, @f{keys %k}), "\n" if %f;
     # gff cols: seqid source type start end score strand phase attributes
     return unless %f;
 
     my $source = parse_inference();
-    $f{type} = "region" if $f{type} eq "source";
-    my $type = $f{type};
+    my $type = $f{gbk_type};
     my $score = parse_score();
     my $phase = $f{codon_start} ? $f{codon_start} -1 : "."; # phase in gff is 0-off
     # TODO: make /seq= and /translation= go to sequence section
     my $attributes = parse_attributes();
-    foreach my $loc (parse_location($f{location})){
+    foreach my $loc (@{$f{gbk_location}}){
         my ($start, $end, $strand, $partial) = @$loc;
         print $bh join("\t", seq_id(), ".", $type, $start, $end,
-            $score, $strand, $phase, $attributes), "\n";
+                       $score, $strand, $phase, $attributes), "\n";
     }
 }
 
@@ -271,7 +358,7 @@ sub print_head{
     %head = ()
 }
 
-    
+
 sub uri_escape{
     my ($string) = @_;
     # tab (%09), newline (%0A), carriage return (%0D), % percent (%25)
