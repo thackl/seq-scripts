@@ -13,44 +13,55 @@ GetOptions (
 ) or die("Error in command line arguments\n");
 
 if ($help){
-    print "Usage: seq-len.pl < in > out\n";
+    print "Usage: seq-len < in > out\n";
     printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    print "Reads FASTA, GFF3 and Genbank.\n";
+    print "Generates three tab-separated columns: seq_id, seq_desc and length\n";
     exit 0;
 }
 
-my @r;
+# determine format based on first line
 my $first = <>;
 
-# determine format based on first line
-if ($first =~ /^##gff/) { # gff
+my @r;
+
+# fasta
+if ($first =~ /^>(\S+)(?:\s(.*))?/){
+    @r = ($1, $2 // "", 0);
+    while (<>) {
+        tr/\r\n//d;             # chomp() fails on \r\n;
+        if (/^>(\S+)(?:\s(.*))?/) {
+            print join("\t", @r),"\n";
+            @r = ($1, $2 // "", 0);
+        } else {
+            $r[2] += length($_)
+        }
+    }
+    print join("\t", @r),"\n";
+}
+
+# gbk
+elsif ($first=~ /^LOCUS\s+(\S+)\s+(\d+)/) {
+    print $1,"\t\t",$2,"\n";
+    while (<>) {
+        if (/^LOCUS\s+(\S+)\s+(\d+)/){
+            print $1,"\t\t",$2,"\n";
+        }
+    }
+}
+
+# gff
+elsif ($first =~ /^##gff/) { 
     while (<>){
         $first = undef;
-        if (/^##FASTA/){
-            $first = <>;
-            last;
+        if (/^##sequence-region\s(\S+)\s(\d+)\s(\d+)/){
+            print $1,"\t\t",$3-$2+1,"\n";
         }
     };
-    unless (defined($first)){
-        print STDERR "No ##FASTA section found in gff\n";
-        exit;
-    };
-}elsif ($first =~ /^LOCUS/) { # gbk
-    die "Genbank format not supported, use `gb2gff --fasta <file> | seq-len` as a workaround";
 }
 
-
-
-$first =~ /^>(\S+)(?:\s(\S+))?/; # fasta
-@r = ($1, $2 // "", 0);
-
-while (<>) {
-    tr/\r\n//d; # chomp() fails on \r\n;
-    if(/^>(\S+)(?:\s(\S+))?/){
-        @r = ($1, $2 // "", 0);
-    }else{
-        $r[2] += length($_)
-    };
+else {
+    die "Unknown format, can read fasta, gbk and gff with proper ##gff-version and ##sequence-region directives\n";
 }
-print join("\t", @r), "\n";
