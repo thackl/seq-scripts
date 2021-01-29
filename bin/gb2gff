@@ -11,7 +11,8 @@ GetOptions (
     "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
     "id-tag|i=s" => \(my $opt_id_tag = "locus_tag,protein_id"),
     "ignore-tag|I=s" => \(my $opt_attr_ignore = "ID,Parent,gbk_location,gbk_type,translation,seq,score,codon_start,gene,gene_synonym,db_xref"),
-    "no-seq|S" => \(my $opt_noseq),
+    "no-seqs|S" => \(my $opt_noseq),
+    "fasta|f" => \(my $opt_fasta),
     "no-upper|U" => \(my $opt_noupper),
     "line-width|w=i" => \(my $line_width = 60),
     "help|h!" => \(my $opt_help),
@@ -21,7 +22,8 @@ GetOptions (
 if ($opt_help){
     print "Usage: gb2gff [options] .gbk > .fna\n";
     printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
-    printf " %-19s  %s\n", "-S/--no-seq", "Don't print sequence from ORIGIN section";
+    printf " %-19s  %s\n", "-S/--no-seqs", "Don't print sequences from ORIGIN sections";
+    printf " %-19s  %s\n", "-f/--fasta", "Only print sequences from ORIGIN section as fasta, nothing else";
     printf " %-19s  %s\n", "-U/--no-upper", "Don't convert sequence to upper case, keep original case";
     printf " %-19s  %s\n", "-w/--line-width", "Output line width [$line_width]";
     printf " %-19s  %s\n", "-h/--help", "show this help";
@@ -130,18 +132,20 @@ SECTION: while (<>) {
 
 $origin || print STDERR "Couldn't find ORIGIN sequence in $ARGV\n";
 
-# print head and body
-print STDERR "writing directives\n";
-seek $hh, 0, 0 or die "Seek $hh failed: $!\n";
-print while <$hh>;
-print STDERR "writing features\n";
-seek $bh, 0, 0 or die "Seek $bh failed: $!\n";
-print while <$bh>;
+if (!$opt_fasta) {
+    # print head and body
+    print STDERR "writing directives\n";
+    seek $hh, 0, 0 or die "Seek $hh failed: $!\n";
+    print while <$hh>;
+    print STDERR "writing features\n";
+    seek $bh, 0, 0 or die "Seek $bh failed: $!\n";
+    print while <$bh>;
+}
 
 # write all fasta seqs from temp file
 if (!$opt_noseq && tell($sh) > 0) { # only if something is in temp file
     print STDERR "writing sequences\n";
-    print "##FASTA\n";
+    print "##FASTA\n" if (!$opt_fasta);
     seek $sh, 0, 0 or die "Seek $sh failed: $!\n";
     print while <$sh>;
 }
@@ -214,7 +218,7 @@ sub parse_location{
     }
     if ($loc =~ s/^(join|order)\(//){
         die "unclosed join/order" unless chop($loc) eq ")";
-        warn "unnesting multi-span $loc\n";
+        # warn "unnesting multi-span $loc\n";
         return map{parse_location($_, $strand)}split(",", $loc);
     }
     if ($loc =~ /^[^<0-9]/) { # e.g. J00194.1:100..202 - link to different accession
