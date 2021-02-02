@@ -24,8 +24,8 @@ if ($help){
 
 # determine format based on first line
 my $first = <>;
-
 my @r;
+my $seq_reg = 0;
 
 # fasta
 if ($first =~ /^>(\S+)(?:\s(.*))?/){
@@ -57,9 +57,13 @@ elsif ($first =~ /^##gff/) {
     while (<>){
         $first = undef;
         if (/^##sequence-region\s(\S+)\s(\d+)\s(\d+)/){
+            $seq_reg++;
             print $1,"\t\t",$3-$2+1,"\n";
         }
     };
+    unless ($seq_reg) {
+        die "Cannot parse sequence lengths: ##sequence-region directives are missing.\n";
+    }
 }
 
 else {
