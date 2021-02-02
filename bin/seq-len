@@ -66,6 +66,23 @@ elsif ($first =~ /^##gff/) {
     }
 }
 
+# fastq
+elsif ($first =~ /^@/) {
+    my %h;
+    my $s = <>; my $x = <>; $x = <>;
+    chomp($s);
+    $h{length($s)}++;
+
+    while(defined($x=<>) && defined($s=<>) && defined($x=<>) && defined($x=<>)){
+        chomp($s);
+        $h{length($s)}++;
+    }
+
+    for (sort{$a<=>$b}keys %h){
+        print $_, "\t", $h{$_}, "\n";
+    }
+}
+
 else {
-    die "Unknown format, can read fasta, gbk and gff with proper ##gff-version and ##sequence-region directives\n";
+    die "Unknown format, can read fasta, fastq, gbk and gff with proper ##gff-version and ##sequence-region directives\n";
 }
