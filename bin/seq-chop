@@ -1,0 +1,56 @@
+#!/usr/bin/env perl
+# Created: 12 Feb 2021
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use Fasta::Parser;
+$|++;
+
+GetOptions (
+    "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
+    "length|l=i" => \(my $l = 0),
+    "progress|p!" => \(my $opt_progress = 1),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV > 2){
+    print "Cut sequences into shorter pieces\n";
+    print "Usage: seq-chop -l <max-seq-len> in > out\n";
+    printf " %-19s  %s\n", "-l/--length", "maximum length of chops of sequence that will be returned";
+    printf " %-19s  %s\n", "-p/--progress", "toggle progress im Mbp";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+if ($l < 1){ print STDERR "--length >=1 required!\n"; exit;}
+
+my $fp = Fasta::Parser->new(file=>$ARGV[0])->check_format;
+
+die "Input file not Fasta\n" unless $fp;
+
+my $bp=0;
+my $frag_pre;
+
+while (my $fa = $fp->next_seq) {
+    $bp+=length($fa->seq);
+
+    my $c = 0;
+    for my $chop(unpack("(a$l)*", $fa->seq)) {
+        print Fasta::Seq->new(
+            id => $fa->id()."_".++$c,
+            desc => $fa->desc(),
+            seq => $chop
+        )
+    }
+
+    if ( $opt_progress ) {
+        printf STDERR ("\r%0.1f Mbp", $bp / 1_000_000);
+    }
+}
+print STDERR "\n" if $opt_progress;
+
