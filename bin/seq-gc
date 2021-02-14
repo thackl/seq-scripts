@@ -78,7 +78,7 @@ check_bin bedtools;
 
 FA=$1;
 PRE=`basename $FA`
-PRE=${PRE%.*};
+PRE=.${PRE%.*};
 [[ -n $MEDIAN ]] && [[ -z $WIN ]] && WIN=1000;
 [[ -z $SHIFT ]] && SHIFT=$WIN
 
@@ -86,14 +86,14 @@ PRE=${PRE%.*};
 samtools faidx $FA;
 
 if [[ -z $WIN ]]; then
-    cut -f 1,2 $FA.fai | sed 's/\t/\t0\t/' > $PRE.bed
+    cut -f 1,2 $FA.fai | sed 's/\t/\t0\t/' > $PRE-gc.bed
 else
     cut -f 1,2 $FA.fai > $PRE.len
     bedtools makewindows \
         -g $PRE.len \
         -w $WIN \
         -s $SHIFT \
-        > $PRE.bed
+        > $PRE-gc.bed
 fi;
 
 if [[ -z $MEDIAN ]]; then  # no median
@@ -101,13 +101,13 @@ if [[ -z $MEDIAN ]]; then  # no median
         if [[ -z $BED ]]; then  # output bed
             bedtools nuc \
                      -fi $FA \
-                     -bed $PRE.bed |
+                     -bed $PRE-gc.bed |
                 cut -f1,5 |
                 tail -n +2
         else
             bedtools nuc \
                      -fi $FA \
-                     -bed $PRE.bed |
+                     -bed $PRE-gc.bed |
         gawk -v w=${WIN} 'BEGIN{FS="\t"; OFS="\t"}
 {
 if (FNR>1) {print $1,$2,$3,"GC.w"w,$5}
@@ -117,7 +117,7 @@ if (FNR>1) {print $1,$2,$3,"GC.w"w,$5}
         if [[ -z $BED ]]; then  # output bed
         bedtools nuc \
             -fi $FA \
-            -bed $PRE.bed |
+            -bed $PRE-gc.bed |
             tail -n +2 |
             perl -ane '
               my $gcc = $F[6] + $F[7];
@@ -127,7 +127,7 @@ if (FNR>1) {print $1,$2,$3,"GC.w"w,$5}
         else
             bedtools nuc \
                      -fi $FA \
-                     -bed $PRE.bed |
+                     -bed $PRE-gc.bed |
                 tail -n +2 |
                 perl -ane '
                   my $gcc = $F[6] + $F[7];
@@ -139,7 +139,7 @@ if (FNR>1) {print $1,$2,$3,"GC.w"w,$5}
 else
     bedtools nuc \
         -fi $FA \
-        -bed $PRE.bed |
+        -bed $PRE-gc.bed |
     cut -f1,5 |
     tail -n +2 |
     perl -ane '
@@ -161,4 +161,4 @@ else
       }'
 fi;
 
-rm -f $PRE.bed $PRE.len;
+rm -f $PRE-gc.bed $PRE.len;
