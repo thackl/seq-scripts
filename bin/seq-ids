@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-perl -ne 'print $1,"\n" if /^>(\S+)/' $@
+perl -ne 'print $1,"\t",$ARGV,"\n" if /^>(\S+)/' $@
