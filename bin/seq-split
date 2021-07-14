@@ -10,21 +10,23 @@ use Fastq::Parser;
 use File::Temp qw(tempfile);
 
 GetOptions (
-    "ungrouped|u" => \(my $ungrouped),
-    "max-open|m=i" => \(my $max_files),
-    "group|g=s" => \(my $group_file),
+    "lump-ungrouped|u" => \(my $ungrouped),
+    "group-fields|f=s" => \(my $group_fields = "1,2"),
+    "min-group-size|m=i" => \(my $min_group_size = 0),
+    "max-open|O=i" => \(my $max_files),
     "out|o=s" => \(my $out_file),
     "help|h!" => \(my $help),
     "debug|D!" => \(my $debug),
 ) or die("Error in command line arguments\n");
 
-if ($help || @ARGV != 1){
-    print "Split one file into many based on a grouping file: seq_id group_id\n";
-    print "Usage: seq-split -g group.tsv in.fa\n";
-    printf " %-19s  %s\n", "-u/--ungrouped", "keep ungrouped seqs in extra file";
-    printf " %-19s  %s\n", "-m/--max-open", "open at most this many files [90% ulimit -n]";
-    printf " %-19s  %s\n", "-g/--group", "grouping table: seq_id group_id";
-    printf " %-19s  %s\n", "-o/--out", "write to these files [in_<group_id>.fa]";
+if ($help || @ARGV != 2){
+    print "Split one file into many based on a grouping file with a seq_id and a group_id field\n";
+    print "Usage: seq-split in.fa group.tsv\n";
+    printf " %-19s  %s\n", "-f/--group-fields", "grouping table fields with seq_id and group_id [$group_fields]";
+    printf " %-19s  %s\n", "-m/--min-group-size", "ignore groups with fewer members (or add to ungrouped) [$min_group_size]";
+    printf " %-19s  %s\n", "-u/--lump-ungrouped", "lump ungrouped seqs in extra file";
+    printf " %-19s  %s\n", "-O/--max-open", "open at most this many files [90% ulimit -n]";
+    printf " %-19s  %s\n", "-o/--out", "write to these files, use printf wildcard '%s' [in_<group_id>.fa]";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
     exit 0;
@@ -38,17 +40,35 @@ if (!defined($out_file)) {
 }
 
 print STDERR "reading groups file\n";
-open(GRP, $group_file) or die $!;
+open(GRP, $ARGV[1]) or die $!;
 my %S;
 my %G;
+my @ri = split(",", $group_fields);
+die "Need exactly two group fields (seq_id, group_id). Got: @ri\n" unless @ri == 2;
+@ri = map{$_ = $_-1}@ri; # perl cols are 0-off
+
 while (<GRP>) {
     chomp();
-    my($seq_id, $group_id) = split(/\s+/, $_);
+    my @r = split(/\s+/, $_);
+    my ($seq_id, $group_id) = @r[@ri];
     $group_id//="_";
     $S{$seq_id} = $group_id;
     $G{$group_id}++;
 }
 close GRP;
+
+print STDERR "read ". keys(%G) ." groups\n";
+
+if ($min_group_size) {
+    my @G_small = grep{$G{$_} < $min_group_size}keys(%G);
+    my %G_small;
+    @G_small{@G_small} = (1) x @G_small;
+    my @S_small = grep{exists $G_small{$S{$_}}}keys(%S);
+    
+    print STDERR "ignoring ". keys(%G_small) ." small groups with ". @S_small ." sequences\n";
+    
+    delete @S{@S_small};
+}
 
 $max_files //= int(qx(sh -c "ulimit -n") * .9);
 
