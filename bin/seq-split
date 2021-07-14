@@ -36,8 +36,13 @@ if (!defined($out_file)) {
     $out_file = $ARGV[0] eq '-' ? "stdin.fa" : $ARGV[0];
     $out_file =~ s/\.(.*?)$//;
     $out_file.= "_%s.$1";
-    print STDERR "writing to files $out_file\n";
 }
+
+if (my ($out_dir) = $out_file =~ /^(.*\/)/) {
+    print STDERR "creating output directory $out_dir\n";
+    mkdir $out_dir || die $!;
+}
+print STDERR "writing to files $out_file\n";
 
 print STDERR "reading groups file\n";
 open(GRP, $ARGV[1]) or die $!;
