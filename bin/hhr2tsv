@@ -39,7 +39,7 @@ while (<>) {
         # header section
         chomp();
         my @r = split(/\s+/, $_, 3);
-        %head = (query_id => $r[1],  query_desc => $r[2]);
+        %head = (query_id => $r[1],  query_desc => $r[2] // "");
         while (<>) {
             last if $_ eq "\n";
             chomp();
