@@ -27,7 +27,7 @@ my $argv = "";
 
 my @col_names = qw(query_file query_id target_id probability evalue pvalue score
                    structure matched_cols query_start query_end target_start
-                   target_end target_cols query_desc target_desc);
+                   target_end query_cols target_cols query_desc target_desc);
 print join("\t", @col_names), "\n";
 
 my %head;
@@ -87,7 +87,8 @@ while (<>) {
 sub output{
     print STDERR "processed $ARGV (".@hits." hits)\n";
     for my $h (@hits) {
-        print join("\t", $argv, $head{query_id}, @{$h}[0..11], $head{query_desc}, $h->[12]), "\n";
+        print join("\t", $argv, $head{query_id}, @{$h}[0..10], $head{match_columns},
+                   $h->[11], $head{query_desc}, $h->[12]), "\n";
     }
 }
 
