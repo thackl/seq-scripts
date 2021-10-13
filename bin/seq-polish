@@ -1,0 +1,173 @@
+#!/usr/bin/env perl
+# Created: 13 Oct 2021
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case);
+use File::Temp qw(tempdir);
+use File::Basename qw(basename);
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+
+my @il_reads;
+my @pb_reads;
+my @np_reads;
+
+my %reads = (il => [], pb => [], np => []);
+
+GetOptions (
+    "out|o=s" => \(my $out),
+    "dir|d=s" => \(my $dir = tempdir( CLEANUP => 1 )),
+    "illumina|i=s{1,}" => $reads{il},
+    "pacbio|p=s{1,}" => $reads{pb},
+    "nanopore|n=s{1,}" => $reads{np},
+    "threads|t" => \(my $threads = 1),
+    "methods|m=s" => \(my $methods), 
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+    "dryrun|y!" => \(my $dry),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV != 1){
+    print "NOTE: Because the read options accept multiple filenames,
+  the assembly file has to be specified before the reads!\n\n" unless @ARGV;
+    print "Usage: seq-polish [options] assembly.fna -i il.fq [il2.fq ...] -n np.fq [np2.fq ...] -p pb.fq [pb2.fq ...]\n";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-t/--threads", "umber of CPU threads";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+
+my $in = $ARGV[0];
+
+my %def_reads = (
+    np => "Nanopore",
+    il => "Illumina",
+    pb => "PacBio"
+    );
+
+my %def_blocks  = (
+    il => "rr",
+    np => "rrm",
+    pb => "rr",
+    npil => "rrm,rr",
+    pbil => "rr,rr"
+);
+
+my %def_methods = (
+    "r" => "racon",
+    "m" => "medaka",
+);
+
+my %def_calls = (
+    "racon" => \&run_racon,
+    "medaka" => \&run_medaka,
+);
+
+my @read_types;
+for (qw(np pb il)){
+    if (@{$reads{$_}}) {
+        push @read_types, $_;
+        print "$def_reads{$_} reads\n";
+        print "  ", join("\n  ", @{$reads{$_}}), "\n\n";
+    }
+}
+
+if (!$methods) {
+    die "no default polishing sequence defined for the given read type combination: @read_types"
+        if not exists $def_blocks{join("", @read_types)};
+    $methods = $def_blocks{join("", @read_types)}
+}
+    
+my @blocks = split(",", $methods);
+if (@blocks != @read_types) {
+    die "number of read types and polishing blocks differ:\n",
+        join(", ", @blocks),"\n", join(", ", @read_types), "\n";
+}
+
+
+# create working dir
+if (!-e $dir){mkdir $dir}
+if (!defined $out) {
+    $out = basename($in, qw(.fa .fas .fna .fasta))."-polished.fna";
+}
+
+
+my @runs;
+my $i=0;
+for (my $j=0; $j<@blocks; $j++) {
+    my $block = $read_types[$j];
+    my @iters = split("", $blocks[$j]);
+    for (my $k=0; $k<@iters; $k++) {
+        $i++;
+        my $method = $iters[$k];
+
+        die "Unknown method abbrevation '$method'\nKnown methods are:", Dumper(\%def_methods) unless
+            exists($def_methods{$method});
+
+        my $pre="$i-$block-$def_methods{$method}";
+        print $pre, "\n" if $debug;
+
+        push @runs, {
+            i => $i,
+            block => $block,
+            reads => $reads{$block},
+            method => $def_methods{$method},
+            in => $i > 1 ? "$dir/i".($i-1).".fa" : $in,
+            out => "$dir/i$i.fa"
+        };
+    }
+}
+$runs[$#runs]{out} = $out; # set final out to true out
+
+print Dumper(\@runs) if $debug;
+
+
+# merge reads in single lib
+print "Temporarily merging reads where necessary\n";
+for (qw(np pb il)){
+    if (@{$reads{$_}} > 1) {
+        my $cmd = "cat @{$reads{$_}} > $dir/il.fq";
+        print $cmd, "\n";
+        system($cmd);
+        @{$reads{$_}} = "$dir/il.fq";
+    }
+}
+print "\n";
+
+for (@runs) {
+    $def_calls{$_->{method}}(%$_);
+}
+
+
+sub run_racon{
+    my %r = @_;
+    print "Running racon\n";
+    my %modes = (il => "sr", pb => "map-pb", np => "map-ont");
+    my $mode = $modes{$r{block}};
+    my $map_cmd = "minimap2 -t $threads -x $mode $r{in} @{$r{reads}} > $r{out}.paf";
+    print $map_cmd, "\n";
+    $dry || system($map_cmd) && die "racon returned with an error!";
+    my $cmd = "racon -u -t $threads @{$r{reads}} $r{out}.paf $r{in} > $r{out}";
+    print $cmd, "\n";
+    $dry || system($cmd) && die "racon returned with an error!";
+    print "\n";
+        
+
+}
+
+sub run_medaka{
+    my %r = @_;
+    print "Running medaka\n";
+
+    my $mdir = "$dir/i$r{i}-medaka";
+    
+    my $cmd = "medaka_consensus -t $threads -i @{$r{reads}} -d $r{in} -o $mdir";
+    print $cmd, "\n";
+    $dry || system($cmd) && die "medaka returned with an error!";
+    $cmd = "mv $mdir/consensus.fasta $r{out}";
+    print $cmd, "\n";
+    $dry || system($cmd) && die "moving medaka results returned with an error!";
+    print "\n";
+}
