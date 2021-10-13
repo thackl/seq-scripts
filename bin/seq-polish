@@ -21,7 +21,7 @@ GetOptions (
     "illumina|i=s{1,}" => $reads{il},
     "pacbio|p=s{1,}" => $reads{pb},
     "nanopore|n=s{1,}" => $reads{np},
-    "threads|t" => \(my $threads = 1),
+    "threads|t=i" => \(my $threads = 1),
     "methods|m=s" => \(my $methods), 
     "help|h!" => \(my $help),
     "debug|D!" => \(my $debug),
