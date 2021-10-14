@@ -6,6 +6,7 @@ use strict;
 use Getopt::Long  qw(:config no_ignore_case);
 use File::Temp qw(tempdir);
 use File::Basename qw(basename);
+use Cwd 'abs_path';
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 
@@ -22,7 +23,9 @@ GetOptions (
     "pacbio|p=s{1,}" => $reads{pb},
     "nanopore|n=s{1,}" => $reads{np},
     "threads|t=i" => \(my $threads = 1),
-    "methods|m=s" => \(my $methods), 
+    "methods|m=s" => \(my $methods),
+    "min-length|l=s" => \(my $min_length = "2000"),
+    "medaka-model=s" => \(my $medaka_model="r941_min_high_g360"),
     "help|h!" => \(my $help),
     "debug|D!" => \(my $debug),
     "dryrun|y!" => \(my $dry),
@@ -89,6 +92,11 @@ if (@blocks != @read_types) {
 
 # create working dir
 if (!-e $dir){mkdir $dir}
+# copy and length filter infile this solves:
+# - racon only knows fa/fasta ext
+# - weird fasta format issues
+# - (hopefully) possible medaka threading issues with small contigs
+run("seqkit seq -m $min_length $in > $dir/i0.fa");
 if (!defined $out) {
     $out = basename($in, qw(.fa .fas .fna .fasta))."-polished.fna";
 }
@@ -114,12 +122,11 @@ for (my $j=0; $j<@blocks; $j++) {
             block => $block,
             reads => $reads{$block},
             method => $def_methods{$method},
-            in => $i > 1 ? "$dir/i".($i-1).".fa" : $in,
-            out => "$dir/i$i.fa"
+            in => "$dir/i".($i-1).".fa",
+            out => "$dir/i$i"
         };
     }
 }
-$runs[$#runs]{out} = $out; # set final out to true out
 
 print Dumper(\@runs) if $debug;
 
@@ -128,9 +135,7 @@ print Dumper(\@runs) if $debug;
 print "Temporarily merging reads where necessary\n";
 for (qw(np pb il)){
     if (@{$reads{$_}} > 1) {
-        my $cmd = "cat @{$reads{$_}} > $dir/il.fq";
-        print $cmd, "\n";
-        system($cmd);
+        run("cat @{$reads{$_}} > $dir/il.fq");
         @{$reads{$_}} = "$dir/il.fq";
     }
 }
@@ -140,18 +145,17 @@ for (@runs) {
     $def_calls{$_->{method}}(%$_);
 }
 
+# mv final output to top
+run("mv $runs[$#runs]{out}.fa $out"); # set final out to true out
+
 
 sub run_racon{
     my %r = @_;
     print "Running racon\n";
     my %modes = (il => "sr", pb => "map-pb", np => "map-ont");
     my $mode = $modes{$r{block}};
-    my $map_cmd = "minimap2 -t $threads -x $mode $r{in} @{$r{reads}} > $r{out}.paf";
-    print $map_cmd, "\n";
-    $dry || system($map_cmd) && die "racon returned with an error!";
-    my $cmd = "racon -u -t $threads @{$r{reads}} $r{out}.paf $r{in} > $r{out}";
-    print $cmd, "\n";
-    $dry || system($cmd) && die "racon returned with an error!";
+    run("minimap2 -t $threads -x $mode $r{in} @{$r{reads}} > $r{out}.paf");
+    run("racon -u -t $threads @{$r{reads}} $r{out}.paf $r{in} > $r{out}.fa");
     print "\n";
         
 
@@ -161,13 +165,37 @@ sub run_medaka{
     my %r = @_;
     print "Running medaka\n";
 
-    my $mdir = "$dir/i$r{i}-medaka";
-    
-    my $cmd = "medaka_consensus -t $threads -i @{$r{reads}} -d $r{in} -o $mdir";
-    print $cmd, "\n";
-    $dry || system($cmd) && die "medaka returned with an error!";
-    $cmd = "mv $mdir/consensus.fasta $r{out}";
-    print $cmd, "\n";
-    $dry || system($cmd) && die "moving medaka results returned with an error!";
+    my $cmd;
+    my $pre = $r{out};
+
+    my $xargs_threads = int(($threads+1)/2);
+
+    # DEPRECATED: independent medaka chunks
+    #run("SeqChunker -s $chunk_size $r{in} -o $dir/i$r{i}-c%04d.fa");
+    #run("find $dir -name \"i$r{i}-c*.fa\" | xargs -t -n1 -i -P $threads medaka_consensus -t 1 -i @{$r{reads}} -o $mdir -d {} 2>> $mdir.log");
+    #run("mv $mdir/consensus.fasta $pre");
+
+    # first align reads to assembly
+    print "# mapping\n";
+    run("mini_align -i @{$r{reads}} -r $r{in} -m -p $pre -t $threads");
+
+    # generate bed files for contig chunks
+    print "# consensus\n";
+    run("seq-len $r{in} | sed 's/\t.*\t/\t0\t/' | split -l 100 -a6 -d --additional-suffix .bed - $pre-");
+
+    run("ls -1 $pre-*.bed |
+       xargs -t -n1 -i -P $xargs_threads bash -c 'medaka consensus $pre.bam {}.hdf --model $medaka_model --batch 200 --threads 2 --region {} 2>> $pre.log'");
+
+    print "# stitch\n";
+    run("medaka stitch $pre-*.hdf $r{in} $pre.fa");
+
     print "\n";
+}
+
+
+sub run{
+    my ($cmd) = @_;
+    print $cmd, "\n";
+    my ($prog) = $cmd =~ /(^\S+)/; 
+    $dry || system($cmd) && die "$prog returned with an error!";
 }
