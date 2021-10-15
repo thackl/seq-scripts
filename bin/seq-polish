@@ -146,7 +146,7 @@ for (@runs) {
 }
 
 # mv final output to top
-run("mv $runs[$#runs]{out}.fa $out"); # set final out to true out
+run("seqkit seq $runs[$#runs]{out}.fa >$out"); # set final out to true out
 
 
 sub run_racon{
