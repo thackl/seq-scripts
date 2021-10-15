@@ -46,6 +46,10 @@ Add sequence as extra file (if ##FASTA is missing in gff)
 
 Output protein translation of sequence.
 
+=item --codontable
+
+Pick genetic code codon table, default 1.
+
 =item --keepstop
 
 Keep stop-codon as "*" in translated sequence.
@@ -62,7 +66,8 @@ Thomas Hackl S<thomas.hackl@uni-wuerzburg.de>
 
 =cut
 
-my ($gff,$version,$type,$source,$aa,$keepstop,$idtags,$fna,$linewidth,$help,$man) = ("",3,"","",0,0,'Parent,locus_tag,ID',"",60,0,0);
+my ($gff,$version,$type,$source,$aa,$keepstop,$idtags,$desctags,$fna,$linewidth,$help,$man, $gtable) =
+    ("",3,"","",0,0,'Parent,locus_tag,ID',"gene,product,note,Name","",60,0,0, 1);
 
 GetOptions(
            'gff=s'=>\$gff,
@@ -71,8 +76,10 @@ GetOptions(
            'type=s'=>\$type ,
            'source=s'=>\$source,
            'aa!'=>\$aa,
+           'codontable=i' => \$gtable,
            'keepstop|k' =>\$keepstop,
            'idtags=s' => \$idtags,
+           'desctags=s' => \$desctags, 
            'linewidth' => \$linewidth,
            'help|?'=>\$help ,
            'man'=>\$man
@@ -88,12 +95,13 @@ $gff || pod2usage("required: --gff");
 $type || pod2usage("required: --type");
 $source || pod2usage("required: --source");
 my @id_tags = split(",", $idtags);
+my @desc_tags = split(",", $desctags);
 
 # Initialise input stream
 my $gffio = Bio::Tools::GFF->new(-file => $gff, -gff_version => $version) or die $!;
 
 # Initialise codon table
-my $codontable = Bio::Tools::CodonTable->new();
+my $codontable = Bio::Tools::CodonTable->new(-id=>$gtable);
 
 # Initialise sequence storage
 my %sequences = ();
@@ -151,17 +159,11 @@ foreach my $id (@transcript_ids){
     my $contig = $transcripts{$id}[0]->seq_id();
 
     # Use first CDS element to get contig name
-    my $product = "";
-    if ($transcripts{$id}[0]->has_tag("product")) {
-        $product = " product=".($transcripts{$id}[0]->get_tag_values("product"))[0];
-    }
-    my $note = "";
-    if ($transcripts{$id}[0]->has_tag("note")) {
-        $product = " note=".($transcripts{$id}[0]->get_tag_values("note"))[0];
-    }
-    my $name = "";
-    if ($transcripts{$id}[0]->has_tag("Name")) {
-        $name = " name=".($transcripts{$id}[0]->get_tag_values("Name"))[0];
+    my $desc = "";
+    for my $tag (@desc_tags) {
+        if ($transcripts{$id}[0]->has_tag($tag)) {
+            $desc.= " $tag=".($transcripts{$id}[0]->get_tag_values($tag))[0]
+        }
     }
 
     # Report Progress
@@ -181,7 +183,7 @@ foreach my $id (@transcript_ids){
     unless($aa){
         $cds_seq = wrap_seq($cds_seq, $linewidth);
 	#print ">$id$name contig=$contig coords=$cds_start-$cds_end length=$seq_length$product$note\n$cds_seq\n";
-	print ">$id$name$product$note\n$cds_seq\n";
+	print ">$id$desc\n$cds_seq\n";
     }else{
 
         # Get Protein sequence
@@ -190,7 +192,7 @@ foreach my $id (@transcript_ids){
         my $seq_length = length($prot_seq);
         $prot_seq = wrap_seq($prot_seq, $linewidth);
         #print ">$id$name contig=$contig coords=$cds_start-$cds_end length=$seq_length$product$note\n$prot_seq\n";
-        print ">$id$name$product$note\n$prot_seq\n";
+        print ">$id$desc\n$prot_seq\n";
     }
 
 }
