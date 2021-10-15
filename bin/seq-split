@@ -54,7 +54,7 @@ die "Need exactly two group fields (seq_id, group_id). Got: @ri\n" unless @ri ==
 
 while (<GRP>) {
     chomp();
-    my @r = split(/\s+/, $_);
+    my @r = split(/\t/, $_);
     my ($seq_id, $group_id) = @r[@ri];
     $group_id//="_";
     $S{$seq_id} = $group_id;
