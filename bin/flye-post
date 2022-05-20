@@ -1,0 +1,110 @@
+#!/usr/bin/env perl
+# Created: 20 May 2022
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Data::Dumper;
+use File::Basename;
+
+GetOptions (
+    "min-length|m=s" => \(my $min_length = 2000),
+    "id-pattern|p=s" => \(my $id_pattern = "%s_%03d"),
+    "dry!" => \(my $dry = 0),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+if ($help || @ARGV != 1){
+    print "Usage: flye-post flye-run-dir\n";
+    print "Postprocess flye - rename files and contigs, apply min-length, ...\n";
+    printf " %-19s  %s\n", "-m/--min-length", "write to this file [$min_length]";
+    printf " %-19s  %s\n", "-p/--id-pattern", "printf pattern for generating new ids [$id_pattern]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    exit 0;
+}
+# av1
+# av1/assembly.fasta
+# av1/assembly_info.txt
+# av1/00-assembly
+# av1/10-consensus
+# av1/20-repeat
+# av1/30-contigger
+# av1/40-polishing
+# av1/assembly_graph.gfa
+# av1/assembly_graph.gv
+# av1/flye.log
+# av1/params.json
+
+my $run = $ARGV[0];
+my $pre = basename($run);
+my $in_fa = "$run/assembly.fasta";
+my $in_fo = "$run/assembly_info.txt";
+my $out_fa = "$run/$pre.fna";
+my $out_fo = "$run/$pre.tsv";
+
+# check files
+for my $file ($in_fa, $in_fo){
+    die "expected file $file missing" unless -e "$file";
+}
+
+## fix filenames  ##############################################
+# copy seqs, reorder, min_length, fix names (and remember for info)
+print "Sorting, filtering and renaming $in_fa\n";
+run("seqkit seq -m $min_length $in_fa | seqkit sort -rl > $out_fa");
+
+open(my $in_fah, $out_fa) or die $!;
+open(my $out_fah, ">", "$out_fa.2") or die $!;
+my %ids;
+my $i = 0;
+while(<$in_fah>){
+    if(/^>/){
+        $i++;
+        my $id = sprintf($id_pattern, $pre, $i);
+        s/^>(\S+)/>$id orig_id:$1/;
+        $ids{$1} = $id;
+    }
+    print $out_fah $_;
+}
+close $in_fah;
+close $out_fah;
+
+run("mv $out_fa.2 $out_fa");
+
+
+## fix contig names in info ##############################################
+print "\nSorting, filtering and renaming $in_fo\n";
+open(my $in_foh, $in_fo) or die $!;
+open(my $out_foh, ">", $out_fo) or die $!;
+
+# cleanup headers
+my $head = <$in_foh>;
+die "unknown header format: $head" if $head ne
+    "#seq_name	length	cov.	circ.	repeat	mult.	alt_group	graph_path\n";
+print $out_foh join("\t", qw(seq_id length coverage circular repeat multiple alt_group graph_path)), "\n";
+
+while(<$in_foh>){
+    my ($old_id) = /^(\S+)/;
+    next unless exists $ids{$old_id}; # short seqs ignored
+    s/^(\S+)/$ids{$1}/e;
+    print $out_foh $_;
+}
+
+close $in_foh;
+close $out_foh;
+
+# the file is already sorted by length, but in case of seqs with identical
+# length, it's not guaranteed that flye order and seqkit order are 100%
+# identical
+run("keep-header $out_fo -- sort -k2,2gr > $out_fo.2; mv $out_fo.2 $out_fo;");
+
+print "\nComputing GC and adding to $out_fo\n";
+run("paste $out_fo <(echo 'gc'; seq-gc -m $out_fa | cut -f2) > $out_fo.2; mv $out_fo.2 $out_fo");
+
+sub run{
+    my ($cmd) = @_;
+    $debug && print '$ ', $cmd, "\n";
+    my ($prog) = $cmd =~ /(^\S+)/; 
+    $dry || system("bash", "-c", $cmd) && die "$prog returned with an error!";
+}
