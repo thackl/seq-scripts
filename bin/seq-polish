@@ -35,8 +35,19 @@ if ($help || @ARGV != 1){
     print "NOTE: Because the read options accept multiple filenames,
   the assembly file has to be specified before the reads!\n\n" unless @ARGV;
     print "Usage: seq-polish [options] assembly.fna -i il.fq [il2.fq ...] -n np.fq [np2.fq ...] -p pb.fq [pb2.fq ...]\n";
+    printf " %-19s  %s\n", "-i/--illumina", "Illumina reads";
+    printf " %-19s  %s\n", "-n/--nanopore", "Nanopore reads";
+    printf " %-19s  %s\n", "-p/--pacbio", "Pacbio reads";
+    printf " %-19s  %s\n", "-l/--min-length", "minimum read length [$min_length]";
+    printf " %-19s  %s\n", "-m/--methods", "which tools to run and how many iterations. Defaults:";
+    printf " %-19s  %s\n", "", "- il-only: 'rr' - 2x racon";
+    printf " %-19s  %s\n", "", "- np-only: 'rrm' - 2x racon + 1x medaka";
+    printf " %-19s  %s\n", "", "- pb-only: 'rr' - 2x racon";
+    printf " %-19s  %s\n", "", "- np+il: 'rrm,rr' - 2x racon + 1x medaka with Nanopore, 2x racon with Illumina";
+    printf " %-19s  %s\n", "", "- pb+il: 'rr,rr' - 2x racon with Pacbio, 2x racon with Illumina";
+    printf " %-19s  %s\n", "--medaka-model", "Modell for Medaka [$medaka_model]";
     printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
-    printf " %-19s  %s\n", "-t/--threads", "umber of CPU threads";
+    printf " %-19s  %s\n", "-t/--threads", "number of CPU threads";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
     exit 0;
