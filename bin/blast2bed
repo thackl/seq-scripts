@@ -33,15 +33,23 @@ open(my $ofh, "|-", $sort) or die $!;
 # strand. Need to look at ref to determine strand.
 # outfmt 6/7: qaccver saccver pident length mismatch gapopen qstart qend sstart send evalue bitscore
 my @i = $query_mode ? (0,6,7,1,11) : (1,8,9,0,11);
-my @a = $all ? ($query_mode ? (2,3,4,5,8,9,10) : (2,3,4,5,6,7,10)) : ();
+my @a;
 
 print $ofh "# $0 $argv\n";
 my $s;
 my @r;
+my $n = 0;
 while (<>) {
     next if /^#/;
     chomp($_);
-    @r = split("\t", $_);
+    @r = split("\t", $_, -1);
+
+    unless($n++){ # compute complementary index once
+        @a = $all ? complement_index(\@i, $#r) : ();
+        print STDERR "Returned columns by original index (use -a for all columns):\n";
+        print STDERR join(",", (map{$_+1}@i), "<strand>", map{$_+1}@a), "\n";
+    }
+
     if($r[8]>$r[9]){ # make coords relative to ref strand
         $s = "-";
         @r[8,9] = @r[9,8];
@@ -55,4 +63,11 @@ while (<>) {
     $r[8]--;
 
     print $ofh join("\t",@r[@i], $s, @r[@a]),"\n";
+}
+
+sub complement_index{
+    my ($i, $max) =  @_;
+    my @re = 0..$max;
+    @re[@$i] = ();
+    grep{defined}@re;
 }
