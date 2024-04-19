@@ -15,8 +15,8 @@ GetOptions (
     "debug|D!" => \(my $debug),
 ) or die("Error in command line arguments\n");
 
-if ($help || @ARGV != 1){
-    print "Usage: flye-post flye-run-dir\n";
+if ($help || @ARGV < 1 || @ARGV > 2){
+    print "Usage: flye-post flye-run-dir [prefix]\n";
     print "Postprocess flye - rename files and contigs, apply min-length, ...\n";
     printf " %-19s  %s\n", "-m/--min-length", "write to this file [$min_length]";
     printf " %-19s  %s\n", "-p/--id-pattern", "printf pattern for generating new ids [$id_pattern]";
@@ -38,11 +38,19 @@ if ($help || @ARGV != 1){
 # av1/params.json
 
 my $run = $ARGV[0];
-my $pre = basename($run);
+my $pre = $ARGV[1] // basename($run);
+my $dir = ".";;
+if ($pre =~ /\//){
+    $dir = dirname($pre);
+    $pre = basename($pre);
+    mkdir $dir
+}
+
 my $in_fa = "$run/assembly.fasta";
 my $in_fo = "$run/assembly_info.txt";
-my $out_fa = "$run/$pre.fna";
-my $out_fo = "$run/$pre.tsv";
+my $out_fa = "$dir/$pre.fna";
+my $out_fo = "$dir/$pre.tsv";
+
 
 # check files
 for my $file ($in_fa, $in_fo){
