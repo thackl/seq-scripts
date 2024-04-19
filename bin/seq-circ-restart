@@ -1,0 +1,208 @@
+#!/usr/bin/env perl
+# Created: 07 Mar 2019
+# Author: Thomas Hackl, thackl@lim4.de
+use warnings;
+use strict;
+use Getopt::Long  qw(:config no_ignore_case bundling);
+use Fasta::Parser;
+use FindBin;
+use File::Temp qw(tempfile);
+use List::Util qw(min max);
+
+my $usage =
+"Usage: seq-circ [options] assembly.fa
+
+Note: Expects blast+ in PATH";
+
+my $desc = "
+
+Reset the start of (circular) sequences to a gene of choice, by default
+dnaN. For --status 'closed' (or 'auto' with only one sequence in the assembly),
+the sequence with the best hit to the new start protein is assumed to be a
+complete circular chromosome, so it is split, reverse-complemented if the hit is
+on the '-' strand, and the split parts are rejoined to retain the complete
+circular chromosome.
+
+If --status is 'draft' (or 'auto' with multiple sequences in the assembly), the
+contig containing the best hit to the new start genes is only split and
+reverse-complemented if appropriate, but not rejoined.
+
+By default, the start is identified based on the best hit to a non-redundant
+collection of dnaN genes obtained from uniprit. To use a custom gene, simply
+provide a fasta file with one or more protein sequences. The best hit out of the
+provided sequences based on an initial blast search will be used to identify the
+new start coordinates. To avoid issues with local alignments obtained from
+blast, the best hit protein is realign using exonerate to obtain the final
+coordinates.";
+
+GetOptions (
+    "out|o=s" => sub { '-' ne $_[1] and open(STDOUT, '>', $_[1]) || die $! },
+    "start|s=s" => \(my $start_seq_file = "$FindBin::Bin/../data/seq-circ/dnaN-uniprot.faa"),
+    "grace|g=i" =>\(my $grace = 200),
+    "status|x=s" => \(my $asm_status = 'auto'),
+    "help|h!" => \(my $help),
+    "debug|D!" => \(my $debug),
+) or die("Error in command line arguments\n");
+
+($asm_status) = grep{$_ eq $asm_status}qw(auto closed draft);
+$asm_status || die "Assembly status need to be one of 'auto', 'closed' or 'draft'";
+
+if ($help || @ARGV != 1){
+    print "$usage\n\n";
+    printf " %-19s  %s\n", "-s/--start", "start gene/protein [$start_seq_file]";
+    printf " %-19s  %s\n", "-g/--grace", "add this many bases upstream [$grace]";
+    printf " %-19s  %s\n", "-x/--status", "Assembly status, one of 'draft','closed' or 'auto' ['auto']";
+    printf " %-19s  %s\n", "-o/--out", "write to this file [STDOUT]";
+    printf " %-19s  %s\n", "-h/--help", "show this help";
+    printf " %-19s  %s\n", "-D/--debug", "show debug messages";
+    print "$desc\n";
+    exit 0;
+}
+
+my $asm_file = $ARGV[0];
+unless (-f $asm_file) {
+    die "Can't read stdin, need assembly in regular plain file.\n";
+}
+my $fp = Fasta::Parser->new(file=> $asm_file);
+my $start_seq_db = Fasta::Parser->new(file=>$start_seq_file);
+my $start_seq_type = guess_seq_type($start_seq_file);
+print STDERR "start seq type: $start_seq_type\n";
+       
+## makeblastdb
+if (! -e "$start_seq_file.phr") {
+    print STDERR "creating blast db\n";
+    qx(makeblastdb -in $start_seq_file -dbtype $start_seq_type);
+}
+
+my ($best_hit,$asm_seq_n, $hit_n) = blast_best_hit($asm_file);
+
+if ($asm_status eq 'auto') {
+    if ($asm_seq_n >1) {
+        $asm_status = 'draft';
+        print STDERR "assembly status: $asm_status (auto w/ multiple contigs)\n";
+    }else{
+        $asm_status = 'closed';
+        print STDERR "assembly status: $asm_status (auto w/ a single contig)\n";
+    }
+}else {
+    print STDERR "assembly status: $asm_status\n";
+}
+
+if (!@$best_hit) {
+    print STDERR "No hits to start proteins found. Exiting.";
+    exit 0;
+}else {
+    print STDERR "Best hit (out of $hit_n possible hits):\n";
+    print STDERR join("\t", @$best_hit);
+}
+# qseqid qstart qend sseqid sstart send slen strand
+my ($query_id, $query_start, $query_end, $query_len,  $target_id, $target_start,
+    $target_end, $target_len) = @$best_hit;
+
+# fix weird blast, coords can be relative to q or t strand.
+my $is_reverse = 0;
+if ($query_start > $query_end) {
+    ($query_start,$query_end) = ($query_end, $query_start);
+    $is_reverse++;
+}
+if ($target_start >$target_end) {
+    ($target_start,$target_end) = ($target_end, $target_start);
+    $is_reverse--;
+}
+
+if ($is_reverse) {
+    $query_start+= min($target_end -1 + $grace, $query_len-$query_start);
+}else {
+    $query_start-= min($query_start, $target_start + $grace);
+}
+
+while(my $fs = $fp->next_seq){
+    if($fs->id eq $query_id){
+	my ($f1, $f2);
+        if(!$is_reverse){
+            print STDERR "splitting sequence ", $fs->id, "\n";
+	    $f1 = $fs->substr_seq($query_start);
+	    $f2 = $fs->substr_seq(0,$query_start);
+	}else{
+            print STDERR "splitting and reverse-complementing sequence ", $fs->id, "\n";
+            $f1 = $fs->substr_seq(0,$query_end)->reverse_complement;
+	    $f2 = $fs->substr_seq($query_end)->reverse_complement;
+	}
+        if ($asm_status eq 'closed') {
+            print STDERR "recircularizing ", $fs->id, "\n";
+            print $f1.$f2;
+        }else {
+            $f2->id(($f2->id)."b"),
+            print $f1,$f2;
+        }
+    }else {
+        print $fs;
+    }
+}
+
+# more than 5% non atugcnATUGCN
+sub guess_seq_type{
+    my ($fa_file) = @_;
+    my $fp = Fasta::Parser->new(file=>$fa_file);
+    my $seq = $fp->next_seq()->seq();
+    my $aa_n = $seq =~ tr/atgcnATGCN//c;
+    $aa_n/length($seq) > .05 ? "prot" : "nucl";
+}
+
+## get best candidate protein using blast
+sub blast_best_hit{
+    my ($query_file) = @_;
+    my $blast_bin = $start_seq_type eq "prot" ? "blastx" : "blastn";
+    my $outfmt = '"7 qseqid qstart qend qlen sseqid sstart send slen bitscore"';
+    my $blast_cmd = "$blast_bin -db $start_seq_file -query $query_file -outfmt $outfmt -max_target_seqs 5 -evalue 1e-5";
+    print STDERR "running blast\n+ $blast_cmd\n";
+    open(BLAST, "-|", $blast_cmd);
+    my $top_hit;
+    my $hit;
+    my $hit_n;
+    my $asm_seq_n;
+    my @best_hit;
+    while(<BLAST>){
+        if(/^# Query/){ $asm_seq_n++; $top_hit++ };
+        if(/^[^#]/ && $top_hit){
+            $top_hit = 0; # only top hit
+            my @hit = split("\t", $_);
+            $hit_n++;
+            if(!@best_hit){
+                @best_hit = @hit
+            }elsif ($best_hit[8] < $hit[8]) { # best score
+                @best_hit = @hit
+            }
+        }
+    }
+    close(BLAST);
+    return \@best_hit, $asm_seq_n, $hit_n;
+}
+
+## refine with exonerate - deprecated because slow
+# retrieve best hit seq from db to speed up exonerate
+# my ($tmp, $best_start_seq_file) = tempfile();
+# while(my $start_seq = $start_seq_db->next_seq){
+#     if ($start_seq->id() eq $best_hit[1]){ print $tmp $start_seq; }
+# }
+
+# ## --genetic-code 4 for Mycoplasmen
+# my $exonerate_mode = $start_seq_type eq "prot" ? "protein2dna" : "";
+# my $exonerate_cmd = "exonerate -n 1 -m $exonerate_mode --percent 80 --showalignment FALSE $best_start_seq_file $asm_file";
+# open(HIT, "-|", $exonerate_cmd);
+# while(<HIT>){
+#     if(/^vulgar/){$hit=$_; last;}
+# }
+# close(HIT);
+
+# if(!defined($hit)){
+#     die "Failed to realign protein with exonerate!\n";}
+# else{
+#     print STDERR "Exonerate-refined hit:\n$hit";
+# }
+
+# chomp($hit);
+
+# my ($vulgar, $query_id, $query_start, $query_end, $query_strand,
+#     $target_id, $target_start, $target_end, $target_strand,
+#     $score, $extra) = split(" ", $hit, 11);
