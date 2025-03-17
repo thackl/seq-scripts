@@ -16,14 +16,19 @@ GetOptions (
 ) or die("Error in command line arguments\n");
 
 if ($help || @ARGV < 1 || @ARGV > 2){
-    print "Usage: flye-post flye-run-dir [prefix]\n";
+    print "Usage: flye-post ASM [OUT]\n";
     print "Postprocess flye - rename files and contigs, apply min-length, ...\n";
-    printf " %-19s  %s\n", "-m/--min-length", "write to this file [$min_length]";
+    printf " %-19s  %s\n", "ASM", "Path to the flye assembly.fasta (and assembly_info.txt)";
+    printf " %-19s  %s\n", "OUT", "Prefix for output files and contig IDs. Defaults to the ASM dirname.";
+    printf " %-19s  %s\n", "",    "Prepend with a path to specify output location. Defaults to inside ";
+    printf " %-19s  %s\n", "",    "ASM directory. Use './OUT' to output to current directory.";
+    printf " %-19s  %s\n", "-m/--min-length", "contig minimum length to keep [$min_length]";
     printf " %-19s  %s\n", "-p/--id-pattern", "printf pattern for generating new ids [$id_pattern]";
     printf " %-19s  %s\n", "-h/--help", "show this help";
     printf " %-19s  %s\n", "-D/--debug", "show debug messages";
     exit 0;
 }
+
 # av1
 # av1/assembly.fasta
 # av1/assembly_info.txt
@@ -38,8 +43,9 @@ if ($help || @ARGV < 1 || @ARGV > 2){
 # av1/params.json
 
 my $run = $ARGV[0];
+$run =~ s/assembly.fasta$//; # allow assembly.fasta as input spec
 my $pre = $ARGV[1] // basename($run);
-my $dir = ".";;
+my $dir = $run;; # default output dir is flye run dir
 if ($pre =~ /\//){
     $dir = dirname($pre);
     $pre = basename($pre);
